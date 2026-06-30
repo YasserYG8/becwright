@@ -3,10 +3,9 @@ exported_from: https://github.com/DataDave-Dev/becwright
 rule:
   id: no-wildcard-imports
   intent: >
-    Evitar 'from x import *', que ensucia el namespace.
+    Avoid 'from x import *', which pollutes the namespace.
   why_it_matters: >
-    Los imports wildcard ocultan de dónde viene cada nombre y rompen el
-    análisis estático.
+    Wildcard imports hide where each name comes from and break static analysis.
   paths:
     - "src/**/*.py"
   severity: warning

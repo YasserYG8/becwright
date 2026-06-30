@@ -3,10 +3,10 @@ exported_from: https://github.com/DataDave-Dev/becwright
 rule:
   id: no-console-log-js
   intent: >
-    Evitar 'console.log(...)' en el código JavaScript/TypeScript.
+    Avoid 'console.log(...)' in JavaScript/TypeScript code.
   why_it_matters: >
-    Los console.log de depuración ensucian la salida en producción y suelen
-    filtrar datos sin querer.
+    Debug console.log statements clutter production output and often leak data
+    unintentionally.
   paths:
     - "**/*.js"
     - "**/*.ts"

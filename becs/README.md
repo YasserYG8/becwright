@@ -1,22 +1,23 @@
-# Catálogo de BECs
+# BEC catalog
 
-BECs listas para importar a tu repo. Cada una es un bundle autocontenido; al
-importar, becwright te muestra qué hace y pide confirmación antes de instalarla.
+BECs ready to import into your repo. Each one is a self-contained bundle; on
+import, becwright shows you what it does and asks for confirmation before
+installing it.
 
 ```bash
-becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/<archivo>
+becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/<file>
 ```
 
-| BEC | Qué hace | Severidad |
+| BEC | What it does | Severity |
 |---|---|---|
-| `no-token-in-logs.bec.yaml` | Frena tokens/credenciales en llamadas a logs | `blocking` |
-| `no-hardcoded-secrets.bec.yaml` | Frena claves, tokens y contraseñas escritas en el código | `blocking` |
-| `no-debug-remnants.bec.yaml` | Frena `breakpoint()`, `pdb.set_trace()`, `import pdb` olvidados | `blocking` |
-| `no-dangerous-eval.bec.yaml` | Frena `eval()` / `exec()` | `blocking` |
-| `no-wildcard-imports.bec.yaml` | Avisa de `from x import *` | `warning` |
-| `no-debugger-js.bec.yaml` | Frena `debugger;` en JS/TS | `blocking` |
-| `no-console-log-js.bec.yaml` | Avisa de `console.log(...)` en JS/TS | `warning` |
+| `no-token-in-logs.bec.yaml` | Blocks tokens/credentials in log calls | `blocking` |
+| `no-hardcoded-secrets.bec.yaml` | Blocks keys, tokens and passwords hardcoded in the code | `blocking` |
+| `no-debug-remnants.bec.yaml` | Blocks forgotten `breakpoint()`, `pdb.set_trace()`, `import pdb` | `blocking` |
+| `no-dangerous-eval.bec.yaml` | Blocks `eval()` / `exec()` | `blocking` |
+| `no-wildcard-imports.bec.yaml` | Warns about `from x import *` | `warning` |
+| `no-debugger-js.bec.yaml` | Blocks `debugger;` in JS/TS | `blocking` |
+| `no-console-log-js.bec.yaml` | Warns about `console.log(...)` in JS/TS | `warning` |
 
-Las BECs de Python usan `paths: ["src/**/*.py"]` y las de JS/TS `["**/*.js",
-"**/*.ts"]`. Tras importar, ajustá `paths` en tu `.bec/rules.yaml` si tu código
-vive en otro lado.
+The Python BECs use `paths: ["src/**/*.py"]` and the JS/TS ones `["**/*.js",
+"**/*.ts"]`. After importing, adjust `paths` in your `.bec/rules.yaml` if your
+code lives elsewhere.

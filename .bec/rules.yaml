@@ -1,15 +1,15 @@
-# BECs que el propio becwright se aplica a sí mismo (dogfooding).
+# BECs that becwright applies to itself (dogfooding).
 rules:
   - id: comments-only-when-complex
     intent: >
-      Los comentarios se reservan para código complejo; si el código se entiende
-      solo, no se comenta.
+      Comments are reserved for complex code; if the code is self-explanatory,
+      it is not commented.
     why_it_matters: >
-      Los comentarios que repiten lo obvio envejecen mal, mienten cuando el
-      código cambia y agregan ruido sin información.
+      Comments that restate the obvious age badly, lie when the code changes
+      and add noise without information.
     rejected_alternatives:
-      - "Prohibir todos los comentarios -> se pierde el 'por qué' de lo complejo"
-      - "Chequeo bloqueante -> la heurística da falsos positivos; mejor avisar"
+      - "Forbid all comments -> the 'why' of complex code is lost"
+      - "Blocking check -> the heuristic gives false positives; better to warn"
     paths:
       - "src/**/*.py"
       - "tests/**/*.py"

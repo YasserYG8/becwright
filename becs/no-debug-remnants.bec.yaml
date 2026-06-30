@@ -3,9 +3,9 @@ exported_from: https://github.com/DataDave-Dev/becwright
 rule:
   id: no-debug-remnants
   intent: >
-    No se commitea código de depuración (breakpoints, pdb).
+    Debug code (breakpoints, pdb) must not be committed.
   why_it_matters: >
-    Un breakpoint olvidado cuelga el proceso en producción o en CI.
+    A forgotten breakpoint hangs the process in production or CI.
   paths:
     - "src/**/*.py"
   severity: blocking

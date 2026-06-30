@@ -3,10 +3,10 @@ exported_from: https://github.com/DataDave-Dev/becwright
 rule:
   id: no-debugger-js
   intent: >
-    No dejar 'debugger;' en el código JavaScript/TypeScript.
+    Do not leave 'debugger;' in JavaScript/TypeScript code.
   why_it_matters: >
-    Un 'debugger' olvidado detiene la ejecución cuando hay devtools abiertas
-    y no debería llegar a producción.
+    A forgotten 'debugger' halts execution when devtools are open and should
+    not reach production.
   paths:
     - "**/*.js"
     - "**/*.ts"
