@@ -49,24 +49,25 @@ viene del paquete instalado.
 
 ## Estado actual
 
-**MVP instalable (A + B)** hecho y verificado end-to-end: motor empaquetado en
-`src/becwright/` con comando `becwright` (check / install / uninstall) y hook de
-git nativo (frena un commit con violación). **Fase 1** ("usable por otros") en
-curso: cinco checks incluidos (`no_token_in_logs`, `hardcoded_secrets`,
-`debug_remnants`, `dangerous_eval`, `wildcard_imports`), guía de adopción en el
-README, distribución vía `pipx install git+URL`, y la salida de bloqueo muestra
-`Qué pide:` + `Por qué importa:`. El prototipo original queda **archivado** en
-`prototype/` como referencia. Plan y norte en [`docs/plan.md`](docs/plan.md);
+**MVP (A + B)** y **Fase 1** ("usable por otros") hechos. **Fase 2
+(Portabilidad, C)** hecha: `becwright export` / `import` mueven una BEC entre
+repos como un único `.bec.yaml` autocontenido (el código del check custom viaja
+embebido), con un gate de confianza que muestra el código antes de instalar.
+Comandos: `check / install / uninstall / export / import`. Cinco checks
+incluidos (`no_token_in_logs`, `hardcoded_secrets`, `debug_remnants`,
+`dangerous_eval`, `wildcard_imports`). El prototipo original queda **archivado**
+en `prototype/` como referencia. Plan y norte en [`docs/plan.md`](docs/plan.md);
 detalle en [`docs/estado-y-roadmap.md`](docs/estado-y-roadmap.md).
 
 ## Alcance y no-objetivos
 
-**Dentro:** el MVP A + B (CLI instalable + hook nativo); mantener documentación
-y prototipo de referencia al día.
+**Dentro:** el MVP A + B (CLI instalable + hook nativo) y la portabilidad C
+(export / import de BECs entre repos); mantener documentación y prototipo de
+referencia al día.
 
-**Fuera (trabajo futuro, no tocar sin pedirlo):** portabilidad / importar-exportar
-BECs entre repos (C), análisis AST, soporte multi-lenguaje, firma de
-verificaciones, "mejorar" el regex de los checks.
+**Fuera (trabajo futuro, no tocar sin pedirlo):** análisis AST, soporte
+multi-lenguaje, firma/verificación criptográfica de BECs, "mejorar" el regex de
+los checks.
 
 ## Convenciones
 
