@@ -14,6 +14,9 @@ becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/b
 | `no-debug-remnants.bec.yaml` | Frena `breakpoint()`, `pdb.set_trace()`, `import pdb` olvidados | `blocking` |
 | `no-dangerous-eval.bec.yaml` | Frena `eval()` / `exec()` | `blocking` |
 | `no-wildcard-imports.bec.yaml` | Avisa de `from x import *` | `warning` |
+| `no-debugger-js.bec.yaml` | Frena `debugger;` en JS/TS | `blocking` |
+| `no-console-log-js.bec.yaml` | Avisa de `console.log(...)` en JS/TS | `warning` |
 
-Todas usan `paths: ["src/**/*.py"]` por defecto. Tras importar, ajustá `paths`
-en tu `.bec/rules.yaml` si tu código vive en otro lado.
+Las BECs de Python usan `paths: ["src/**/*.py"]` y las de JS/TS `["**/*.js",
+"**/*.ts"]`. Tras importar, ajustá `paths` en tu `.bec/rules.yaml` si tu código
+vive en otro lado.
