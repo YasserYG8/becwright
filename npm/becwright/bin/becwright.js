@@ -22,8 +22,8 @@ function resolveBinary() {
 const binary = resolveBinary();
 if (!binary) {
   console.error(`becwright: no prebuilt binary for ${TARGET}.`);
-  console.error("Supported: linux-x64, linux-arm64, darwin-arm64, win32-x64.");
-  console.error("On other platforms (e.g. Intel macOS) install via pipx: pipx install becwright");
+  console.error("Supported: linux-x64, linux-arm64, darwin-x64, darwin-arm64, win32-x64.");
+  console.error("On other platforms install via pipx: pipx install becwright");
   process.exit(1);
 }
 

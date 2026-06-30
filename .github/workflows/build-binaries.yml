@@ -2,7 +2,12 @@ name: Build binaries
 
 # Freezes a standalone `becwright` binary per platform with PyInstaller.
 # These artifacts are what the npm packages ship, so users without Python can
-# install becwright via npm/pnpm. Release publishing is wired in publish.yml.
+# install becwright via npm/pnpm. Release publishing is wired in release.yml.
+#
+# macOS is built once as a universal2 binary (Intel + Apple Silicon) on the
+# Apple Silicon runner, then served for both the darwin-arm64 and darwin-x64 npm
+# packages — GitHub's Intel macOS runners are unreliable, so we don't depend on
+# them.
 on:
   workflow_dispatch:
   workflow_call: # invoked by release.yml on a published release
@@ -17,17 +22,46 @@ jobs:
         include:
           - { os: ubuntu-latest, target: linux-x64, ext: "" }
           - { os: ubuntu-24.04-arm, target: linux-arm64, ext: "" }
-          - { os: macos-14, target: darwin-arm64, ext: "" }
+          - { os: macos-14, target: darwin-universal2, ext: "" }
           - { os: windows-latest, target: win32-x64, ext: ".exe" }
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      # --- Standard build (Linux / Windows): host-arch binary ---
+      - name: Set up Python
+        if: matrix.target != 'darwin-universal2'
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Install
+        if: matrix.target != 'darwin-universal2'
         run: pip install ".[build]"
       - name: Build
+        if: matrix.target != 'darwin-universal2'
         run: pyinstaller --clean --noconfirm packaging/becwright.spec
+
+      # --- macOS universal2 build (Intel + Apple Silicon in one binary) ---
+      # setup-python is arch-specific, so use the python.org universal2 framework
+      # build. pyyaml ships an arch-specific C extension; drop it so the bundle is
+      # pure-Python and the result is cleanly universal2 (becwright only needs
+      # yaml.safe_load/dump, which the pure-Python loader provides).
+      - name: Build universal2 (macOS)
+        if: matrix.target == 'darwin-universal2'
+        env:
+          BECWRIGHT_TARGET_ARCH: universal2
+          PYVER: "3.12.8"
+        run: |
+          set -euo pipefail
+          curl -sSLo /tmp/python.pkg "https://www.python.org/ftp/python/${PYVER}/python-${PYVER}-macos11.pkg"
+          sudo installer -pkg /tmp/python.pkg -target /
+          PY=/Library/Frameworks/Python.framework/Versions/3.12/bin/python3
+          "$PY" -m pip install --upgrade pip
+          "$PY" -m pip install ".[build]"
+          SITE="$("$PY" -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
+          find "$SITE" -name "_yaml*.so" -delete || true
+          "$PY" -m PyInstaller --clean --noconfirm packaging/becwright.spec
+          echo "--- lipo ---"; lipo -info dist/becwright
+
       - name: Smoke test
         shell: bash
         run: |
@@ -39,6 +73,16 @@ jobs:
             echo "forbid should have exited non-zero on a match"; exit 1
           fi
           echo "frozen 'run' dispatch works"
+
+      - name: Smoke test Intel slice via Rosetta (macOS universal2)
+        if: matrix.target == 'darwin-universal2'
+        run: |
+          set -euo pipefail
+          softwareupdate --install-rosetta --agree-to-license || true
+          arch -x86_64 dist/becwright --version
+          arch -x86_64 dist/becwright list >/dev/null
+          echo "Intel slice runs under Rosetta"
+
       - uses: actions/upload-artifact@v4
         with:
           name: becwright-${{ matrix.target }}

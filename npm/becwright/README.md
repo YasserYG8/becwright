@@ -34,7 +34,7 @@ local binary from `node_modules/.bin`, so it works without a global install.
 
 ## Supported platforms
 
-`linux-x64`, `linux-arm64`, `darwin-arm64`, `win32-x64`. Intel macOS: use `pipx install becwright`.
+`linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`, `win32-x64` (macOS is a universal2 binary).
 
 On other platforms, install via [pipx](https://pipx.pypa.io): `pipx install becwright`.
 

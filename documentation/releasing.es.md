@@ -3,7 +3,7 @@
 becwright se distribuye por tres canales desde un único release de GitHub:
 
 - **PyPI** — el paquete de Python (`pip` / `pipx`).
-- **npm** — un paquete lanzador (`becwright`) más cuatro paquetes por plataforma
+- **npm** — un paquete lanzador (`becwright`) más cinco paquetes por plataforma
   con `os`/`cpu` (`@becwright/<target>`), cada uno con un binario precompilado,
   para que quien no usa Python pueda instalarlo.
 
@@ -24,7 +24,7 @@ becwright se distribuye por tres canales desde un único release de GitHub:
 2. Commit y crear un **release de GitHub** con tag `vX.Y.Z` (debe coincidir con
    `pyproject.toml`).
 3. Publicar el release dispara `release.yml`, que:
-   - construye y prueba el binario en las cuatro plataformas,
+   - construye y prueba el binario en todas las plataformas (macOS como binario universal2),
    - stagea cada binario en su paquete `@becwright/<target>` (`npm/stage.mjs`),
    - fija la versión de cada paquete npm desde el tag (`npm/set-version.mjs`),
    - publica primero los paquetes de plataforma y luego el lanzador,

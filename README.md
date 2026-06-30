@@ -64,7 +64,7 @@ becwright init                      # detects your language, writes .bec/rules.y
 
 Installed as a devDependency, the pre-commit hook resolves the local binary from
 `node_modules/.bin`, so it works without a global install. The npm packages cover
-`linux-x64`, `linux-arm64`, `darwin-arm64` and `win32-x64`; on any
+`linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64` and `win32-x64`; on any
 other platform use `pipx install becwright`.
 
 Available commands:

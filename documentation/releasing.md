@@ -3,7 +3,7 @@
 becwright ships through three channels from a single GitHub release:
 
 - **PyPI** — the Python package (`pip` / `pipx`).
-- **npm** — a launcher package (`becwright`) plus four `os`/`cpu`-gated platform
+- **npm** — a launcher package (`becwright`) plus five `os`/`cpu`-gated platform
   packages (`@becwright/<target>`) that each carry a prebuilt binary, so users
   without Python can install it.
 
@@ -23,7 +23,7 @@ becwright ships through three channels from a single GitHub release:
 2. Commit, then create a **GitHub release** whose tag is `vX.Y.Z` (must match
    `pyproject.toml`).
 3. Publishing the release triggers `release.yml`, which:
-   - builds and smoke-tests the binary on all four platforms,
+   - builds and smoke-tests the binary on all platforms (macOS as a universal2 binary),
    - stages each binary into its `@becwright/<target>` package
      (`npm/stage.mjs`),
    - sets every npm package version from the tag (`npm/set-version.mjs`),

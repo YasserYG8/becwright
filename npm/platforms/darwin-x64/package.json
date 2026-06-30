@@ -1,12 +1,12 @@
 {
-  "name": "@becwright/linux-arm64",
+  "name": "@becwright/darwin-x64",
   "version": "0.2.1",
-  "description": "Linux arm64 binary for becwright.",
+  "description": "macOS x64 (Intel) binary for becwright.",
   "os": [
-    "linux"
+    "darwin"
   ],
   "cpu": [
-    "arm64"
+    "x64"
   ],
   "files": [
     "becwright"

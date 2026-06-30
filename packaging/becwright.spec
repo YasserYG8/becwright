@@ -12,6 +12,10 @@ entry = os.path.join(SPECPATH, "becwright_entry.py")  # noqa: F821
 # PyInstaller's static analysis cannot find them. Collect them all explicitly.
 hiddenimports = collect_submodules("becwright.checks")
 
+# On macOS we build a single universal2 binary (Intel + Apple Silicon) by setting
+# BECWRIGHT_TARGET_ARCH=universal2 in CI; elsewhere it stays the host arch.
+target_arch = os.environ.get("BECWRIGHT_TARGET_ARCH") or None
+
 a = Analysis(
     [entry],
     pathex=[os.path.join(root, "src")],
@@ -41,7 +45,7 @@ exe = EXE(
     console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
-    target_arch=None,
+    target_arch=target_arch,
     codesign_identity=None,
     entitlements_file=None,
 )

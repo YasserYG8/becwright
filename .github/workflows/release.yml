@@ -28,7 +28,9 @@ jobs:
         run: |
           node npm/stage.mjs linux-x64    artifacts/becwright-linux-x64/becwright
           node npm/stage.mjs linux-arm64  artifacts/becwright-linux-arm64/becwright
-          node npm/stage.mjs darwin-arm64 artifacts/becwright-darwin-arm64/becwright
+          # One universal2 macOS binary serves both Apple Silicon and Intel.
+          node npm/stage.mjs darwin-arm64 artifacts/becwright-darwin-universal2/becwright
+          node npm/stage.mjs darwin-x64   artifacts/becwright-darwin-universal2/becwright
           node npm/stage.mjs win32-x64    artifacts/becwright-win32-x64/becwright.exe
       - name: Set version from tag
         run: node npm/set-version.mjs "${GITHUB_REF_NAME#v}"
