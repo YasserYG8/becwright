@@ -126,6 +126,34 @@ def test_append_rule_creates_and_preserves(tmp_path):
     assert ids == {"first", "second"}
 
 
+def test_append_rule_matches_four_space_indent(tmp_path):
+    rules_path = tmp_path / "rules.yaml"
+    rules_path.write_text("rules:\n    - id: first\n      paths: ['*.py']\n"
+                          "      check: 'true'\n      severity: warning\n", encoding="utf-8")
+    bundle.append_rule(rules_path, {"id": "second", "paths": ["*.py"],
+                                    "check": "false", "severity": "blocking"})
+    assert {r.id for r in load_rules(rules_path)} == {"first", "second"}
+
+
+@pytest.mark.parametrize("empty", ["rules: []\n", "rules: {}\n"])
+def test_append_rule_handles_empty_inline_list(tmp_path, empty):
+    rules_path = tmp_path / "rules.yaml"
+    rules_path.write_text(empty, encoding="utf-8")
+    bundle.append_rule(rules_path, {"id": "only", "paths": ["*.py"],
+                                    "check": "false", "severity": "blocking"})
+    assert {r.id for r in load_rules(rules_path)} == {"only"}
+
+
+@pytest.mark.parametrize("text", [
+    "becwright_bec: 1\nrule: {id: r}\ncheck: {kind: script, filename: x.py}\n",
+    "becwright_bec: 1\nrule: {id: r}\ncheck: {kind: builtin}\n",
+    "becwright_bec: 1\nrule: {id: r}\ncheck: {kind: weird}\n",
+])
+def test_parse_rejects_malformed_check(text):
+    with pytest.raises(bundle.BundleError):
+        bundle.parse_bundle(text)
+
+
 # --- round trips through evaluate ---
 
 def test_roundtrip_script_blocks_via_evaluate(tmp_path, monkeypatch):

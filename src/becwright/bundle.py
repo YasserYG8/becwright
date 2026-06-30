@@ -13,6 +13,8 @@ BUNDLE_VERSION = 1
 
 _BUILTIN = re.compile(r"^python3?\s+-m\s+becwright\.checks\.(\w+)$")
 _PY_PATH = re.compile(r"[\w./-]+\.py")
+_ITEM_INDENT = re.compile(r"^([ \t]+)-\s", re.MULTILINE)
+_EMPTY_RULES = re.compile(r"^rules:[ \t]*(?:\[[ \t]*\]|\{[ \t]*\})[ \t]*$", re.MULTILINE)
 
 
 class BundleError(RuntimeError):
@@ -81,6 +83,13 @@ def parse_bundle(text: str) -> dict:
         raise BundleError("El bundle no tiene una regla válida (falta 'rule.id').")
     if not isinstance(check, dict) or "kind" not in check:
         raise BundleError("El bundle no tiene un check válido (falta 'check.kind').")
+    required = {"builtin": ("module",), "script": ("filename", "source"), "command": ("command",)}
+    kind = check["kind"]
+    if kind not in required:
+        raise BundleError(f"Tipo de check desconocido: {kind!r}.")
+    missing = [f for f in required[kind] if not check.get(f)]
+    if missing:
+        raise BundleError(f"El check '{kind}' no tiene los campos: {', '.join(missing)}.")
     return data
 
 
@@ -118,16 +127,18 @@ def materialize(bundle: dict, root: Path) -> dict:
 
 
 def append_rule(rules_path: Path, rule_dict: dict) -> None:
-    item = textwrap.indent(
-        yaml.safe_dump([rule_dict], sort_keys=False, allow_unicode=True), "  "
-    )
+    dumped = yaml.safe_dump([rule_dict], sort_keys=False, allow_unicode=True)
     if not rules_path.exists():
         rules_path.parent.mkdir(parents=True, exist_ok=True)
-        rules_path.write_text("rules:\n" + item, encoding="utf-8")
+        rules_path.write_text("rules:\n" + textwrap.indent(dumped, "  "), encoding="utf-8")
         return
-    text = rules_path.read_text(encoding="utf-8")
+    # Normalize an empty inline list (`rules: []`) so block items can follow it.
+    text = _EMPTY_RULES.sub("rules:", rules_path.read_text(encoding="utf-8"), count=1)
     if text and not text.endswith("\n"):
         text += "\n"
     if not re.search(r"^rules:", text, re.MULTILINE):
         text += "rules:\n"
-    rules_path.write_text(text + item, encoding="utf-8")
+    # Match the indentation the file already uses for list items.
+    existing = _ITEM_INDENT.search(text)
+    prefix = existing.group(1) if existing else "  "
+    rules_path.write_text(text + textwrap.indent(dumped, prefix), encoding="utf-8")
