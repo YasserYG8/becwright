@@ -1,5 +1,9 @@
 # Releasing
 
+> **Maintainers only.** This page is about publishing a new version of becwright
+> to npm and PyPI. If you're *using* becwright, you never need this — install it
+> with the commands in the [README](../README.md) and you're set.
+
 becwright ships through three channels from a single GitHub release:
 
 - **PyPI** — the Python package (`pip` / `pipx`).

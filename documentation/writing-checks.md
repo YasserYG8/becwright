@@ -2,8 +2,14 @@
 
 # Writing checks
 
-A check is the **executable** part of a BEC. becwright runs it and trusts its
-exit code.
+A check is the **executable** part of a BEC — the little program that actually
+inspects your files and says pass or fail.
+
+**Most of the time you don't write code.** If your rule is "this text must not
+appear" (a forbidden word, a leftover `debugger`, a banned function), use the
+built-in `forbid` check and you're done — jump to
+[The fastest path](#the-fastest-path-forbid). Writing your own check (the rest of
+this page) is only for cases `forbid` can't express.
 
 ## The contract
 
@@ -11,6 +17,12 @@ exit code.
 - **Output:** print violations to stdout (becwright shows them under "Found in:").
 - **Exit code:** `0` = pass, non-zero = fail.
 - **Working directory:** the repo root, so paths from stdin resolve directly.
+
+> **Quick glossary:** *stdin*/*stdout* are the standard input/output streams a
+> program reads from and writes to. The *exit code* is the number a program
+> returns when it finishes — `0` means "all good", anything else means "problem
+> found". That's the entire interface: read files in, print issues out, exit
+> `0` or non-zero.
 
 ## The fastest path: `forbid`
 

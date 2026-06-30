@@ -18,6 +18,30 @@ determinista: en lugar de *pedirle* a un agente de IA que respete una regla
 ignorar), becwright **verifica el resultado** y frena el commit si la regla
 se rompe.
 
+## En cristiano
+
+¿Primera vez con una herramienta así? La idea entera en tres líneas:
+
+Un **commit** es el momento en que *guardás* tu trabajo en git. becwright es un
+guardia parado en esa puerta. Justo antes de guardar, corre tus reglas sobre el
+código:
+
+- ✅ si todo pasa → el commit entra;
+- ❌ si una regla se rompe → te frena, te dice qué regla es y *por qué* existe,
+  y espera hasta que lo arregles.
+
+Una nota en `CLAUDE.md` es un *letrero* que pide a las personas (y a los agentes
+de IA) que se porten bien. becwright es el *guardia que revisa*. Un letrero se
+puede ignorar; el guardia no.
+
+> **Dos palabras que vas a ver mucho:** un **commit** es una foto guardada de tu
+> código en git. Un **hook** es un pequeño script que git ejecuta solo en un
+> momento determinado — becwright usa el hook *pre-commit*, que se dispara justo
+> antes de guardar un commit. Nunca lo corrés a mano; lo hace git.
+
+El resto de este README va de "solo quiero empezar" hasta el detalle técnico
+completo — leé hasta donde necesites.
+
 ## El problema
 
 Un agente de IA escribe código y deja una nota: *"esto nunca debe loguear
@@ -53,21 +77,28 @@ tiene juntas:
 
 ## Cómo se usa
 
-becwright se instala una vez como herramienta; cada repo solo aporta su propio
-`.bec/rules.yaml`.
+becwright se instala una vez en tu máquina; cada proyecto (repo) solo agrega su
+propio archivito de reglas, `.bec/rules.yaml`. Podés elegir el comando de
+instalación según lo que ya uses — todos te dejan el mismo comando `becwright`.
 
 ```bash
-# 1. Instalar el motor. Elegí tu ecosistema — sin Python vía npm/pnpm, que
-#    traen un binario autónomo:
+# 1. Instalar la herramienta. Elegí la línea que combine con lo que ya usás.
+#    Por npm/pnpm NO hace falta Python — trae un programa ya listo.
 npm install --save-dev becwright    # o global: npm install -g becwright
 pnpm add -D becwright
 pipx install becwright              # o: pip install becwright
 
-# 2. En tu repo, generar reglas + instalar el hook
-becwright init                      # detecta tu lenguaje, escribe .bec/rules.yaml, instala el hook
+# 2. Dentro de tu proyecto, configurarlo. Un solo comando hace todo:
+becwright init                      # escribe un .bec/rules.yaml de arranque e instala el hook pre-commit
 
-# 3. Listo: cada commit corre los chequeos; si una regla blocking falla, frena.
+# 3. Listo. A partir de ahora, cada `git commit` corre los chequeos solo.
+#    Si una regla blocking falla, el commit se frena hasta que lo arregles.
 ```
+
+**Qué significa cada paso:** el paso 1 deja el programa `becwright` en tu
+computadora. El paso 2 crea el archivo de reglas (ya con unas cuantas reglas
+sensatas) y lo conecta con git para que corra solo. El paso 3 es vos trabajando
+normal — becwright hace su trabajo al momento del commit sin que lo llames.
 
 Instalado como devDependency, el hook de pre-commit resuelve el binario local
 desde `node_modules/.bin`, así funciona sin instalación global. Los paquetes npm
@@ -101,8 +132,9 @@ Agrega un skill `becwright` y un comando `/becwright`. Ver
 
 Para resultados estructurados, `becwright check --json` imprime un resumen
 legible por máquina, y `becwright mcp` (instalá el extra `mcp`: `pipx install
-"becwright[mcp]"`) levanta un servidor MCP que expone `check` y `list_checks` a
-cualquier agente. Ver [`documentation/mcp.md`](documentation/mcp.md).
+"becwright[mcp]"`) levanta un servidor MCP — MCP es una forma estándar de que
+las herramientas de IA se conecten a habilidades extra — que expone `check` y
+`list_checks` a cualquier agente. Ver [`documentation/mcp.md`](documentation/mcp.md).
 
 Una regla en `.bec/rules.yaml`:
 
@@ -122,9 +154,11 @@ rules:
 ## Checks incluidos
 
 becwright trae chequeos listos para usar. Cada uno es un módulo que se invoca
-desde el campo `check`. Son **basados en texto/regex** (no análisis AST), así
-que son conservadores y pueden tener casos límite; el valor está en atar cada
-regla a su *por qué*.
+desde el campo `check`. Funcionan **buscando texto** dentro de tus archivos con
+un patrón (un *regex* — un patrón de búsqueda de texto, tipo "encontrá esta
+palabra exacta"), en vez de entender el código de verdad. Eso los hace simples y
+predecibles: pueden pasar por alto casos raros, y el verdadero valor está en
+atar cada regla a su *por qué*.
 
 | Check | Qué detecta | Lenguaje | Severidad sugerida |
 |---|---|---|---|
@@ -138,8 +172,10 @@ regla a su *por qué*.
 ## Cualquier lenguaje
 
 becwright es **agnóstico al lenguaje**: el motor solo filtra archivos por sus
-`paths` (globs) y corre el `check` como un comando; nunca asume Python. Podés
-vigilar JavaScript, Go, Rust, o lo que sea.
+`paths` (escritos como *globs* — patrones de archivos como `src/**/*.js`, donde
+`*` significa "cualquier nombre" y `**` significa "cualquier carpeta, por más
+profunda que esté") y corre el `check` como un comando; nunca asume Python.
+Podés vigilar JavaScript, Go, Rust, o lo que sea.
 
 La forma más rápida de escribir una regla para otro lenguaje —sin escribir
 código— es el check `forbid`, que falla si un regex aparece en los archivos:
@@ -189,11 +225,17 @@ viaja con su código embebido y aterriza en `.bec/checks/` del repo destino.
 
 ## Documentación
 
-La documentación técnica vive en [`documentation/`](documentation/README.es.md):
-[arquitectura y flujo](documentation/architecture.es.md),
-[uso y esquema de reglas](documentation/usage.es.md),
-[escribir checks](documentation/writing-checks.es.md), y
-[portabilidad](documentation/portability.es.md).
+La documentación completa vive en [`documentation/`](documentation/README.es.md).
+Cada página arranca con un resumen en lenguaje simple y después profundiza, así
+que empezá donde estés:
+
+- **Recién empezás:** [uso](documentation/usage.es.md) — instalación, los
+  comandos y cómo escribir una regla.
+- **Querés agregar tu propia regla:** [escribir checks](documentation/writing-checks.es.md)
+  — desde el atajo sin código `forbid` hasta un check propio en cualquier lenguaje.
+- **Compartir reglas entre proyectos:** [portabilidad](documentation/portability.es.md).
+- **Curiosidad por cómo funciona adentro:** [arquitectura y flujo](documentation/architecture.es.md).
+- **Conectarlo a un agente de IA:** [MCP y salida JSON](documentation/mcp.es.md).
 
 ## Estado actual
 

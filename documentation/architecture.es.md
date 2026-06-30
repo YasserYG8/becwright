@@ -6,6 +6,13 @@ becwright es un motor chico que corre **checks** sobre tus archivos y decide si
 un commit puede proceder. Es agnóstico al lenguaje: nunca parsea tu código —
 filtra archivos por su ruta y corre un comando.
 
+**La versión en una frase:** por cada regla, becwright elige los archivos a los
+que aplica y corre un programita (el "check"); si ese programa reporta un
+problema, una regla blocking frena el commit. Todo lo de abajo es esa misma idea
+en detalle — los componentes, el flujo exacto y el contrato que un check debe
+cumplir. El resto de esta página es para los curiosos y para quien escriba sus
+propios checks.
+
 ## Componentes
 
 | Módulo | Responsabilidad |
@@ -49,8 +56,9 @@ flowchart TD
 
 ## El contrato del check
 
-El motor corre `rule.check` como comando de shell con `cwd` en la raíz del repo,
-y le pasa las rutas relevantes (una por línea) por **stdin**. Un check:
+El motor corre `rule.check` como comando de shell desde la raíz del repo, y le
+pasa las rutas relevantes (una por línea) por **stdin** — stdin es simplemente la
+entrada estándar del programa, el canal por el que un comando lee. Un check:
 
 - lee la lista de archivos por stdin,
 - imprime las violaciones por stdout (se muestran bajo "Found in:"),

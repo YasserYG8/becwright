@@ -6,6 +6,12 @@ becwright is a small engine that runs **checks** against your files and decides
 whether a commit may proceed. It is language-agnostic: it never parses your code
 itself — it matches files by path and runs a command.
 
+**The one-sentence version:** for every rule, becwright picks the files it
+applies to and runs a small program (the "check"); if that program reports a
+problem, a blocking rule stops the commit. Everything below is just that idea in
+detail — the components, the exact flow, and the contract a check must follow.
+The rest of this page is for the curious and for people writing their own checks.
+
 ## Components
 
 | Module | Responsibility |
@@ -49,8 +55,9 @@ flowchart TD
 
 ## The check contract
 
-The engine runs `rule.check` as a shell command with `cwd` set to the repo root,
-and feeds it the relevant file paths (one per line) on **stdin**. A check:
+The engine runs `rule.check` as a shell command from the repo root and feeds it
+the relevant file paths (one per line) on **stdin** — stdin is just the
+program's standard input stream, the channel a command reads from. A check:
 
 - reads the file list from stdin,
 - prints any violations to stdout (shown under "Found in:"),

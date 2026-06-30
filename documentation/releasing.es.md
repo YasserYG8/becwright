@@ -1,5 +1,9 @@
 # Publicar una versión
 
+> **Solo para mantenedores.** Esta página trata de publicar una nueva versión de
+> becwright en npm y PyPI. Si solo *usás* becwright, nunca la necesitás —
+> instalalo con los comandos del [README](../README.es.md) y listo.
+
 becwright se distribuye por tres canales desde un único release de GitHub:
 
 - **PyPI** — el paquete de Python (`pip` / `pipx`).

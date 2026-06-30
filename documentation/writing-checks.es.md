@@ -2,8 +2,14 @@
 
 # Escribir checks
 
-Un check es la parte **ejecutable** de una BEC. becwright lo corre y confía en su
-código de salida.
+Un check es la parte **ejecutable** de una BEC — el programita que de verdad
+inspecciona tus archivos y dice pasa o falla.
+
+**La mayoría de las veces no escribís código.** Si tu regla es "este texto no
+debe aparecer" (una palabra prohibida, un `debugger` olvidado, una función
+vetada), usá el check incluido `forbid` y listo — saltá a
+[El camino más rápido](#el-camino-más-rápido-forbid). Escribir tu propio check
+(el resto de esta página) es solo para casos que `forbid` no puede expresar.
 
 ## El contrato
 
@@ -11,6 +17,12 @@ código de salida.
 - **Salida:** imprimir las violaciones por stdout (becwright las muestra bajo "Found in:").
 - **Código de salida:** `0` = pasa, no-cero = falla.
 - **Directorio de trabajo:** la raíz del repo, así las rutas de stdin resuelven directo.
+
+> **Glosario rápido:** *stdin*/*stdout* son los canales de entrada/salida estándar
+> por los que un programa lee y escribe. El *código de salida* es el número que
+> devuelve un programa al terminar — `0` significa "todo bien", cualquier otro
+> significa "encontré un problema". Esa es toda la interfaz: entran archivos,
+> salen los problemas, y sale con `0` o no-cero.
 
 ## El camino más rápido: `forbid`
 

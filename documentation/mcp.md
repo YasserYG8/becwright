@@ -1,6 +1,13 @@
 # MCP server & JSON output
 
-For AI agents, becwright exposes its results in machine-readable form two ways.
+**Who is this page for?** People wiring becwright into an AI tool or a script.
+If you just want becwright to guard your commits, you don't need any of this —
+the normal install already does that. Read on only if you want an AI agent (or
+some other program) to *read* becwright's results.
+
+becwright exposes its results in machine-readable form two ways: a JSON output
+for scripts, and an MCP server for AI agents. (MCP — Model Context Protocol — is
+a standard plug for giving AI tools extra abilities.)
 
 ## `becwright check --json`
 

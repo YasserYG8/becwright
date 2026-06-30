@@ -2,6 +2,11 @@
 
 # Uso
 
+**En corto:** instalá becwright una vez, corré `becwright init` dentro de tu
+proyecto, y a partir de ahí cada vez que guardás tu trabajo (un *commit*) revisa
+tu código contra tus reglas y frena el commit si se rompe una regla blocking.
+Ese es todo el ciclo — el resto de esta página es el detalle.
+
 ## Instalación
 
 ```bash
@@ -36,7 +41,14 @@ a mano: `becwright install` más un `.bec/rules.yaml` que escribas vos.)
 | `becwright export <id> [-o archivo]` | Exporta una regla a un bundle `.bec.yaml` |
 | `becwright import <fuente> [--yes]` | Importa una BEC de un archivo o URL http(s) |
 
-Códigos de salida: `0` pasa · `1` falló una regla blocking · `2` no es un repo git / error de uso.
+> **¿"Archivos en staging"?** Cuando corrés `git add`, los archivos que elegís
+> quedan *en staging* — en la fila para el próximo commit. `becwright check` mira
+> solo esos por defecto (justo lo que el commit va a crear), por eso es rápido.
+> Usá `--all` para escanear todo el proyecto.
+
+Códigos de salida (el número que devuelve un comando al terminar; `0` significa
+éxito): `0` pasa · `1` falló una regla blocking · `2` no es un repo git / error
+de uso.
 
 ## El archivo de reglas: `.bec/rules.yaml`
 

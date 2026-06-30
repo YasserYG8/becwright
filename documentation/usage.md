@@ -2,6 +2,11 @@
 
 # Usage
 
+**In short:** install becwright once, run `becwright init` inside your project,
+and from then on every time you save your work (a *commit*) it checks your code
+against your rules and stops the commit if a blocking rule is broken. That's the
+whole loop — the rest of this page is the detail.
+
 ## Install
 
 ```bash
@@ -35,7 +40,13 @@ From then on, every `git commit` runs the checks. (You can also set up by hand:
 | `becwright export <id> [-o file]` | Export a rule to a `.bec.yaml` bundle |
 | `becwright import <source> [--yes]` | Import a BEC from a file or http(s) URL |
 
-Exit codes: `0` pass · `1` a blocking rule failed · `2` not a git repo / usage error.
+> **"Staged files"?** When you run `git add`, the files you picked are *staged* —
+> queued for the next commit. `becwright check` looks only at those by default
+> (the exact set the commit will create), which is why it's fast. Use
+> `--all` to scan the whole project instead.
+
+Exit codes (the number a command returns when it ends; `0` means success):
+`0` pass · `1` a blocking rule failed · `2` not a git repo / usage error.
 
 ## The rules file: `.bec/rules.yaml`
 

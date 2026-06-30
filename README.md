@@ -17,6 +17,29 @@
 etc. do — which the agent can read and ignore), becwright **verifies the
 result** and blocks the commit if the rule is broken.
 
+## In plain words
+
+New to this kind of tool? Here is the whole idea in three lines:
+
+A **commit** is the moment you *save* your work in git. becwright is a guard
+standing at that door. Right before the work is saved, it runs your rules
+against the code:
+
+- ✅ everything passes → the commit goes through;
+- ❌ a rule is broken → it stops you, names the rule and *why* it exists, and
+  waits until you fix it.
+
+A note in `CLAUDE.md` is a *sign* asking people (and AI agents) to behave.
+becwright is the *guard that checks*. A sign can be ignored; the guard cannot.
+
+> **Two words you'll see a lot:** a **commit** is a saved snapshot of your code
+> in git. A **hook** is a small script git runs automatically at a set moment —
+> becwright uses the *pre-commit* hook, which fires just before a commit is
+> saved. You never run it by hand; git does.
+
+The rest of this README goes from "just get me started" to the full technical
+detail — read as far as you need.
+
 ## The problem
 
 An AI agent writes code and leaves a note: *"this must never log session
@@ -52,21 +75,28 @@ together:
 
 ## How to use it
 
-becwright is installed once as a tool; each repo only contributes its own
-`.bec/rules.yaml`.
+You install becwright once on your machine; each project (repo) only adds its
+own small rules file, `.bec/rules.yaml`. You can mix and match the install
+command with your stack — they all give you the same `becwright` command.
 
 ```bash
-# 1. Install the engine. Pick your ecosystem — no Python needed via npm/pnpm,
-#    which ship a self-contained binary:
+# 1. Install the tool. Pick the line that matches what you already use.
+#    Via npm/pnpm there is NO Python required — it ships a ready-made program.
 npm install --save-dev becwright    # or global: npm install -g becwright
 pnpm add -D becwright
 pipx install becwright              # or: pip install becwright
 
-# 2. In your repo, scaffold rules + install the hook
-becwright init                      # detects your language, writes .bec/rules.yaml, installs the hook
+# 2. Inside your project, set it up. One command does everything:
+becwright init                      # writes a starter .bec/rules.yaml and installs the pre-commit hook
 
-# 3. Done: each commit runs the checks; if a blocking rule fails, it stops.
+# 3. That's it. From now on every `git commit` runs the checks automatically.
+#    If a blocking rule fails, the commit is stopped until you fix it.
 ```
+
+**What each step means:** step 1 puts the `becwright` program on your computer.
+Step 2 creates the rules file (with a few sensible rules already filled in) and
+wires it into git so it runs by itself. Step 3 is just you working normally —
+becwright does its job at commit time without you calling it.
 
 Installed as a devDependency, the pre-commit hook resolves the local binary from
 `node_modules/.bin`, so it works without a global install. The npm packages cover
@@ -100,8 +130,9 @@ It adds a `becwright` skill and a `/becwright` command. See
 
 For structured results, `becwright check --json` prints a machine-readable
 summary, and `becwright mcp` (install the `mcp` extra: `pipx install
-"becwright[mcp]"`) runs an MCP server exposing `check` and `list_checks` to any
-agent. See [`documentation/mcp.md`](documentation/mcp.md).
+"becwright[mcp]"`) runs an MCP server — MCP is a standard way for AI tools to
+plug in extra abilities — exposing `check` and `list_checks` to any agent. See
+[`documentation/mcp.md`](documentation/mcp.md).
 
 A rule in `.bec/rules.yaml`:
 
@@ -121,9 +152,10 @@ rules:
 ## Included checks
 
 becwright ships ready-to-use checks. Each one is a module invoked from the
-`check` field. They are **text/regex based** (no AST analysis), so they are
-conservative and may have edge cases; the value is in tying each rule to its
-*why*.
+`check` field. They work by **searching the text** of your files for a pattern
+(a *regex* — a search pattern for text, like "find this exact word"), rather
+than truly understanding the code. That keeps them simple and predictable: they
+may miss exotic cases, and the real value is in tying each rule to its *why*.
 
 | Check | What it detects | Language | Suggested severity |
 |---|---|---|---|
@@ -180,8 +212,10 @@ rules:
 ## Any language
 
 becwright is **language-agnostic**: the engine only filters files by their
-`paths` (globs) and runs the `check` as a command; it never assumes Python. You
-can watch JavaScript, Go, Rust, or anything else.
+`paths` (written as *globs* — file patterns like `src/**/*.js`, where `*` means
+"any name" and `**` means "any folder, however deep") and runs the `check` as a
+command; it never assumes Python. You can watch JavaScript, Go, Rust, or
+anything else.
 
 The fastest way to write a rule for another language —without writing code— is
 the `forbid` check, which fails if a regex appears in the files:
@@ -231,11 +265,16 @@ travels with its code embedded and lands in `.bec/checks/` of the target repo.
 
 ## Documentation
 
-Technical documentation lives in [`documentation/`](documentation/):
-[architecture & flow](documentation/architecture.md),
-[usage & rules schema](documentation/usage.md),
-[writing checks](documentation/writing-checks.md), and
-[portability](documentation/portability.md).
+Full docs live in [`documentation/`](documentation/). Each page opens with a
+plain-language summary and then goes deeper, so start wherever you are:
+
+- **Just getting started:** [usage](documentation/usage.md) — install, the
+  commands, and how to write a rule.
+- **Want to add your own rule:** [writing checks](documentation/writing-checks.md)
+  — from the no-code `forbid` shortcut to a custom check in any language.
+- **Sharing rules between projects:** [portability](documentation/portability.md).
+- **Curious how it works inside:** [architecture & flow](documentation/architecture.md).
+- **Wiring it to an AI agent:** [MCP & JSON output](documentation/mcp.md).
 
 ## Current status
 

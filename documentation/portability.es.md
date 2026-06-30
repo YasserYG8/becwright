@@ -2,8 +2,13 @@
 
 # Portabilidad: export / import
 
-Una BEC es **portable** — podés moverla entre repos. Un bundle es un único
-archivo `.bec.yaml` autocontenido.
+**En corto:** ¿escribiste una buena regla y la querés en otro proyecto (o
+pasársela a un compañero)? `export` la empaqueta en un archivito; `import` la
+mete en el otro repo. El archivo lleva todo lo que la regla necesita — incluido
+el código del check si es propio — así que no se rompe nada del otro lado.
+
+Una BEC es **portable** — podés moverla entre repos. Un bundle (el archivo
+empaquetado) es un único `.bec.yaml` autocontenido.
 
 ## Export
 

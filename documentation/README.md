@@ -2,12 +2,22 @@
 
 # becwright documentation
 
-Technical documentation for becwright. For the project overview, see the
-[main README](../README.md).
+Documentation for becwright. For the project overview, see the
+[main README](../README.md). Every page starts with a plain-language summary and
+then goes deeper, so you can stop wherever it stops being useful to you — no
+prior background assumed.
 
-- [Architecture](architecture.md) — how becwright works and the check flow.
-- [Usage](usage.md) — install, commands, and the `.bec/rules.yaml` schema.
-- [Writing checks](writing-checks.md) — the check contract, `forbid`, custom checks.
-- [Portability](portability.md) — export/import, the bundle format, the catalog.
+**Start here**
+
+- [Usage](usage.md) — install, the commands, and how to write a rule. Read this first.
+- [Writing checks](writing-checks.md) — the no-code `forbid` shortcut, then custom checks in any language.
+- [Portability](portability.md) — share a rule between projects with export/import.
+
+**Go deeper**
+
+- [Architecture](architecture.md) — how becwright works inside and the exact check flow.
 - [MCP & JSON output](mcp.md) — structured results for AI agents (`check --json`, the MCP server).
+
+**Maintainers**
+
 - [Releasing](releasing.md) — how the npm + PyPI release is built and published.

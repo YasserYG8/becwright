@@ -1,7 +1,14 @@
 # Servidor MCP y salida JSON
 
-Para agentes de IA, becwright expone sus resultados en formato legible por
-máquina de dos maneras.
+**¿Para quién es esta página?** Para quien quiera conectar becwright a una
+herramienta de IA o a un script. Si solo querés que becwright cuide tus commits,
+no necesitás nada de esto — la instalación normal ya lo hace. Seguí leyendo solo
+si querés que un agente de IA (u otro programa) *lea* los resultados de becwright.
+
+becwright expone sus resultados en formato legible por máquina de dos maneras:
+una salida JSON para scripts y un servidor MCP para agentes de IA. (MCP — Model
+Context Protocol — es un enchufe estándar para darles habilidades extra a las
+herramientas de IA.)
 
 ## `becwright check --json`
 
