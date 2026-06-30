@@ -49,11 +49,15 @@ viene del paquete instalado.
 
 ## Estado actual
 
-Construyendo el **MVP instalable (A + B)**: motor empaquetado en
+**MVP instalable (A + B)** hecho y verificado end-to-end: motor empaquetado en
 `src/becwright/` con comando `becwright` (check / install / uninstall) y hook de
-git nativo. Verificado end-to-end (el hook frena un commit con token). El
-prototipo original queda **archivado** en `prototype/` como referencia. Ver
-[`docs/estado-y-roadmap.md`](docs/estado-y-roadmap.md).
+git nativo (frena un commit con violación). **Fase 1** ("usable por otros") en
+curso: cinco checks incluidos (`no_token_in_logs`, `hardcoded_secrets`,
+`debug_remnants`, `dangerous_eval`, `wildcard_imports`), guía de adopción en el
+README, distribución vía `pipx install git+URL`, y la salida de bloqueo muestra
+`Qué pide:` + `Por qué importa:`. El prototipo original queda **archivado** en
+`prototype/` como referencia. Plan y norte en [`docs/plan.md`](docs/plan.md);
+detalle en [`docs/estado-y-roadmap.md`](docs/estado-y-roadmap.md).
 
 ## Alcance y no-objetivos
 
