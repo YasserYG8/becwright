@@ -1,0 +1,142 @@
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+from becwright import cli, git
+from becwright.engine import Result, RuleResult
+from becwright.rules import Rule
+
+_SRC = Path(__file__).resolve().parents[1] / "src"
+
+
+def _git(root, *args):
+    subprocess.run(["git", *args], cwd=root, check=True, capture_output=True, text=True)
+
+
+def _init_repo(tmp_path):
+    _git(tmp_path, "init")
+    _git(tmp_path, "config", "user.email", "t@t.t")
+    _git(tmp_path, "config", "user.name", "t")
+    return tmp_path
+
+
+def _rules_yaml(module):
+    check = f'PYTHONPATH="{_SRC}" "{sys.executable}" -m becwright.checks.{module}'
+    return f'rules:\n  - id: no-debug\n    paths: ["**/*.py"]\n    check: \'{check}\'\n    severity: blocking\n'
+
+
+# --- git.py ---
+
+def test_install_hook_roundtrip(tmp_path):
+    (tmp_path / ".git").mkdir()
+    ok, _ = git.install_hook(tmp_path)
+    hook = tmp_path / ".git" / "hooks" / "pre-commit"
+    assert ok and hook.exists() and "becwright" in hook.read_text(encoding="utf-8")
+    assert git.install_hook(tmp_path)[0] is False  # idempotent
+    assert git.uninstall_hook(tmp_path)[0] is True
+    assert not hook.exists()
+
+
+def test_install_refuses_foreign_hook(tmp_path):
+    hooks = tmp_path / ".git" / "hooks"
+    hooks.mkdir(parents=True)
+    (hooks / "pre-commit").write_text("#!/bin/sh\necho hi\n", encoding="utf-8")
+    assert git.install_hook(tmp_path)[0] is False
+    assert git.uninstall_hook(tmp_path)[0] is False
+
+
+def test_uninstall_when_no_hook(tmp_path):
+    (tmp_path / ".git").mkdir()
+    assert git.uninstall_hook(tmp_path)[0] is False
+
+
+def test_repo_root_and_files_to_check(tmp_path, monkeypatch):
+    _init_repo(tmp_path)
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "a.py")
+    monkeypatch.chdir(tmp_path)
+    root = git.repo_root()
+    assert Path(root).samefile(tmp_path)
+    assert "a.py" in git.files_to_check(root, all_files=False)
+    assert "a.py" in git.files_to_check(root, all_files=True)
+
+
+def test_repo_root_outside_repo(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(git.NotAGitRepo):
+        git.repo_root()
+
+
+# --- cli.py ---
+
+def test_version_exits_zero():
+    with pytest.raises(SystemExit) as e:
+        cli.main(["--version"])
+    assert e.value.code == 0
+
+
+def test_print_result_shows_intent_why_and_pass(capsys):
+    failing = Rule(id="r1", paths=("*.py",), check="false", intent="No secretos",
+                   why_it_matters="se filtran", severity="blocking")
+    passing = Rule(id="r2", paths=("*.py",), check="true")
+    res = Result(per_rule=[
+        RuleResult(rule=failing, passed=False, output="  a.py:1\n      > bad"),
+        RuleResult(rule=passing, passed=True, output=""),
+    ])
+    cli._print_result(res)
+    out = capsys.readouterr().out
+    assert "FRENO" in out and "Qué pide:" in out and "Por qué importa:" in out
+    assert "a.py:1" in out and "PASA" in out
+
+
+def test_check_no_rules(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check"]) == 0
+    assert "Nada que revisar" in capsys.readouterr().out
+
+
+def test_check_no_staged_files(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir()
+    (tmp_path / ".bec" / "rules.yaml").write_text(_rules_yaml("debug_remnants"), encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check"]) == 0
+    assert "No hay archivos" in capsys.readouterr().out
+
+
+def test_check_blocks_on_violation(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir()
+    (tmp_path / ".bec" / "rules.yaml").write_text(_rules_yaml("debug_remnants"), encoding="utf-8")
+    (tmp_path / "bad.py").write_text("breakpoint()\n", encoding="utf-8")
+    _git(tmp_path, "add", "bad.py")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check"]) == 1
+    assert "Commit BLOQUEADO" in capsys.readouterr().out
+
+
+def test_check_passes_clean(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir()
+    (tmp_path / ".bec" / "rules.yaml").write_text(_rules_yaml("debug_remnants"), encoding="utf-8")
+    (tmp_path / "ok.py").write_text("x = 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "ok.py")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check"]) == 0
+    assert "Todo bien" in capsys.readouterr().out
+
+
+def test_main_install_uninstall(tmp_path, monkeypatch):
+    _init_repo(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["install"]) == 0
+    assert (tmp_path / ".git" / "hooks" / "pre-commit").exists()
+    assert cli.main(["uninstall"]) == 0
+
+
+def test_main_outside_repo_returns_2(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["install"]) == 2
