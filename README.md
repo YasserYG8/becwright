@@ -47,13 +47,13 @@ becwright se instala una vez como herramienta; cada repo solo aporta su propio
 `.bec/rules.yaml`.
 
 ```bash
-# 1. Instalar el motor (desde la raíz de este repo)
-pipx install .          # o: pip install -e .
+# 1. Instalar el motor (una vez, global)
+pipx install git+<URL-del-repo>     # o, desde una copia local: pipx install .
 
 # 2. En el repo donde querés las reglas, instalar el hook de git
-becwright install       # escribe .git/hooks/pre-commit
+becwright install                   # escribe .git/hooks/pre-commit
 
-# 3. Escribir tus reglas en .bec/rules.yaml (ver ejemplo abajo)
+# 3. Escribir tus reglas en .bec/rules.yaml (ver ejemplos abajo)
 # 4. Listo: cada commit corre los chequeos; si una regla blocking falla, frena.
 ```
 
@@ -80,11 +80,69 @@ rules:
     severity: blocking   # blocking = frena el commit | warning = solo avisa
 ```
 
+## Checks incluidos
+
+becwright trae chequeos listos para usar. Cada uno es un módulo que se invoca
+desde el campo `check`. Son **basados en texto/regex** (no análisis AST), así
+que son conservadores y pueden tener casos límite; el valor está en atar cada
+regla a su *por qué*.
+
+| Check | Qué detecta | Severidad sugerida |
+|---|---|---|
+| `no_token_in_logs` | Tokens/credenciales en llamadas a logs | `blocking` |
+| `hardcoded_secrets` | Claves AWS, claves privadas, `password = "..."` literales | `blocking` |
+| `debug_remnants` | `breakpoint()`, `pdb.set_trace()`, `import pdb` olvidados | `blocking` |
+| `dangerous_eval` | Llamadas a `eval()` / `exec()` | `blocking` |
+| `wildcard_imports` | `from x import *` | `warning` |
+
+Reglas de ejemplo para copiar a tu `.bec/rules.yaml`:
+
+```yaml
+rules:
+  - id: no-hardcoded-secrets
+    intent: >
+      Ningún secreto (clave, token, contraseña) debe quedar escrito en el código.
+    why_it_matters: >
+      Un secreto en el repo queda en el historial de git para siempre y es
+      visible para cualquiera con acceso al código.
+    paths: ["src/**/*.py"]
+    check: "python3 -m becwright.checks.hardcoded_secrets"
+    severity: blocking
+
+  - id: no-debug-remnants
+    intent: >
+      No se commitea código de depuración (breakpoints, pdb).
+    why_it_matters: >
+      Un breakpoint olvidado cuelga el proceso en producción o en CI.
+    paths: ["src/**/*.py"]
+    check: "python3 -m becwright.checks.debug_remnants"
+    severity: blocking
+
+  - id: no-dangerous-eval
+    intent: >
+      No usar eval()/exec(), que ejecutan código arbitrario.
+    why_it_matters: >
+      eval/exec sobre entrada no confiable es ejecución remota de código.
+    paths: ["src/**/*.py"]
+    check: "python3 -m becwright.checks.dangerous_eval"
+    severity: blocking
+
+  - id: no-wildcard-imports
+    intent: >
+      Evitar 'from x import *', que ensucia el namespace.
+    why_it_matters: >
+      Los imports wildcard ocultan de dónde viene cada nombre y rompen el
+      análisis estático.
+    paths: ["src/**/*.py"]
+    check: "python3 -m becwright.checks.wildcard_imports"
+    severity: warning
+```
+
 ## Estado actual
 
 El **MVP instalable** está construido y verificado end-to-end: motor empaquetado
 (`src/becwright/`), CLI (`check` / `install` / `uninstall`), hook de git nativo
-que frena un commit con un token en un log, dos checks incluidos y tests en
+que frena un commit con un token en un log, cinco checks incluidos y tests en
 verde. El prototipo original queda **archivado** en `prototype/` como referencia.
 
 - **Plan y norte del proyecto:** [`docs/plan.md`](docs/plan.md)
