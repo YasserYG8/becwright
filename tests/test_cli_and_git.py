@@ -78,8 +78,8 @@ def test_version_exits_zero():
 
 
 def test_print_result_shows_intent_why_and_pass(capsys):
-    failing = Rule(id="r1", paths=("*.py",), check="false", intent="No secretos",
-                   why_it_matters="se filtran", severity="blocking")
+    failing = Rule(id="r1", paths=("*.py",), check="false", intent="No secrets",
+                   why_it_matters="they leak", severity="blocking")
     passing = Rule(id="r2", paths=("*.py",), check="true")
     res = Result(per_rule=[
         RuleResult(rule=failing, passed=False, output="  a.py:1\n      > bad"),
@@ -87,15 +87,15 @@ def test_print_result_shows_intent_why_and_pass(capsys):
     ])
     cli._print_result(res)
     out = capsys.readouterr().out
-    assert "FRENO" in out and "Qué pide:" in out and "Por qué importa:" in out
-    assert "a.py:1" in out and "PASA" in out
+    assert "BLOCK" in out and "Intent:" in out and "Why it matters:" in out
+    assert "a.py:1" in out and "PASS" in out
 
 
 def test_check_no_rules(tmp_path, monkeypatch, capsys):
     _init_repo(tmp_path)
     monkeypatch.chdir(tmp_path)
     assert cli.main(["check"]) == 0
-    assert "Nada que revisar" in capsys.readouterr().out
+    assert "Nothing to check" in capsys.readouterr().out
 
 
 def test_check_no_staged_files(tmp_path, monkeypatch, capsys):
@@ -104,7 +104,7 @@ def test_check_no_staged_files(tmp_path, monkeypatch, capsys):
     (tmp_path / ".bec" / "rules.yaml").write_text(_rules_yaml("debug_remnants"), encoding="utf-8")
     monkeypatch.chdir(tmp_path)
     assert cli.main(["check"]) == 0
-    assert "No hay archivos" in capsys.readouterr().out
+    assert "No files" in capsys.readouterr().out
 
 
 def test_check_blocks_on_violation(tmp_path, monkeypatch, capsys):
@@ -115,7 +115,7 @@ def test_check_blocks_on_violation(tmp_path, monkeypatch, capsys):
     _git(tmp_path, "add", "bad.py")
     monkeypatch.chdir(tmp_path)
     assert cli.main(["check"]) == 1
-    assert "Commit BLOQUEADO" in capsys.readouterr().out
+    assert "Commit BLOCKED" in capsys.readouterr().out
 
 
 def test_check_passes_clean(tmp_path, monkeypatch, capsys):
@@ -126,7 +126,7 @@ def test_check_passes_clean(tmp_path, monkeypatch, capsys):
     _git(tmp_path, "add", "ok.py")
     monkeypatch.chdir(tmp_path)
     assert cli.main(["check"]) == 0
-    assert "Todo bien" in capsys.readouterr().out
+    assert "All good" in capsys.readouterr().out
 
 
 def test_main_install_uninstall(tmp_path, monkeypatch):

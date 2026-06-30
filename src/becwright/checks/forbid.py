@@ -25,11 +25,11 @@ def find_violations(paths: list[str], pattern: str, flags: int = 0) -> list[tupl
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="becwright.checks.forbid",
-        description="Falla si un patrón regex aparece en los archivos.",
+        description="Fails if a regex pattern appears in the files.",
     )
-    parser.add_argument("--pattern", required=True, help="regex prohibido")
-    parser.add_argument("--ignore-case", action="store_true", help="ignora mayúsculas/minúsculas")
-    parser.add_argument("--message", default="", help="nota a mostrar si hay coincidencias")
+    parser.add_argument("--pattern", required=True, help="forbidden regex")
+    parser.add_argument("--ignore-case", action="store_true", help="ignore case")
+    parser.add_argument("--message", default="", help="note to show if there are matches")
     args = parser.parse_args(argv)
 
     try:
@@ -39,7 +39,7 @@ def main(argv: list[str] | None = None) -> int:
             re.IGNORECASE if args.ignore_case else 0,
         )
     except re.error as e:
-        print(f"patrón inválido: {e}", file=sys.stderr)
+        print(f"invalid pattern: {e}", file=sys.stderr)
         return 2
 
     if args.message and violations:

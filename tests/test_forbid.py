@@ -47,8 +47,8 @@ def test_main_clean_exits_zero(tmp_path, monkeypatch):
 def test_main_message_printed(tmp_path, monkeypatch, capsys):
     f = _write(tmp_path, "debugger;\n")
     monkeypatch.setattr("sys.stdin", io.StringIO(f + "\n"))
-    forbid.main(["--pattern", r"\bdebugger\b", "--message", "sacá el debugger"])
-    assert "sacá el debugger" in capsys.readouterr().out
+    forbid.main(["--pattern", r"\bdebugger\b", "--message", "remove the debugger"])
+    assert "remove the debugger" in capsys.readouterr().out
 
 
 def test_main_invalid_pattern_exits_two(monkeypatch):

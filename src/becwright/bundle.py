@@ -80,27 +80,27 @@ def parse_bundle(text: str) -> dict:
     try:
         data = yaml.safe_load(text)
     except yaml.YAMLError as e:
-        raise BundleError(f"El bundle no es YAML válido: {e}")
+        raise BundleError(f"The bundle is not valid YAML: {e}")
     if not isinstance(data, dict):
-        raise BundleError("El bundle está vacío o malformado.")
+        raise BundleError("The bundle is empty or malformed.")
     if data.get("becwright_bec") != BUNDLE_VERSION:
         raise BundleError(
-            f"Versión de bundle no soportada: {data.get('becwright_bec')!r} "
-            f"(esperaba {BUNDLE_VERSION})."
+            f"Unsupported bundle version: {data.get('becwright_bec')!r} "
+            f"(expected {BUNDLE_VERSION})."
         )
     rule = data.get("rule")
     check = data.get("check")
     if not isinstance(rule, dict) or "id" not in rule:
-        raise BundleError("El bundle no tiene una regla válida (falta 'rule.id').")
+        raise BundleError("The bundle has no valid rule (missing 'rule.id').")
     if not isinstance(check, dict) or "kind" not in check:
-        raise BundleError("El bundle no tiene un check válido (falta 'check.kind').")
+        raise BundleError("The bundle has no valid check (missing 'check.kind').")
     required = {"builtin": ("module",), "script": ("filename", "source"), "command": ("command",)}
     kind = check["kind"]
     if kind not in required:
-        raise BundleError(f"Tipo de check desconocido: {kind!r}.")
+        raise BundleError(f"Unknown check kind: {kind!r}.")
     missing = [f for f in required[kind] if not check.get(f)]
     if missing:
-        raise BundleError(f"El check '{kind}' no tiene los campos: {', '.join(missing)}.")
+        raise BundleError(f"The '{kind}' check is missing fields: {', '.join(missing)}.")
     return data
 
 
@@ -117,7 +117,7 @@ def materialize(bundle: dict, root: Path) -> dict:
         source = check["source"]
         if dest.exists() and dest.read_text(encoding="utf-8") != source:
             raise BundleError(
-                f"Ya existe un check distinto en {dest}. No lo piso; resolvé a mano."
+                f"A different check already exists at {dest}. Not overwriting it; resolve by hand."
             )
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(source, encoding="utf-8")
@@ -126,7 +126,7 @@ def materialize(bundle: dict, root: Path) -> dict:
     elif kind == "command":
         command = check["command"]
     else:
-        raise BundleError(f"Tipo de check desconocido: {kind!r}")
+        raise BundleError(f"Unknown check kind: {kind!r}")
 
     rule = bundle["rule"]
     out: dict = {"id": rule["id"]}

@@ -17,18 +17,18 @@ BOLD = "\033[1m"; DIM = "\033[2m"; RESET = "\033[0m"
 def _print_result(result: Result) -> None:
     for r in result.per_rule:
         if r.passed:
-            print(f"  {GREEN}PASA{RESET}  {r.rule.id}")
+            print(f"  {GREEN}PASS{RESET}  {r.rule.id}")
             continue
         if r.rule.is_blocking:
-            print(f"  {RED}{BOLD}FRENO{RESET}  {r.rule.id}  {RED}(bloqueante){RESET}")
+            print(f"  {RED}{BOLD}BLOCK{RESET}  {r.rule.id}  {RED}(blocking){RESET}")
         else:
-            print(f"  {YELLOW}AVISO{RESET}  {r.rule.id}  {YELLOW}(solo advertencia){RESET}")
+            print(f"  {YELLOW}WARN{RESET}  {r.rule.id}  {YELLOW}(warning only){RESET}")
         if r.rule.intent:
-            print(f"        {DIM}Qué pide:{RESET} {r.rule.intent}")
+            print(f"        {DIM}Intent:{RESET} {r.rule.intent}")
         if r.rule.why_it_matters:
-            print(f"        {DIM}Por qué importa:{RESET} {r.rule.why_it_matters}")
+            print(f"        {DIM}Why it matters:{RESET} {r.rule.why_it_matters}")
         if r.output:
-            print(f"        {DIM}Encontrado en:{RESET}")
+            print(f"        {DIM}Found in:{RESET}")
             for line in r.output.splitlines():
                 print(f"        {line}")
         print()
@@ -38,23 +38,23 @@ def _cmd_check(args: argparse.Namespace) -> int:
     root = git.repo_root()
     rules = load_rules(root / ".bec" / "rules.yaml")
     if not rules:
-        print(f"{YELLOW}No hay .bec/rules.yaml con reglas. Nada que revisar.{RESET}")
+        print(f"{YELLOW}No .bec/rules.yaml with rules. Nothing to check.{RESET}")
         return 0
 
     files = git.files_to_check(root, all_files=args.all)
     if not files:
-        print(f"{DIM}No hay archivos para revisar.{RESET}")
+        print(f"{DIM}No files to check.{RESET}")
         return 0
 
-    print(f"{BOLD}BEC -- {len(files)} archivo(s) contra {len(rules)} regla(s){RESET}\n")
+    print(f"{BOLD}BEC -- {len(files)} file(s) against {len(rules)} rule(s){RESET}\n")
     result = evaluate(rules, files, root)
     _print_result(result)
 
     if result.had_blocking:
-        print(f"{RED}{BOLD}>>> Commit BLOQUEADO: se rompió una regla bloqueante.{RESET}")
-        print(f"{DIM}    Arreglá lo de arriba, o si es intencional editá .bec/rules.yaml{RESET}")
+        print(f"{RED}{BOLD}>>> Commit BLOCKED: a blocking rule was broken.{RESET}")
+        print(f"{DIM}    Fix the above, or if it is intentional edit .bec/rules.yaml{RESET}")
         return 1
-    print(f"{GREEN}{BOLD}>>> Todo bien. Commit permitido.{RESET}")
+    print(f"{GREEN}{BOLD}>>> All good. Commit allowed.{RESET}")
     return 0
 
 
@@ -74,12 +74,12 @@ def _cmd_export(args: argparse.Namespace) -> int:
     root = git.repo_root()
     rule = next((r for r in load_rules(root / ".bec" / "rules.yaml") if r.id == args.rule_id), None)
     if rule is None:
-        print(f"{RED}No existe una regla con id '{args.rule_id}' en .bec/rules.yaml.{RESET}", file=sys.stderr)
+        print(f"{RED}No rule with id '{args.rule_id}' in .bec/rules.yaml.{RESET}", file=sys.stderr)
         return 1
     text = bundle.export_bec(rule, root)
     if args.output:
         Path(args.output).write_text(text, encoding="utf-8")
-        print(f"{GREEN}BEC '{rule.id}' exportada a {args.output}.{RESET}")
+        print(f"{GREEN}BEC '{rule.id}' exported to {args.output}.{RESET}")
     else:
         sys.stdout.write(text)
     return 0
@@ -94,19 +94,19 @@ def _read_source(source: str) -> str:
 
 def _print_bundle_summary(data: dict) -> None:
     rule, check = data["rule"], data["check"]
-    print(f"{BOLD}BEC: {rule['id']}{RESET}  {DIM}(desde {data.get('exported_from', '?')}){RESET}")
+    print(f"{BOLD}BEC: {rule['id']}{RESET}  {DIM}(from {data.get('exported_from', '?')}){RESET}")
     if rule.get("intent"):
-        print(f"  {DIM}Qué pide:{RESET} {rule['intent'].strip()}")
+        print(f"  {DIM}Intent:{RESET} {rule['intent'].strip()}")
     if rule.get("why_it_matters"):
-        print(f"  {DIM}Por qué importa:{RESET} {rule['why_it_matters'].strip()}")
+        print(f"  {DIM}Why it matters:{RESET} {rule['why_it_matters'].strip()}")
     kind = check.get("kind")
     print(f"  {DIM}Check:{RESET} {kind}")
     if kind == "script":
-        print(f"  {DIM}Código de {check.get('filename')}:{RESET}")
+        print(f"  {DIM}Code of {check.get('filename')}:{RESET}")
         for line in check.get("source", "").splitlines():
             print(f"      {line}")
     elif kind == "command":
-        print(f"  {DIM}Comando:{RESET} {check.get('command')}")
+        print(f"  {DIM}Command:{RESET} {check.get('command')}")
 
 
 def _cmd_import(args: argparse.Namespace) -> int:
@@ -114,20 +114,20 @@ def _cmd_import(args: argparse.Namespace) -> int:
     try:
         data = bundle.parse_bundle(_read_source(args.source))
     except (bundle.BundleError, OSError, urllib.error.URLError) as e:
-        print(f"{RED}No se pudo importar: {e}{RESET}", file=sys.stderr)
+        print(f"{RED}Could not import: {e}{RESET}", file=sys.stderr)
         return 1
 
     _print_bundle_summary(data)
     if not args.yes:
-        print(f"{YELLOW}Importar una BEC instala código que se ejecuta en cada commit.{RESET}")
-        if input("¿Instalar esta BEC? [y/N] ").strip().lower() not in ("y", "yes", "s", "si", "sí"):
-            print(f"{DIM}Cancelado. No se escribió nada.{RESET}")
+        print(f"{YELLOW}Importing a BEC installs code that runs on every commit.{RESET}")
+        if input("Install this BEC? [y/N] ").strip().lower() not in ("y", "yes"):
+            print(f"{DIM}Cancelled. Nothing was written.{RESET}")
             return 1
 
     rules_path = root / ".bec" / "rules.yaml"
     rule_id = data["rule"]["id"]
     if rule_id in {r.id for r in load_rules(rules_path)}:
-        print(f"{RED}Ya existe una regla con id '{rule_id}'. No la dupliqué.{RESET}", file=sys.stderr)
+        print(f"{RED}A rule with id '{rule_id}' already exists. Not duplicating it.{RESET}", file=sys.stderr)
         return 1
     try:
         rule_dict = bundle.materialize(data, root)
@@ -135,33 +135,33 @@ def _cmd_import(args: argparse.Namespace) -> int:
         print(f"{RED}{e}{RESET}", file=sys.stderr)
         return 1
     bundle.append_rule(rules_path, rule_dict)
-    print(f"{GREEN}{BOLD}BEC '{rule_id}' instalada en .bec/rules.yaml.{RESET}")
+    print(f"{GREEN}{BOLD}BEC '{rule_id}' installed in .bec/rules.yaml.{RESET}")
     return 0
 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="becwright",
-        description="Hace cumplir BECs (Bound Executable Constraints) sobre el código.",
+        description="Enforces BECs (Bound Executable Constraints) on your code.",
     )
     parser.add_argument("--version", action="version", version=f"becwright {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p_check = sub.add_parser("check", help="revisa el código contra las reglas")
-    p_check.add_argument("--all", action="store_true", help="revisa todo el repo, no solo staging")
+    p_check = sub.add_parser("check", help="check the code against the rules")
+    p_check.add_argument("--all", action="store_true", help="check the whole repo, not just staging")
     p_check.set_defaults(func=_cmd_check)
 
-    sub.add_parser("install", help="instala el hook pre-commit").set_defaults(func=_cmd_install)
-    sub.add_parser("uninstall", help="quita el hook pre-commit").set_defaults(func=_cmd_uninstall)
+    sub.add_parser("install", help="install the pre-commit hook").set_defaults(func=_cmd_install)
+    sub.add_parser("uninstall", help="remove the pre-commit hook").set_defaults(func=_cmd_uninstall)
 
-    p_export = sub.add_parser("export", help="exporta una BEC a un archivo .bec.yaml")
-    p_export.add_argument("rule_id", help="id de la regla a exportar")
-    p_export.add_argument("-o", "--output", help="archivo de salida (por defecto: stdout)")
+    p_export = sub.add_parser("export", help="export a BEC to a .bec.yaml file")
+    p_export.add_argument("rule_id", help="id of the rule to export")
+    p_export.add_argument("-o", "--output", help="output file (default: stdout)")
     p_export.set_defaults(func=_cmd_export)
 
-    p_import = sub.add_parser("import", help="importa una BEC desde un archivo o URL")
-    p_import.add_argument("source", help="ruta a un .bec.yaml o URL http(s)")
-    p_import.add_argument("--yes", action="store_true", help="instala sin pedir confirmación")
+    p_import = sub.add_parser("import", help="import a BEC from a file or URL")
+    p_import.add_argument("source", help="path to a .bec.yaml or http(s) URL")
+    p_import.add_argument("--yes", action="store_true", help="install without asking for confirmation")
     p_import.set_defaults(func=_cmd_import)
     return parser
 

@@ -147,13 +147,13 @@ def test_materialize_script_conflict_raises(tmp_path):
 
 
 def test_materialize_strips_metadata_whitespace(tmp_path):
-    data = {"rule": {"id": "r", "intent": "texto\n\n", "why_it_matters": "  por qué  ",
+    data = {"rule": {"id": "r", "intent": "text\n\n", "why_it_matters": "  why now  ",
                      "rejected_alternatives": ["a\n", " b "], "paths": ["*.py"],
                      "severity": "blocking"},
             "check": {"kind": "builtin", "module": "debug_remnants"}}
     rd = bundle.materialize(data, tmp_path)
-    assert rd["intent"] == "texto"
-    assert rd["why_it_matters"] == "por qué"
+    assert rd["intent"] == "text"
+    assert rd["why_it_matters"] == "why now"
     assert rd["rejected_alternatives"] == ["a", "b"]
 
 
@@ -206,7 +206,7 @@ def test_roundtrip_script_blocks_via_evaluate(tmp_path, monkeypatch):
     check.parent.mkdir(parents=True)
     check.write_text(CUSTOM_CHECK, encoding="utf-8")
     rule = Rule(id="no-xxx", paths=("**/*.py",), check="python3 .bec/checks/no_xxx.py",
-                intent="No marcadores XXX", severity="blocking")
+                intent="No XXX markers", severity="blocking")
     text = bundle.export_bec(rule, src)
 
     dst = _init_repo(tmp_path / "b")
