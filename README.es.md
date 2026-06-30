@@ -3,6 +3,8 @@
 # becwright
 
 [![CI](https://github.com/DataDave-Dev/becwright/actions/workflows/ci.yml/badge.svg)](https://github.com/DataDave-Dev/becwright/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/becwright?logo=npm)](https://www.npmjs.com/package/becwright)
+[![PyPI](https://img.shields.io/pypi/v/becwright?logo=pypi&logoColor=white)](https://pypi.org/project/becwright/)
 
 **Reglas que se ejecutan, no notas que se ignoran.**
 
@@ -191,12 +193,18 @@ La documentación técnica vive en [`documentation/`](documentation/README.es.md
 
 ## Estado actual
 
-El **MVP instalable** está construido y verificado end-to-end: motor empaquetado
-(`src/becwright/`), CLI (`check` / `install` / `uninstall` / `export` /
-`import`), hook de git nativo que frena un commit con un token en un log, checks
-incluidos (Python + el genérico `forbid` para cualquier lenguaje), portabilidad
-de BECs entre repos, catálogo con BECs de Python y JS/TS, y tests en verde. El
-prototipo original queda **archivado** en `prototype/` como referencia.
+becwright está **publicado e instalable en todas las plataformas**: vía npm/pnpm
+como binario autónomo (sin Python) y vía pip/pipx. El motor empaquetado
+(`src/becwright/`) trae una CLI (`init` / `list` / `check` (con `--json`) /
+`run` / `install` / `uninstall` / `export` / `import` / `mcp`), un hook de git
+nativo, checks incluidos (Python + el genérico `forbid` para cualquier
+lenguaje), portabilidad de BECs entre repos, y un catálogo con BECs de Python,
+JS/TS, Go y Rust.
+
+Para agentes de IA hay un **plugin de Claude Code** y un **servidor MCP**
+(`becwright mcp`), además de la salida estructurada `check --json`. El prototipo
+original queda **archivado** en `prototype/` como referencia, y los tests están
+en verde.
 
 El trabajo futuro (análisis AST, tooling profundo por lenguaje, firma de
 verificaciones) está documentado en el plan del proyecto.
