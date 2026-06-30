@@ -12,16 +12,21 @@ pipx install becwright      # or: pip install becwright
 
 ```bash
 cd your-repo
-becwright install           # writes .git/hooks/pre-commit
-# create .bec/rules.yaml (see below)
+becwright init              # scaffolds .bec/rules.yaml (language-aware) and installs the hook
 ```
 
-From then on, every `git commit` runs the checks.
+`init` detects whether the repo has Python or JS/TS files and writes a starter
+`.bec/rules.yaml` with matching rules, then installs the pre-commit hook. Review
+the generated rules and run `becwright check --all` to see the current state.
+
+From then on, every `git commit` runs the checks. (You can also set up by hand:
+`becwright install` plus a `.bec/rules.yaml` you write yourself.)
 
 ## Commands
 
 | Command | Description |
 |---|---|
+| `becwright init` | Scaffold a starter `.bec/rules.yaml` and install the hook |
 | `becwright check` | Run rules over the staged files |
 | `becwright check --all` | Run rules over the whole repo (`git ls-files`) |
 | `becwright install` | Install the pre-commit hook |

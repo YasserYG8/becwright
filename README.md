@@ -53,17 +53,17 @@ becwright is installed once as a tool; each repo only contributes its own
 # 1. Install the engine (once, global)
 pipx install becwright              # or: pip install becwright
 
-# 2. In the repo where you want the rules, install the git hook
-becwright install                   # writes .git/hooks/pre-commit
+# 2. In your repo, scaffold rules + install the hook
+becwright init                      # detects your language, writes .bec/rules.yaml, installs the hook
 
-# 3. Write your rules in .bec/rules.yaml (see examples below)
-# 4. Done: each commit runs the checks; if a blocking rule fails, it stops.
+# 3. Done: each commit runs the checks; if a blocking rule fails, it stops.
 ```
 
 Available commands:
 
 | Command | What it does |
 |---|---|
+| `becwright init` | Scaffold a starter `.bec/rules.yaml` and install the hook |
 | `becwright check` | Runs the rules over the staged files |
 | `becwright install` | Installs the native `pre-commit` hook |
 | `becwright uninstall` | Removes the hook |

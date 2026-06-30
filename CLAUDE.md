@@ -33,7 +33,7 @@ becwright/
 ├── README.md                 # public conceptual document (English; README.es.md = Spanish)
 ├── pyproject.toml            # packaging + `becwright` command (setuptools)
 ├── src/becwright/            # packaged ENGINE (installable, not copied into each repo)
-│   ├── cli.py                # argparse: check / install / uninstall / export / import
+│   ├── cli.py                # argparse: init / check / install / uninstall / export / import
 │   ├── engine.py             # path matching + runs checks + decides pass/fail
 │   ├── rules.py              # Rule model + loading of .bec/rules.yaml
 │   ├── bundle.py             # export/import of BECs (the portable bundle)
@@ -54,7 +54,7 @@ engine comes from the installed package.
 (Portability, C)** done: `becwright export` / `import` move a BEC between repos
 as a single self-contained `.bec.yaml` (a custom check's code travels embedded),
 with a trust gate that shows the code before installing. Commands:
-`check / install / uninstall / export / import`. **Multi-language:** the engine
+`init / check / install / uninstall / export / import`. **Multi-language:** the engine
 is agnostic (runs any check on any file); the generic `forbid` check (regex via
 `--pattern`) lets you write rules for any language without code, and the catalog
 includes Python and JS/TS BECs. Included checks: `forbid` (any language),
