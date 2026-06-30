@@ -1,0 +1,17 @@
+# BECs que el propio becwright se aplica a sí mismo (dogfooding).
+rules:
+  - id: comments-only-when-complex
+    intent: >
+      Los comentarios se reservan para código complejo; si el código se entiende
+      solo, no se comenta.
+    why_it_matters: >
+      Los comentarios que repiten lo obvio envejecen mal, mienten cuando el
+      código cambia y agregan ruido sin información.
+    rejected_alternatives:
+      - "Prohibir todos los comentarios -> se pierde el 'por qué' de lo complejo"
+      - "Chequeo bloqueante -> la heurística da falsos positivos; mejor avisar"
+    paths:
+      - "src/**/*.py"
+      - "tests/**/*.py"
+    check: "python3 -m becwright.checks.redundant_comments"
+    severity: warning

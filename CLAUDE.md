@@ -32,38 +32,43 @@ Detalle completo en [`docs/concepto-bec.md`](docs/concepto-bec.md).
 becwright/
 ├── CLAUDE.md                 # este archivo: contexto persistente
 ├── README.md                 # documento conceptual público
-├── docs/
-│   ├── concepto-bec.md       # la idea de BEC en detalle
-│   ├── decisiones.md         # bitácora de decisiones (ADR-lite)
-│   └── estado-y-roadmap.md   # estado actual + plan + trabajo futuro
+├── pyproject.toml            # empaquetado + comando `becwright` (setuptools)
+├── src/becwright/            # MOTOR empaquetado (instalable, no se copia a cada repo)
+│   ├── cli.py                # argparse: check / install / uninstall
+│   ├── engine.py             # matching de paths + corre checks + decide pasa/no-pasa
+│   ├── rules.py              # modelo Regla + carga de .bec/rules.yaml
+│   ├── git.py                # raíz del repo, archivos staged, hook nativo
+│   └── checks/               # checks incluidos (no_token_in_logs, ...)
+├── tests/                    # pytest
+├── docs/                     # concepto, decisiones, estado-y-roadmap
 └── prototype/                # PROTOTIPO ARCHIVADO (referencia, no se construye encima sin avisar)
-    ├── .bec/
-    │   ├── rules.yaml         # formato de reglas (id, intent, why, paths, check, severity)
-    │   ├── becwright.py       # motor: lee reglas, corre chequeos, frena o deja pasar
-    │   └── checks/
-    │       └── no_token_in_logs.py
-    └── src/auth.py            # código de ejemplo
 ```
+
+El repo que *adopta* becwright solo aporta su propio `.bec/rules.yaml`; el motor
+viene del paquete instalado.
 
 ## Estado actual
 
-Prototipo funcional **verificado** (detecta y frena un commit con un token en
-un log) y luego **archivado** en `prototype/`. El foco actual del proyecto es
-la **documentación de contexto**, no añadir features. Ver
+Construyendo el **MVP instalable (A + B)**: motor empaquetado en
+`src/becwright/` con comando `becwright` (check / install / uninstall) y hook de
+git nativo. Verificado end-to-end (el hook frena un commit con token). El
+prototipo original queda **archivado** en `prototype/` como referencia. Ver
 [`docs/estado-y-roadmap.md`](docs/estado-y-roadmap.md).
 
 ## Alcance y no-objetivos
 
-**Dentro:** documentar concepto, decisiones y estado; conservar el prototipo
-como referencia recuperable.
+**Dentro:** el MVP A + B (CLI instalable + hook nativo); mantener documentación
+y prototipo de referencia al día.
 
-**Fuera (trabajo futuro, no tocar sin pedirlo):** análisis AST, soporte
-multi-lenguaje, importar/exportar BECs entre repos, firma de verificaciones,
-"mejorar" el regex de los checks.
+**Fuera (trabajo futuro, no tocar sin pedirlo):** portabilidad / importar-exportar
+BECs entre repos (C), análisis AST, soporte multi-lenguaje, firma de
+verificaciones, "mejorar" el regex de los checks.
 
 ## Convenciones
 
-- Código y comentarios **en español**.
+- Código y comentarios **en ingles**.
+- Comentarios reservados para código complejo: si el código se entiende solo,
+  no se comenta. Nada de comentarios que repiten lo obvio.
 - Python 3.12 objetivo (el entorno actual tiene 3.14; anotarlo, no forzar).
 - Dependencias mínimas: solo `pyyaml`. No agregar otras sin preguntar.
 - No cambiar el formato de `rules.yaml` ni la lógica de `checks/` sin preguntar.

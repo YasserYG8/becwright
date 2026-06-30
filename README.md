@@ -41,19 +41,57 @@ tiene juntas:
 - **Portable** — puede exportarse de un repo e importarse en otro, como un
   paquete (esto es lo que genera el efecto de red a futuro).
 
+## Cómo se usa
+
+becwright se instala una vez como herramienta; cada repo solo aporta su propio
+`.bec/rules.yaml`.
+
+```bash
+# 1. Instalar el motor (desde la raíz de este repo)
+pipx install .          # o: pip install -e .
+
+# 2. En el repo donde querés las reglas, instalar el hook de git
+becwright install       # escribe .git/hooks/pre-commit
+
+# 3. Escribir tus reglas en .bec/rules.yaml (ver ejemplo abajo)
+# 4. Listo: cada commit corre los chequeos; si una regla blocking falla, frena.
+```
+
+Comandos disponibles:
+
+| Comando | Qué hace |
+|---|---|
+| `becwright check` | Corre las reglas sobre los archivos en staging |
+| `becwright install` | Instala el hook `pre-commit` nativo |
+| `becwright uninstall` | Quita el hook |
+
+Una regla en `.bec/rules.yaml`:
+
+```yaml
+rules:
+  - id: no-token-in-logs
+    intent: >
+      Los tokens de sesión y credenciales nunca deben llegar a ningún log.
+    why_it_matters: >
+      Si un token aparece en los logs, cualquiera con acceso a ellos puede
+      robar la sesión de un usuario.
+    paths: ["src/**/*.py"]
+    check: "python3 -m becwright.checks.no_token_in_logs"
+    severity: blocking   # blocking = frena el commit | warning = solo avisa
+```
+
 ## Estado actual
 
-El prototipo funcional (proof of concept) ya **fue verificado**: detecta y
-frena un commit que mete un token en un log. Ahora está **archivado** en
-[`prototype/`](prototype/) como referencia, y el foco del proyecto está en la
-documentación de contexto.
+El **MVP instalable** está construido y verificado end-to-end: motor empaquetado
+(`src/becwright/`), CLI (`check` / `install` / `uninstall`), hook de git nativo
+que frena un commit con un token en un log, dos checks incluidos y tests en
+verde. El prototipo original queda **archivado** en `prototype/` como referencia.
 
+- **Plan y norte del proyecto:** [`docs/plan.md`](docs/plan.md)
 - **Contexto del proyecto:** [`CLAUDE.md`](CLAUDE.md)
 - **El concepto BEC en detalle:** [`docs/concepto-bec.md`](docs/concepto-bec.md)
 - **Decisiones tomadas:** [`docs/decisiones.md`](docs/decisiones.md)
 - **Estado y roadmap:** [`docs/estado-y-roadmap.md`](docs/estado-y-roadmap.md)
-- **Prototipo archivado:** [`prototype/`](prototype/)
 
-Las limitaciones conocidas y el trabajo futuro (hook de git, empaquetado como
-CLI, AST, multi-lenguaje, import/export de BECs) están documentados en
-[`docs/estado-y-roadmap.md`](docs/estado-y-roadmap.md).
+El trabajo futuro (portabilidad / import-export de BECs entre repos, AST,
+multi-lenguaje) está documentado en [`docs/plan.md`](docs/plan.md).

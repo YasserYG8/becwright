@@ -1,0 +1,27 @@
+# Empaquetado de becwright. Objetivo Python 3.12 (el entorno actual tiene 3.14).
+# Dependencias mínimas a propósito: solo pyyaml (convención del proyecto).
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "becwright"
+version = "0.1.0"
+description = "Hace cumplir restricciones (BECs) sobre el código de forma determinista, frenando commits que las violan."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["pyyaml>=6"]
+
+# El comando global. `pipx install .` deja disponible `becwright` en el PATH.
+[project.scripts]
+becwright = "becwright.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-cov>=5"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

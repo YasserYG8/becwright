@@ -8,3 +8,7 @@ venv/
 # Entorno / editor
 .env
 .DS_Store
+
+# Prototipo y documentación
+prototype/
+docs/
