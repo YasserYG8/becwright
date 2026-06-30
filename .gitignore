@@ -5,6 +5,10 @@ __pycache__/
 .venv/
 venv/
 
+# Test / cobertura
+.coverage
+.pytest_cache/
+
 # Entorno / editor
 .env
 .DS_Store
