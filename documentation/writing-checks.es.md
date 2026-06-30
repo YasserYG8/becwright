@@ -48,6 +48,7 @@ genérico incluido:
 | `debug_remnants` | `breakpoint()`, `pdb.set_trace()`, `import pdb` | Python |
 | `dangerous_eval` | `eval()` / `exec()` | cualquiera |
 | `wildcard_imports` | `from x import *` | Python |
+| `redundant_comments` | comentarios que repiten lo obvio del código (heurístico) | Python |
 
 ## Un check propio (cualquier lenguaje)
 

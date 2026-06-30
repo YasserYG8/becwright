@@ -48,6 +48,7 @@ generic check:
 | `debug_remnants` | `breakpoint()`, `pdb.set_trace()`, `import pdb` | Python |
 | `dangerous_eval` | `eval()` / `exec()` | any |
 | `wildcard_imports` | `from x import *` | Python |
+| `redundant_comments` | comments that restate the obvious code (heuristic) | Python |
 
 ## A custom check (any language)
 
