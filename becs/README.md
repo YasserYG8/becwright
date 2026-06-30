@@ -17,7 +17,7 @@ becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/b
 | `no-wildcard-imports.bec.yaml` | Warns about `from x import *` | `warning` |
 | `no-debugger-js.bec.yaml` | Blocks `debugger;` in JS/TS | `blocking` |
 | `no-console-log-js.bec.yaml` | Warns about `console.log(...)` in JS/TS | `warning` |
+| `no-debug-go.bec.yaml` | Blocks `fmt.Println()` and `panic()` in Go | `blocking` |
+| `no-debug-rust.bec.yaml` | Blocks `dbg!()` and `println!()` in Rust | `blocking` |
 
-The Python BECs use `paths: ["src/**/*.py"]` and the JS/TS ones `["**/*.js",
-"**/*.ts"]`. After importing, adjust `paths` in your `.bec/rules.yaml` if your
-code lives elsewhere.
+The Python BECs use `paths: ["src/**/*.py"]`, the JS/TS ones `["**/*.js", "**/*.ts"]`, the Go bundles use `["**/*.go"]`, and the Rust bundles use `["**/*.rs"]`. After importing, adjust `paths` in your `.bec/rules.yaml` if your code lives elsewhere.

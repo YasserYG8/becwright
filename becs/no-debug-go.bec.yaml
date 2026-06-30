@@ -1,0 +1,15 @@
+becwright_bec: 1
+exported_from: https://github.com/DataDave-Dev/becwright
+rule:
+  id: no-debug-go
+  intent: >
+    Do not leave debug output or panic calls in Go code.
+  why_it_matters: >
+    Debug statements and unexpected panic calls should not reach production.
+  paths:
+    - "**/*.go"
+  severity: blocking
+check:
+  kind: builtin
+  module: forbid
+  args: "--pattern 'fmt\\.Println\\s*\\(|panic\\s*\\('"

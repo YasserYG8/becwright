@@ -1,0 +1,15 @@
+becwright_bec: 1
+exported_from: https://github.com/DataDave-Dev/becwright
+rule:
+  id: no-debug-rust
+  intent: >
+    Do not leave debug output in Rust code.
+  why_it_matters: >
+    Debug macros and leftover println! calls should not reach production.
+  paths:
+    - "**/*.rs"
+  severity: blocking
+check:
+  kind: builtin
+  module: forbid
+  args: "--pattern 'dbg!\\s*\\(|println!\\s*\\('"
