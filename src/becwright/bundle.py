@@ -11,7 +11,7 @@ from .rules import Rule
 
 BUNDLE_VERSION = 1
 
-_BUILTIN = re.compile(r"^python3?\s+-m\s+becwright\.checks\.(\w+)$")
+_BUILTIN = re.compile(r"^python3?\s+-m\s+becwright\.checks\.(\w+)(?:\s+(.*))?$")
 _PY_PATH = re.compile(r"[\w./-]+\.py")
 _ITEM_INDENT = re.compile(r"^([ \t]+)-\s", re.MULTILINE)
 _EMPTY_RULES = re.compile(r"^rules:[ \t]*(?:\[[ \t]*\]|\{[ \t]*\})[ \t]*$", re.MULTILINE)
@@ -41,7 +41,10 @@ def classify_check(command: str, root: Path) -> dict:
     command = command.strip()
     builtin = _BUILTIN.match(command)
     if builtin:
-        return {"kind": "builtin", "module": builtin.group(1)}
+        out = {"kind": "builtin", "module": builtin.group(1)}
+        if builtin.group(2):
+            out["args"] = builtin.group(2).strip()
+        return out
     for token in _PY_PATH.findall(command):
         candidate = root / token
         if candidate.is_file():
@@ -106,6 +109,8 @@ def materialize(bundle: dict, root: Path) -> dict:
     kind = check.get("kind")
     if kind == "builtin":
         command = f"python3 -m becwright.checks.{check['module']}"
+        if check.get("args"):
+            command += f" {check['args']}"
     elif kind == "script":
         filename = Path(check["filename"]).name
         dest = root / ".bec" / "checks" / filename

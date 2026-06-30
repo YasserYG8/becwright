@@ -64,6 +64,39 @@ def test_classify_opaque_command(tmp_path):
     assert out == {"kind": "command", "command": "grep -r TODO src/"}
 
 
+def test_classify_builtin_with_args(tmp_path):
+    out = bundle.classify_check(
+        r"python3 -m becwright.checks.forbid --pattern '\bdebugger\b'", tmp_path)
+    assert out == {"kind": "builtin", "module": "forbid",
+                   "args": r"--pattern '\bdebugger\b'"}
+
+
+def test_materialize_builtin_with_args(tmp_path):
+    data = {"rule": {"id": "r", "paths": ["*.js"], "severity": "blocking"},
+            "check": {"kind": "builtin", "module": "forbid", "args": r"--pattern '\bx\b'"}}
+    rd = bundle.materialize(data, tmp_path)
+    assert rd["check"] == r"python3 -m becwright.checks.forbid --pattern '\bx\b'"
+
+
+def test_roundtrip_builtin_args_preserved(tmp_path):
+    rule = Rule(id="no-dbg", paths=("**/*.js",),
+                check=r"python3 -m becwright.checks.forbid --pattern '\bdebugger\b'",
+                severity="blocking")
+    data = bundle.parse_bundle(bundle.export_bec(rule, tmp_path))
+    assert data["check"]["args"] == r"--pattern '\bdebugger\b'"
+    assert bundle.materialize(data, tmp_path)["check"] == rule.check
+
+
+def test_catalog_bundles_are_valid(tmp_path):
+    becs = Path(__file__).resolve().parents[1] / "becs"
+    files = list(becs.glob("*.bec.yaml"))
+    assert files, "no hay bundles en becs/"
+    for f in files:
+        data = bundle.parse_bundle(f.read_text(encoding="utf-8"))
+        rd = bundle.materialize(data, tmp_path)
+        assert rd["check"].startswith("python3 -m becwright.checks.")
+
+
 # --- export / parse ---
 
 def test_export_builtin_roundtrips_through_parse(tmp_path):
