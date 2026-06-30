@@ -9,3 +9,5 @@ Documentación técnica de becwright. Para la visión general del proyecto, ver 
 - [Uso](usage.es.md) — instalación, comandos y el esquema de `.bec/rules.yaml`.
 - [Escribir checks](writing-checks.es.md) — el contrato del check, `forbid`, checks propios.
 - [Portabilidad](portability.es.md) — export/import, el formato del bundle, el catálogo.
+- [MCP y salida JSON](mcp.es.md) — resultados estructurados para agentes de IA (`check --json`, el servidor MCP).
+- [Publicar versiones](releasing.es.md) — cómo se construye y publica el release npm + PyPI.
