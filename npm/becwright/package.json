@@ -27,7 +27,6 @@
   "optionalDependencies": {
     "@becwright/linux-x64": "0.1.0",
     "@becwright/linux-arm64": "0.1.0",
-    "@becwright/darwin-x64": "0.1.0",
     "@becwright/darwin-arm64": "0.1.0",
     "@becwright/win32-x64": "0.1.0"
   }

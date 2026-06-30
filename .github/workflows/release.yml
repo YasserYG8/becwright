@@ -28,7 +28,6 @@ jobs:
         run: |
           node npm/stage.mjs linux-x64    artifacts/becwright-linux-x64/becwright
           node npm/stage.mjs linux-arm64  artifacts/becwright-linux-arm64/becwright
-          node npm/stage.mjs darwin-x64   artifacts/becwright-darwin-x64/becwright
           node npm/stage.mjs darwin-arm64 artifacts/becwright-darwin-arm64/becwright
           node npm/stage.mjs win32-x64    artifacts/becwright-win32-x64/becwright.exe
       - name: Set version from tag
@@ -60,3 +59,5 @@ jobs:
           python -m build
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true

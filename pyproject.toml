@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "becwright"
-version = "0.2.0"
+version = "0.2.1"
 description = "Deterministically enforces constraints (BECs) on your code, blocking commits that violate them."
 readme = "README.md"
 requires-python = ">=3.12"
