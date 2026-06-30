@@ -27,6 +27,7 @@ From then on, every `git commit` runs the checks. (You can also set up by hand:
 | Command | Description |
 |---|---|
 | `becwright init` | Scaffold a starter `.bec/rules.yaml` and install the hook |
+| `becwright list` | List the built-in checks |
 | `becwright check` | Run rules over the staged files |
 | `becwright check --all` | Run rules over the whole repo (`git ls-files`) |
 | `becwright install` | Install the pre-commit hook |

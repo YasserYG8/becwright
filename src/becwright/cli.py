@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import pkgutil
 import sys
 import urllib.error
 import urllib.request
@@ -67,6 +68,35 @@ def _cmd_install(_: argparse.Namespace) -> int:
 def _cmd_uninstall(_: argparse.Namespace) -> int:
     ok, msg = git.uninstall_hook(git.repo_root())
     print((GREEN if ok else YELLOW) + msg + RESET)
+    return 0
+
+
+_CHECK_DESCRIPTIONS = {
+    "forbid": "fail if a regex (--pattern) appears in the files (any language)",
+    "no_token_in_logs": "tokens or credentials in log calls (Python)",
+    "hardcoded_secrets": "AWS keys, private keys, hardcoded password literals (any language)",
+    "debug_remnants": "leftover debugger / pdb statements (Python)",
+    "dangerous_eval": "eval / exec calls (any language)",
+    "wildcard_imports": "wildcard star imports (Python)",
+    "redundant_comments": "comments that restate the obvious code (Python, heuristic)",
+}
+
+
+def _builtin_check_names() -> list[str]:
+    from . import checks
+    return sorted(m.name for m in pkgutil.iter_modules(checks.__path__) if not m.name.startswith("_"))
+
+
+def _cmd_list(_: argparse.Namespace) -> int:
+    print(f"{BOLD}Built-in checks{RESET} {DIM}(use as: python3 -m becwright.checks.<name>){RESET}")
+    for name in _builtin_check_names():
+        desc = _CHECK_DESCRIPTIONS.get(name, "")
+        line = f"  {GREEN}{name}{RESET}"
+        if desc:
+            line += f"  {DIM}{desc}{RESET}"
+        print(line)
+    print(f"\n{DIM}Catalog of ready-to-use BECs: "
+          f"https://github.com/DataDave-Dev/becwright/tree/main/becs{RESET}")
     return 0
 
 
@@ -248,6 +278,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p_init.add_argument("--force", action="store_true", help="overwrite an existing .bec/rules.yaml")
     p_init.set_defaults(func=_cmd_init)
 
+    sub.add_parser("list", help="list the built-in checks").set_defaults(func=_cmd_list)
     sub.add_parser("install", help="install the pre-commit hook").set_defaults(func=_cmd_install)
     sub.add_parser("uninstall", help="remove the pre-commit hook").set_defaults(func=_cmd_uninstall)
 

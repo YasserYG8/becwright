@@ -65,6 +65,7 @@ Comandos disponibles:
 | Comando | Qué hace |
 |---|---|
 | `becwright init` | Genera un `.bec/rules.yaml` de arranque e instala el hook |
+| `becwright list` | Lista los checks incluidos |
 | `becwright check` | Corre las reglas sobre los archivos en staging |
 | `becwright install` | Instala el hook `pre-commit` nativo |
 | `becwright uninstall` | Quita el hook |

@@ -10,7 +10,7 @@ filtra archivos por su ruta y corre un comando.
 
 | Módulo | Responsabilidad |
 |---|---|
-| `cli.py` | CLI con argparse: `init / check / install / uninstall / export / import` |
+| `cli.py` | CLI con argparse: `init / list / check / install / uninstall / export / import` |
 | `rules.py` | El modelo `Rule` y la carga de `.bec/rules.yaml` |
 | `engine.py` | Matching de rutas por glob, corre los checks, decide pasa/no-pasa |
 | `git.py` | Raíz del repo, archivos en staging, el hook pre-commit nativo |

@@ -64,6 +64,7 @@ Available commands:
 | Command | What it does |
 |---|---|
 | `becwright init` | Scaffold a starter `.bec/rules.yaml` and install the hook |
+| `becwright list` | List the built-in checks |
 | `becwright check` | Runs the rules over the staged files |
 | `becwright install` | Installs the native `pre-commit` hook |
 | `becwright uninstall` | Removes the hook |

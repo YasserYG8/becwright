@@ -10,7 +10,7 @@ itself — it matches files by path and runs a command.
 
 | Module | Responsibility |
 |---|---|
-| `cli.py` | Argparse CLI: `init / check / install / uninstall / export / import` |
+| `cli.py` | Argparse CLI: `init / list / check / install / uninstall / export / import` |
 | `rules.py` | The `Rule` model and loading of `.bec/rules.yaml` |
 | `engine.py` | Glob path matching, running checks, deciding pass/fail |
 | `git.py` | Repo root, staged files, the native pre-commit hook |

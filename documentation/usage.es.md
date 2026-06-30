@@ -28,6 +28,7 @@ a mano: `becwright install` más un `.bec/rules.yaml` que escribas vos.)
 | Comando | Descripción |
 |---|---|
 | `becwright init` | Genera un `.bec/rules.yaml` de arranque e instala el hook |
+| `becwright list` | Lista los checks incluidos |
 | `becwright check` | Corre las reglas sobre los archivos en staging |
 | `becwright check --all` | Corre las reglas sobre todo el repo (`git ls-files`) |
 | `becwright install` | Instala el hook pre-commit |
