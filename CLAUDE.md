@@ -53,21 +53,26 @@ viene del paquete instalado.
 (Portabilidad, C)** hecha: `becwright export` / `import` mueven una BEC entre
 repos como un único `.bec.yaml` autocontenido (el código del check custom viaja
 embebido), con un gate de confianza que muestra el código antes de instalar.
-Comandos: `check / install / uninstall / export / import`. Cinco checks
-incluidos (`no_token_in_logs`, `hardcoded_secrets`, `debug_remnants`,
-`dangerous_eval`, `wildcard_imports`). El prototipo original queda **archivado**
-en `prototype/` como referencia. Plan y norte en [`docs/plan.md`](docs/plan.md);
-detalle en [`docs/estado-y-roadmap.md`](docs/estado-y-roadmap.md).
+Comandos: `check / install / uninstall / export / import`. **Multi-lenguaje:** el
+motor es agnóstico (corre cualquier check sobre cualquier archivo); el check
+genérico `forbid` (regex por `--pattern`) deja escribir reglas para cualquier
+lenguaje sin código, y el catálogo trae BECs de Python y JS/TS. Checks incluidos:
+`forbid` (cualquier lenguaje), `hardcoded_secrets` y `dangerous_eval`
+(agnósticos), y `no_token_in_logs` / `debug_remnants` / `wildcard_imports`
+(Python). El prototipo original queda **archivado** en `prototype/` como
+referencia. Plan y norte en [`docs/plan.md`](docs/plan.md); detalle en
+[`docs/estado-y-roadmap.md`](docs/estado-y-roadmap.md).
 
 ## Alcance y no-objetivos
 
-**Dentro:** el MVP A + B (CLI instalable + hook nativo) y la portabilidad C
-(export / import de BECs entre repos); mantener documentación y prototipo de
-referencia al día.
+**Dentro:** el MVP A + B (CLI instalable + hook nativo), la portabilidad C
+(export / import de BECs entre repos) y el soporte multi-lenguaje (motor
+agnóstico + check `forbid`); mantener documentación y prototipo de referencia al
+día.
 
-**Fuera (trabajo futuro, no tocar sin pedirlo):** análisis AST, soporte
-multi-lenguaje, firma/verificación criptográfica de BECs, "mejorar" el regex de
-los checks.
+**Fuera (trabajo futuro, no tocar sin pedirlo):** análisis AST, tooling profundo
+por lenguaje (suites de checks específicas, AST por lenguaje),
+firma/verificación criptográfica de BECs, "mejorar" el regex de los checks.
 
 ## Convenciones
 

@@ -87,13 +87,14 @@ desde el campo `check`. Son **basados en texto/regex** (no análisis AST), así
 que son conservadores y pueden tener casos límite; el valor está en atar cada
 regla a su *por qué*.
 
-| Check | Qué detecta | Severidad sugerida |
-|---|---|---|
-| `no_token_in_logs` | Tokens/credenciales en llamadas a logs | `blocking` |
-| `hardcoded_secrets` | Claves AWS, claves privadas, `password = "..."` literales | `blocking` |
-| `debug_remnants` | `breakpoint()`, `pdb.set_trace()`, `import pdb` olvidados | `blocking` |
-| `dangerous_eval` | Llamadas a `eval()` / `exec()` | `blocking` |
-| `wildcard_imports` | `from x import *` | `warning` |
+| Check | Qué detecta | Lenguaje | Severidad sugerida |
+|---|---|---|---|
+| `forbid` | Cualquier regex que le pases (`--pattern`) | cualquiera | según el caso |
+| `no_token_in_logs` | Tokens/credenciales en llamadas a logs | Python | `blocking` |
+| `hardcoded_secrets` | Claves AWS, claves privadas, `password = "..."` literales | cualquiera | `blocking` |
+| `debug_remnants` | `breakpoint()`, `pdb.set_trace()`, `import pdb` olvidados | Python | `blocking` |
+| `dangerous_eval` | Llamadas a `eval()` / `exec()` | cualquiera | `blocking` |
+| `wildcard_imports` | `from x import *` | Python | `warning` |
 
 Reglas de ejemplo para copiar a tu `.bec/rules.yaml`:
 
@@ -138,6 +139,32 @@ rules:
     severity: warning
 ```
 
+## Cualquier lenguaje
+
+becwright es **agnóstico al lenguaje**: el motor solo filtra archivos por sus
+`paths` (globs) y corre el `check` como un comando; nunca asume Python. Podés
+vigilar JavaScript, Go, Rust, o lo que sea.
+
+La forma más rápida de escribir una regla para otro lenguaje —sin escribir
+código— es el check `forbid`, que falla si un regex aparece en los archivos:
+
+```yaml
+rules:
+  - id: no-debugger-js
+    intent: >
+      No dejar 'debugger;' en el código JavaScript/TypeScript.
+    why_it_matters: >
+      Un 'debugger' olvidado detiene la ejecución y no debería llegar a producción.
+    paths: ["**/*.js", "**/*.ts"]
+    check: "python3 -m becwright.checks.forbid --pattern '\\bdebugger\\b'"
+    severity: blocking
+```
+
+`forbid` acepta `--pattern REGEX`, `--ignore-case` y `--message TEXTO`. Para
+checks más finos, escribí tu propio script en el lenguaje que quieras (un
+ejecutable que lea la lista de archivos por stdin y salga con código 0/1) y
+apuntá `check` a él.
+
 ## Compartir BECs entre repos
 
 Una BEC es **portable**: podés sacarla de un repo e instalarla en otro. Un
@@ -168,8 +195,9 @@ viaja con su código embebido y aterriza en `.bec/checks/` del repo destino.
 
 El **MVP instalable** está construido y verificado end-to-end: motor empaquetado
 (`src/becwright/`), CLI (`check` / `install` / `uninstall` / `export` /
-`import`), hook de git nativo que frena un commit con un token en un log, cinco
-checks incluidos, portabilidad de BECs entre repos y tests en verde. El
+`import`), hook de git nativo que frena un commit con un token en un log, checks
+incluidos (Python + el genérico `forbid` para cualquier lenguaje), portabilidad
+de BECs entre repos, catálogo con BECs de Python y JS/TS, y tests en verde. El
 prototipo original queda **archivado** en `prototype/` como referencia.
 
 - **Plan y norte del proyecto:** [`docs/plan.md`](docs/plan.md)
@@ -178,5 +206,5 @@ prototipo original queda **archivado** en `prototype/` como referencia.
 - **Decisiones tomadas:** [`docs/decisiones.md`](docs/decisiones.md)
 - **Estado y roadmap:** [`docs/estado-y-roadmap.md`](docs/estado-y-roadmap.md)
 
-El trabajo futuro (AST, multi-lenguaje, firma de verificaciones) está
-documentado en [`docs/plan.md`](docs/plan.md).
+El trabajo futuro (análisis AST, tooling profundo por lenguaje, firma de
+verificaciones) está documentado en [`docs/plan.md`](docs/plan.md).
