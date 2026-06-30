@@ -61,7 +61,8 @@ def evaluate(rules: list[Rule], files: list[str], root: Path) -> Result:
             rule.check, shell=True, cwd=root,
             input="\n".join(relevant), capture_output=True, text=True,
         )
+        output = proc.stdout.strip() or proc.stderr.strip()
         results.append(
-            RuleResult(rule=rule, passed=proc.returncode == 0, output=proc.stdout.strip())
+            RuleResult(rule=rule, passed=proc.returncode == 0, output=output)
         )
     return Result(per_rule=results)

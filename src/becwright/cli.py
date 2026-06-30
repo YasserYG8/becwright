@@ -20,6 +20,8 @@ def _print_result(result: Result) -> None:
             print(f"  {RED}{BOLD}FRENO{RESET}  {r.rule.id}  {RED}(bloqueante){RESET}")
         else:
             print(f"  {YELLOW}AVISO{RESET}  {r.rule.id}  {YELLOW}(solo advertencia){RESET}")
+        if r.rule.intent:
+            print(f"        {DIM}Qué pide:{RESET} {r.rule.intent}")
         if r.rule.why_it_matters:
             print(f"        {DIM}Por qué importa:{RESET} {r.rule.why_it_matters}")
         if r.output:
