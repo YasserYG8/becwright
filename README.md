@@ -196,6 +196,14 @@ Built-in checks (`python3 -m becwright.checks.*`) travel with the package, so
 the bundle only stores their name. A **custom** check (`.bec/checks/foo.py`)
 travels with its code embedded and lands in `.bec/checks/` of the target repo.
 
+## Documentation
+
+Technical documentation lives in [`documentation/`](documentation/):
+[architecture & flow](documentation/architecture.md),
+[usage & rules schema](documentation/usage.md),
+[writing checks](documentation/writing-checks.md), and
+[portability](documentation/portability.md).
+
 ## Current status
 
 The **installable MVP** is built and verified end-to-end: packaged engine
