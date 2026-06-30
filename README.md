@@ -51,7 +51,7 @@ becwright is installed once as a tool; each repo only contributes its own
 
 ```bash
 # 1. Install the engine (once, global)
-pipx install git+https://github.com/DataDave-Dev/becwright.git   # or local: pipx install .
+pipx install becwright              # or: pip install becwright
 
 # 2. In the repo where you want the rules, install the git hook
 becwright install                   # writes .git/hooks/pre-commit
