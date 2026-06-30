@@ -91,6 +91,35 @@ def test_print_result_shows_intent_why_and_pass(capsys):
     assert "a.py:1" in out and "PASS" in out
 
 
+def test_print_result_omits_ansi_when_no_color_is_set(monkeypatch, capsys):
+    monkeypatch.setenv("NO_COLOR", "1")
+    monkeypatch.setattr(cli.sys.stdout, "isatty", lambda: True)
+    rule = Rule(id="r1", paths=("*.py",), check="false", severity="blocking")
+    res = Result(per_rule=[RuleResult(rule=rule, passed=False, output="")])
+
+    cli._print_result(res)
+
+    assert "\033[" not in capsys.readouterr().out
+
+
+def test_print_result_omits_ansi_when_stdout_is_not_tty(monkeypatch, capsys):
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    monkeypatch.setattr(cli.sys.stdout, "isatty", lambda: False)
+    rule = Rule(id="r1", paths=("*.py",), check="true")
+    res = Result(per_rule=[RuleResult(rule=rule, passed=True, output="")])
+
+    cli._print_result(res)
+
+    assert "\033[" not in capsys.readouterr().out
+
+
+def test_empty_no_color_value_keeps_ansi_for_tty(monkeypatch):
+    monkeypatch.setenv("NO_COLOR", "")
+    monkeypatch.setattr(cli.sys.stdout, "isatty", lambda: True)
+
+    assert "\033[" in cli._style("PASS", cli.GREEN)
+
+
 def test_check_no_rules(tmp_path, monkeypatch, capsys):
     _init_repo(tmp_path)
     monkeypatch.chdir(tmp_path)

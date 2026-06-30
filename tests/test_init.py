@@ -78,14 +78,17 @@ def test_init_creates_rules_and_hook(tmp_path, monkeypatch):
     assert (tmp_path / ".git" / "hooks" / "pre-commit").exists()
 
 
-def test_init_refuses_existing(tmp_path, monkeypatch):
+def test_init_refuses_existing(tmp_path, monkeypatch, capsys):
     _init_repo(tmp_path)
     (tmp_path / ".bec").mkdir()
     rules_path = tmp_path / ".bec" / "rules.yaml"
     rules_path.write_text("rules: []\n", encoding="utf-8")
+    monkeypatch.setenv("NO_COLOR", "1")
+    monkeypatch.setattr(cli.sys.stdout, "isatty", lambda: True)
     monkeypatch.chdir(tmp_path)
     assert cli.main(["init"]) == 1
     assert rules_path.read_text(encoding="utf-8") == "rules: []\n"
+    assert "\033[" not in capsys.readouterr().out
 
 
 def test_init_force_overwrites(tmp_path, monkeypatch):

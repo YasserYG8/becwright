@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import pkgutil
 import sys
 import urllib.error
@@ -15,21 +16,31 @@ RED = "\033[91m"; GREEN = "\033[92m"; YELLOW = "\033[93m"
 BOLD = "\033[1m"; DIM = "\033[2m"; RESET = "\033[0m"
 
 
+def _colors_enabled() -> bool:
+    return not os.environ.get("NO_COLOR") and sys.stdout.isatty()
+
+
+def _style(text: str, *codes: str) -> str:
+    if not _colors_enabled():
+        return text
+    return f"{''.join(codes)}{text}{RESET}"
+
+
 def _print_result(result: Result) -> None:
     for r in result.per_rule:
         if r.passed:
-            print(f"  {GREEN}PASS{RESET}  {r.rule.id}")
+            print(f"  {_style('PASS', GREEN)}  {r.rule.id}")
             continue
         if r.rule.is_blocking:
-            print(f"  {RED}{BOLD}BLOCK{RESET}  {r.rule.id}  {RED}(blocking){RESET}")
+            print(f"  {_style('BLOCK', RED, BOLD)}  {r.rule.id}  {_style('(blocking)', RED)}")
         else:
-            print(f"  {YELLOW}WARN{RESET}  {r.rule.id}  {YELLOW}(warning only){RESET}")
+            print(f"  {_style('WARN', YELLOW)}  {r.rule.id}  {_style('(warning only)', YELLOW)}")
         if r.rule.intent:
-            print(f"        {DIM}Intent:{RESET} {r.rule.intent}")
+            print(f"        {_style('Intent:', DIM)} {r.rule.intent}")
         if r.rule.why_it_matters:
-            print(f"        {DIM}Why it matters:{RESET} {r.rule.why_it_matters}")
+            print(f"        {_style('Why it matters:', DIM)} {r.rule.why_it_matters}")
         if r.output:
-            print(f"        {DIM}Found in:{RESET}")
+            print(f"        {_style('Found in:', DIM)}")
             for line in r.output.splitlines():
                 print(f"        {line}")
         print()
@@ -45,32 +56,32 @@ def _cmd_check(args: argparse.Namespace) -> int:
         return 1 if (result and result.had_blocking) else 0
 
     if not rules:
-        print(f"{YELLOW}No .bec/rules.yaml with rules. Nothing to check.{RESET}")
+        print(_style("No .bec/rules.yaml with rules. Nothing to check.", YELLOW))
         return 0
     if not files:
-        print(f"{DIM}No files to check.{RESET}")
+        print(_style("No files to check.", DIM))
         return 0
 
-    print(f"{BOLD}BEC -- {len(files)} file(s) against {len(rules)} rule(s){RESET}\n")
+    print(f"{_style(f'BEC -- {len(files)} file(s) against {len(rules)} rule(s)', BOLD)}\n")
     _print_result(result)
 
     if result.had_blocking:
-        print(f"{RED}{BOLD}>>> Commit BLOCKED: a blocking rule was broken.{RESET}")
-        print(f"{DIM}    Fix the above, or if it is intentional edit .bec/rules.yaml{RESET}")
+        print(_style(">>> Commit BLOCKED: a blocking rule was broken.", RED, BOLD))
+        print(_style("    Fix the above, or if it is intentional edit .bec/rules.yaml", DIM))
         return 1
-    print(f"{GREEN}{BOLD}>>> All good. Commit allowed.{RESET}")
+    print(_style(">>> All good. Commit allowed.", GREEN, BOLD))
     return 0
 
 
 def _cmd_install(_: argparse.Namespace) -> int:
     ok, msg = git.install_hook(git.repo_root())
-    print((GREEN if ok else YELLOW) + msg + RESET)
+    print(_style(msg, GREEN if ok else YELLOW))
     return 0
 
 
 def _cmd_uninstall(_: argparse.Namespace) -> int:
     ok, msg = git.uninstall_hook(git.repo_root())
-    print((GREEN if ok else YELLOW) + msg + RESET)
+    print(_style(msg, GREEN if ok else YELLOW))
     return 0
 
 
@@ -92,7 +103,7 @@ def _builtin_check_names() -> list[str]:
 
 def _cmd_run(args: argparse.Namespace) -> int:
     if args.module not in _builtin_check_names():
-        print(f"{RED}Unknown built-in check: {args.module}{RESET}", file=sys.stderr)
+        print(_style(f"Unknown built-in check: {args.module}", RED), file=sys.stderr)
         return 2
     from importlib import import_module
     # Forward any args to the check through sys.argv: checks that take options
@@ -105,8 +116,8 @@ def _cmd_mcp(_: argparse.Namespace) -> int:
     try:
         from .mcp_server import serve
     except ImportError:
-        print(f"{RED}The MCP server needs the 'mcp' extra.{RESET}", file=sys.stderr)
-        print(f'{DIM}    pipx install "becwright[mcp]"   (or: pip install "becwright[mcp]"){RESET}',
+        print(_style("The MCP server needs the 'mcp' extra.", RED), file=sys.stderr)
+        print(_style('    pipx install "becwright[mcp]"   (or: pip install "becwright[mcp]")', DIM),
               file=sys.stderr)
         return 2
     serve()
@@ -114,15 +125,15 @@ def _cmd_mcp(_: argparse.Namespace) -> int:
 
 
 def _cmd_list(_: argparse.Namespace) -> int:
-    print(f"{BOLD}Built-in checks{RESET} {DIM}(use as: becwright run <name>){RESET}")
+    print(f"{_style('Built-in checks', BOLD)} {_style('(use as: becwright run <name>)', DIM)}")
     for name in _builtin_check_names():
         desc = _CHECK_DESCRIPTIONS.get(name, "")
-        line = f"  {GREEN}{name}{RESET}"
+        line = f"  {_style(name, GREEN)}"
         if desc:
-            line += f"  {DIM}{desc}{RESET}"
+            line += f"  {_style(desc, DIM)}"
         print(line)
-    print(f"\n{DIM}Catalog of ready-to-use BECs: "
-          f"https://github.com/DataDave-Dev/becwright/tree/main/becs{RESET}")
+    print(_style("\nCatalog of ready-to-use BECs: "
+                 "https://github.com/DataDave-Dev/becwright/tree/main/becs", DIM))
     return 0
 
 
@@ -204,7 +215,7 @@ def _cmd_init(args: argparse.Namespace) -> int:
     root = git.repo_root()
     rules_path = root / ".bec" / "rules.yaml"
     if rules_path.exists() and not args.force:
-        print(f"{YELLOW}{rules_path} already exists. Use --force to overwrite.{RESET}")
+        print(_style(f"{rules_path} already exists. Use --force to overwrite.", YELLOW))
         return 1
     langs = _detect_languages(root)
     rules = _starter_rules(langs)
@@ -212,10 +223,11 @@ def _cmd_init(args: argparse.Namespace) -> int:
     rules_path.write_text(_render_rules_yaml(rules), encoding="utf-8")
 
     detected = ", ".join(langs) if langs else "none"
-    print(f"{GREEN}Created {rules_path}{RESET} {DIM}({len(rules)} starter rule(s); languages: {detected}){RESET}")
+    print(f"{_style(f'Created {rules_path}', GREEN)} "
+          f"{_style(f'({len(rules)} starter rule(s); languages: {detected})', DIM)}")
     ok, msg = git.install_hook(root)
-    print((GREEN if ok else YELLOW) + msg + RESET)
-    print(f"{DIM}Review your rules, then run `becwright check --all` to see the current state.{RESET}")
+    print(_style(msg, GREEN if ok else YELLOW))
+    print(_style("Review your rules, then run `becwright check --all` to see the current state.", DIM))
     return 0
 
 
@@ -223,12 +235,12 @@ def _cmd_export(args: argparse.Namespace) -> int:
     root = git.repo_root()
     rule = next((r for r in load_rules(root / ".bec" / "rules.yaml") if r.id == args.rule_id), None)
     if rule is None:
-        print(f"{RED}No rule with id '{args.rule_id}' in .bec/rules.yaml.{RESET}", file=sys.stderr)
+        print(_style(f"No rule with id '{args.rule_id}' in .bec/rules.yaml.", RED), file=sys.stderr)
         return 1
     text = bundle.export_bec(rule, root)
     if args.output:
         Path(args.output).write_text(text, encoding="utf-8")
-        print(f"{GREEN}BEC '{rule.id}' exported to {args.output}.{RESET}")
+        print(_style(f"BEC '{rule.id}' exported to {args.output}.", GREEN))
     else:
         sys.stdout.write(text)
     return 0
@@ -243,19 +255,22 @@ def _read_source(source: str) -> str:
 
 def _print_bundle_summary(data: dict) -> None:
     rule, check = data["rule"], data["check"]
-    print(f"{BOLD}BEC: {rule['id']}{RESET}  {DIM}(from {data.get('exported_from', '?')}){RESET}")
+    rule_id = rule["id"]
+    exported_from = data.get("exported_from", "?")
+    print(f"{_style(f'BEC: {rule_id}', BOLD)}  {_style(f'(from {exported_from})', DIM)}")
     if rule.get("intent"):
-        print(f"  {DIM}Intent:{RESET} {rule['intent'].strip()}")
+        print(f"  {_style('Intent:', DIM)} {rule['intent'].strip()}")
     if rule.get("why_it_matters"):
-        print(f"  {DIM}Why it matters:{RESET} {rule['why_it_matters'].strip()}")
+        print(f"  {_style('Why it matters:', DIM)} {rule['why_it_matters'].strip()}")
     kind = check.get("kind")
-    print(f"  {DIM}Check:{RESET} {kind}")
+    print(f"  {_style('Check:', DIM)} {kind}")
     if kind == "script":
-        print(f"  {DIM}Code of {check.get('filename')}:{RESET}")
+        filename = check.get("filename")
+        print(f"  {_style(f'Code of {filename}:', DIM)}")
         for line in check.get("source", "").splitlines():
             print(f"      {line}")
     elif kind == "command":
-        print(f"  {DIM}Command:{RESET} {check.get('command')}")
+        print(f"  {_style('Command:', DIM)} {check.get('command')}")
 
 
 def _cmd_import(args: argparse.Namespace) -> int:
@@ -263,28 +278,28 @@ def _cmd_import(args: argparse.Namespace) -> int:
     try:
         data = bundle.parse_bundle(_read_source(args.source))
     except (bundle.BundleError, OSError, urllib.error.URLError) as e:
-        print(f"{RED}Could not import: {e}{RESET}", file=sys.stderr)
+        print(_style(f"Could not import: {e}", RED), file=sys.stderr)
         return 1
 
     _print_bundle_summary(data)
     if not args.yes:
-        print(f"{YELLOW}Importing a BEC installs code that runs on every commit.{RESET}")
+        print(_style("Importing a BEC installs code that runs on every commit.", YELLOW))
         if input("Install this BEC? [y/N] ").strip().lower() not in ("y", "yes"):
-            print(f"{DIM}Cancelled. Nothing was written.{RESET}")
+            print(_style("Cancelled. Nothing was written.", DIM))
             return 1
 
     rules_path = root / ".bec" / "rules.yaml"
     rule_id = data["rule"]["id"]
     if rule_id in {r.id for r in load_rules(rules_path)}:
-        print(f"{RED}A rule with id '{rule_id}' already exists. Not duplicating it.{RESET}", file=sys.stderr)
+        print(_style(f"A rule with id '{rule_id}' already exists. Not duplicating it.", RED), file=sys.stderr)
         return 1
     try:
         rule_dict = bundle.materialize(data, root)
     except bundle.BundleError as e:
-        print(f"{RED}{e}{RESET}", file=sys.stderr)
+        print(_style(str(e), RED), file=sys.stderr)
         return 1
     bundle.append_rule(rules_path, rule_dict)
-    print(f"{GREEN}{BOLD}BEC '{rule_id}' installed in .bec/rules.yaml.{RESET}")
+    print(_style(f"BEC '{rule_id}' installed in .bec/rules.yaml.", GREEN, BOLD))
     return 0
 
 
@@ -332,7 +347,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         return args.func(args)
     except git.NotAGitRepo as e:
-        print(f"{RED}{e}{RESET}", file=sys.stderr)
+        print(_style(str(e), RED), file=sys.stderr)
         return 2
 
 
