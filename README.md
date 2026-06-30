@@ -48,7 +48,7 @@ becwright se instala una vez como herramienta; cada repo solo aporta su propio
 
 ```bash
 # 1. Instalar el motor (una vez, global)
-pipx install git+<URL-del-repo>     # o, desde una copia local: pipx install .
+pipx install git+https://github.com/DataDave-Dev/becwright.git   # o local: pipx install .
 
 # 2. En el repo donde querés las reglas, instalar el hook de git
 becwright install                   # escribe .git/hooks/pre-commit
