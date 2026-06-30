@@ -157,6 +157,9 @@ Al importar, becwright **muestra el código del check y pide confirmación** ant
 de instalarlo: importar una BEC es importar código que se ejecutará en cada
 commit. Usá `--yes` para saltar la confirmación en entornos automatizados.
 
+Hay un **catálogo de BECs listas para usar** en [`becs/`](becs/) que podés
+importar directo desde su URL cruda.
+
 Los checks built-in (`python3 -m becwright.checks.*`) viajan con el paquete, así
 que el bundle solo guarda su nombre. Un check **custom** (`.bec/checks/foo.py`)
 viaja con su código embebido y aterriza en `.bec/checks/` del repo destino.

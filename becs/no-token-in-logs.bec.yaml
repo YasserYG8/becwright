@@ -1,0 +1,15 @@
+becwright_bec: 1
+exported_from: https://github.com/DataDave-Dev/becwright
+rule:
+  id: no-token-in-logs
+  intent: >
+    Los tokens de sesión y credenciales nunca deben llegar a ningún log.
+  why_it_matters: >
+    Si un token aparece en los logs, cualquiera con acceso a ellos puede
+    robar la sesión de un usuario.
+  paths:
+    - "src/**/*.py"
+  severity: blocking
+check:
+  kind: builtin
+  module: no_token_in_logs

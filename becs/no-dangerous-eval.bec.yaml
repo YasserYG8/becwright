@@ -1,0 +1,14 @@
+becwright_bec: 1
+exported_from: https://github.com/DataDave-Dev/becwright
+rule:
+  id: no-dangerous-eval
+  intent: >
+    No usar eval() / exec(), que ejecutan código arbitrario.
+  why_it_matters: >
+    eval/exec sobre entrada no confiable es ejecución remota de código.
+  paths:
+    - "src/**/*.py"
+  severity: blocking
+check:
+  kind: builtin
+  module: dangerous_eval
