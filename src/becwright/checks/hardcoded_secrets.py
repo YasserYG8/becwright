@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 import sys
 
+from ._ignore import is_ignored
+
 _AWS_KEY = r"AKIA[0-9A-Z]{16}"
 _PRIVATE_KEY = r"-----BEGIN [A-Z ]*PRIVATE KEY-----"
 _ASSIGNMENT = (
@@ -27,7 +29,7 @@ def find_violations(paths: list[str]) -> list[tuple[str, int, str]]:
         try:
             with open(path, encoding="utf-8") as f:
                 for lineno, line in enumerate(f, start=1):
-                    if PATTERN.search(line) and not _PLACEHOLDER.search(line):
+                    if PATTERN.search(line) and not _PLACEHOLDER.search(line) and not is_ignored(line):
                         violations.append((path, lineno, line.strip()))
         except (FileNotFoundError, IsADirectoryError, UnicodeDecodeError):
             continue

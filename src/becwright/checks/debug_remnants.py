@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 import sys
 
+from ._ignore import is_ignored
+
 PATTERN = re.compile(
     r"\bbreakpoint\s*\(|\b(?:i?pdb)\.set_trace\s*\(|\bimport\s+i?pdb\b"
 )
@@ -17,7 +19,7 @@ def find_violations(paths: list[str]) -> list[tuple[str, int, str]]:
         try:
             with open(path, encoding="utf-8") as f:
                 for lineno, line in enumerate(f, start=1):
-                    if PATTERN.search(line):
+                    if PATTERN.search(line) and not is_ignored(line):
                         violations.append((path, lineno, line.strip()))
         except (FileNotFoundError, IsADirectoryError, UnicodeDecodeError):
             continue

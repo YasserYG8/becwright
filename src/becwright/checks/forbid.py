@@ -4,6 +4,8 @@ import argparse
 import re
 import sys
 
+from ._ignore import is_ignored
+
 
 def find_violations(paths: list[str], pattern: str, flags: int = 0) -> list[tuple[str, int, str]]:
     rx = re.compile(pattern, flags)
@@ -15,7 +17,7 @@ def find_violations(paths: list[str], pattern: str, flags: int = 0) -> list[tupl
         try:
             with open(path, encoding="utf-8") as f:
                 for lineno, line in enumerate(f, start=1):
-                    if rx.search(line):
+                    if rx.search(line) and not is_ignored(line):
                         violations.append((path, lineno, line.strip()))
         except (FileNotFoundError, IsADirectoryError, UnicodeDecodeError):
             continue

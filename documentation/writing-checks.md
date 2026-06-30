@@ -64,10 +64,27 @@ process.exit(bad ? 1 : 0);
 A built-in Python check follows the same skeleton — see
 `src/becwright/checks/dangerous_eval.py`.
 
+## Ignoring a line
+
+A false positive — a pattern that appears as text, not as a real violation — can
+be suppressed with a `becwright: ignore` marker in a comment on that line, in any
+language:
+
+```py
+result = eval(expr)  # becwright: ignore
+```
+
+```js
+console.log(x);  // becwright: ignore
+```
+
+The marker exempts the line from every built-in check.
+
 ## The self-reference caveat
 
 A text/regex check cannot run over its own source: a check that forbids the
 string `eval(` will match the very line in its own code that defines that
 pattern. When a rule's check would scan the check's own file, scope `paths` to
 exclude it — e.g. use `src/becwright/*.py` (top level only) instead of
-`src/becwright/**/*.py` to skip the `checks/` directory.
+`src/becwright/**/*.py` to skip the `checks/` directory. For individual lines,
+the `becwright: ignore` marker above is simpler.

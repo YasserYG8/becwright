@@ -64,6 +64,22 @@ process.exit(bad ? 1 : 0);
 Un check incluido de Python sigue el mismo esqueleto — ver
 `src/becwright/checks/dangerous_eval.py`.
 
+## Ignorar una línea
+
+Un falso positivo —un patrón que aparece como texto, no como una violación
+real— se puede suprimir con un marcador `becwright: ignore` en un comentario de
+esa línea, en cualquier lenguaje:
+
+```py
+result = eval(expr)  # becwright: ignore
+```
+
+```js
+console.log(x);  // becwright: ignore
+```
+
+El marcador exime a la línea de todos los checks incluidos.
+
 ## La trampa de la auto-referencia
 
 Un check de texto/regex no puede correr sobre su propia fuente: un check que
@@ -71,3 +87,4 @@ prohíbe el string `eval(` va a matchear la mismísima línea de su propio códi
 que define ese patrón. Cuando el check de una regla escanearía su propio archivo,
 acotá `paths` para excluirlo — p.ej. usá `src/becwright/*.py` (solo el nivel
 superior) en vez de `src/becwright/**/*.py` para saltarte el directorio `checks/`.
+Para líneas puntuales, el marcador `becwright: ignore` de arriba es más simple.
