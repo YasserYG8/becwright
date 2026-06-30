@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="becwright — Rules that run, not notes that get ignored">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dx="0" dy="6" result="o"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- backdrop -->
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <!-- faint hex grid accents top-right -->
+  <g opacity="0.06" stroke="#BEF264" stroke-width="2" fill="none">
+    <path d="M1120 70 L1170 99 V157 L1120 186 L1070 157 V99 Z"/>
+    <path d="M1210 122 L1260 151 V209 L1210 238 L1160 209 V151 Z"/>
+  </g>
+  <!-- lime edge accent -->
+  <rect x="0" y="0" width="10" height="640" fill="#BEF264"/>
+
+  <!-- logo mark -->
+  <g transform="translate(96,168) scale(1.45)" filter="url(#soft)">
+    <path d="M100 20 L170 60 V140 L100 180 L30 140 V60 L100 20 Z" fill="#1F2937"/>
+    <rect x="62" y="65" width="8" height="70" rx="4" fill="#BEF264"/>
+    <path d="M85 65 V135 L145 100 Z" fill="#BEF264" stroke-linejoin="round"/>
+  </g>
+
+  <!-- wordmark + tagline -->
+  <g font-family="DejaVu Sans, Verdana, Helvetica, Arial, sans-serif">
+    <text x="500" y="248" fill="#F9FAFB" font-size="104" font-weight="700" letter-spacing="-2">becwright</text>
+    <text x="504" y="312" fill="#BEF264" font-size="34" font-weight="700">Rules that run, not notes that get ignored.</text>
+    <text x="504" y="360" fill="#9CA3AF" font-size="24" font-family="DejaVu Sans Mono, ui-monospace, monospace">Deterministic, portable rules. Any language.</text>
+  </g>
+
+  <!-- terminal chip showing a blocked commit -->
+  <g font-family="DejaVu Sans Mono, ui-monospace, monospace" xml:space="preserve">
+    <rect x="500" y="408" width="688" height="150" rx="14" fill="#111827" stroke="#1F2937" stroke-width="2"/>
+    <circle cx="528" cy="436" r="6" fill="#EF4444"/>
+    <circle cx="550" cy="436" r="6" fill="#F59E0B"/>
+    <circle cx="572" cy="436" r="6" fill="#22C55E"/>
+    <text x="524" y="486" font-size="24"><tspan fill="#F87171" font-weight="700">  BLOCK</tspan><tspan fill="#E5E7EB">  no-hardcoded-secrets   </tspan><tspan fill="#F87171" font-weight="700">(blocking)</tspan></text>
+    <text x="524" y="528" font-size="22" fill="#9CA3AF">  &gt;&gt;&gt; caught before it shipped — guaranteed, not asked.</text>
+  </g>
+</svg>
