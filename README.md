@@ -138,12 +138,36 @@ rules:
     severity: warning
 ```
 
+## Compartir BECs entre repos
+
+Una BEC es **portable**: podés sacarla de un repo e instalarla en otro. Un
+bundle es un único archivo `.bec.yaml` autocontenido (la regla + el código del
+check si es custom).
+
+```bash
+# En el repo de origen: exportar una regla a un archivo
+becwright export no-token-in-logs -o no-token-in-logs.bec.yaml
+
+# En otro repo: importar (desde archivo o URL http/https)
+becwright import no-token-in-logs.bec.yaml
+becwright import https://ejemplo.com/no-token-in-logs.bec.yaml
+```
+
+Al importar, becwright **muestra el código del check y pide confirmación** antes
+de instalarlo: importar una BEC es importar código que se ejecutará en cada
+commit. Usá `--yes` para saltar la confirmación en entornos automatizados.
+
+Los checks built-in (`python3 -m becwright.checks.*`) viajan con el paquete, así
+que el bundle solo guarda su nombre. Un check **custom** (`.bec/checks/foo.py`)
+viaja con su código embebido y aterriza en `.bec/checks/` del repo destino.
+
 ## Estado actual
 
 El **MVP instalable** está construido y verificado end-to-end: motor empaquetado
-(`src/becwright/`), CLI (`check` / `install` / `uninstall`), hook de git nativo
-que frena un commit con un token en un log, cinco checks incluidos y tests en
-verde. El prototipo original queda **archivado** en `prototype/` como referencia.
+(`src/becwright/`), CLI (`check` / `install` / `uninstall` / `export` /
+`import`), hook de git nativo que frena un commit con un token en un log, cinco
+checks incluidos, portabilidad de BECs entre repos y tests en verde. El
+prototipo original queda **archivado** en `prototype/` como referencia.
 
 - **Plan y norte del proyecto:** [`docs/plan.md`](docs/plan.md)
 - **Contexto del proyecto:** [`CLAUDE.md`](CLAUDE.md)
@@ -151,5 +175,5 @@ verde. El prototipo original queda **archivado** en `prototype/` como referencia
 - **Decisiones tomadas:** [`docs/decisiones.md`](docs/decisiones.md)
 - **Estado y roadmap:** [`docs/estado-y-roadmap.md`](docs/estado-y-roadmap.md)
 
-El trabajo futuro (portabilidad / import-export de BECs entre repos, AST,
-multi-lenguaje) está documentado en [`docs/plan.md`](docs/plan.md).
+El trabajo futuro (AST, multi-lenguaje, firma de verificaciones) está
+documentado en [`docs/plan.md`](docs/plan.md).
