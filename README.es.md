@@ -1,5 +1,9 @@
 > [English](README.md) · **Español**
 
+<p align="center">
+  <img src="assets/becwright-logo.svg" alt="becwright" width="140" height="140">
+</p>
+
 # becwright
 
 [![CI](https://github.com/DataDave-Dev/becwright/actions/workflows/ci.yml/badge.svg)](https://github.com/DataDave-Dev/becwright/actions/workflows/ci.yml)
