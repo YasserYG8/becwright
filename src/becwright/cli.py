@@ -7,8 +7,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from . import __version__, bundle, git
-from .engine import Result, evaluate
+from . import __version__, bundle, git, report
+from .engine import Result
 from .rules import load_rules
 
 RED = "\033[91m"; GREEN = "\033[92m"; YELLOW = "\033[93m"
@@ -37,18 +37,21 @@ def _print_result(result: Result) -> None:
 
 def _cmd_check(args: argparse.Namespace) -> int:
     root = git.repo_root()
-    rules = load_rules(root / ".bec" / "rules.yaml")
+    rules, files, result = report.gather(root, all_files=args.all)
+
+    if args.json:
+        import json
+        print(json.dumps(report.payload(rules, files, result), indent=2))
+        return 1 if (result and result.had_blocking) else 0
+
     if not rules:
         print(f"{YELLOW}No .bec/rules.yaml with rules. Nothing to check.{RESET}")
         return 0
-
-    files = git.files_to_check(root, all_files=args.all)
     if not files:
         print(f"{DIM}No files to check.{RESET}")
         return 0
 
     print(f"{BOLD}BEC -- {len(files)} file(s) against {len(rules)} rule(s){RESET}\n")
-    result = evaluate(rules, files, root)
     _print_result(result)
 
     if result.had_blocking:
@@ -96,6 +99,18 @@ def _cmd_run(args: argparse.Namespace) -> int:
     # (e.g. forbid --pattern) read sys.argv[1:]; the rest just ignore it.
     sys.argv = [f"becwright run {args.module}", *args.args]
     return import_module(f"becwright.checks.{args.module}").main()
+
+
+def _cmd_mcp(_: argparse.Namespace) -> int:
+    try:
+        from .mcp_server import serve
+    except ImportError:
+        print(f"{RED}The MCP server needs the 'mcp' extra.{RESET}", file=sys.stderr)
+        print(f'{DIM}    pipx install "becwright[mcp]"   (or: pip install "becwright[mcp]"){RESET}',
+              file=sys.stderr)
+        return 2
+    serve()
+    return 0
 
 
 def _cmd_list(_: argparse.Namespace) -> int:
@@ -283,6 +298,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     p_check = sub.add_parser("check", help="check the code against the rules")
     p_check.add_argument("--all", action="store_true", help="check the whole repo, not just staging")
+    p_check.add_argument("--json", action="store_true", help="output results as JSON")
     p_check.set_defaults(func=_cmd_check)
 
     p_init = sub.add_parser("init", help="scaffold a starter .bec/rules.yaml and install the hook")
@@ -295,6 +311,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p_run.set_defaults(func=_cmd_run)
 
     sub.add_parser("list", help="list the built-in checks").set_defaults(func=_cmd_list)
+    sub.add_parser("mcp", help="run the MCP server for AI agents (needs the 'mcp' extra)").set_defaults(func=_cmd_mcp)
     sub.add_parser("install", help="install the pre-commit hook").set_defaults(func=_cmd_install)
     sub.add_parser("uninstall", help="remove the pre-commit hook").set_defaults(func=_cmd_uninstall)
 

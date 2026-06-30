@@ -27,10 +27,10 @@ class NotAGitRepo(RuntimeError):
     pass
 
 
-def repo_root() -> Path:
+def repo_root(cwd: Path | None = None) -> Path:
     res = subprocess.run(
         ["git", "rev-parse", "--show-toplevel"],
-        capture_output=True, text=True,
+        cwd=cwd, capture_output=True, text=True,
     )
     if res.returncode != 0:
         raise NotAGitRepo("You are not inside a git repository.")

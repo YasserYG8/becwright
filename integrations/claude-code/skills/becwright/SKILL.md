@@ -49,6 +49,10 @@ commit runs the checks; a blocking rule that fails stops the commit.
 | `becwright import <url-or-file>` | Add a BEC from the catalog (shows code, asks before installing) |
 | `becwright export <rule-id>` | Export a rule as a portable `.bec.yaml` |
 
+For structured results you can parse, use `becwright check --json`. An MCP server
+is also available (`becwright mcp`, needs the `mcp` extra) exposing `check` and
+`list_checks` as tools.
+
 Catalog of ready-to-use BECs:
 https://github.com/DataDave-Dev/becwright/tree/main/becs
 

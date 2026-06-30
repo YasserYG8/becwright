@@ -165,3 +165,11 @@ def test_run_unknown_check_returns_2(monkeypatch):
     import io
     monkeypatch.setattr("sys.stdin", io.StringIO(""))
     assert cli.main(["run", "nope_check"]) == 2
+
+
+# --- the mcp subcommand ---
+
+def test_mcp_subcommand_without_extra(monkeypatch):
+    # Simulate the 'mcp' extra not being installed: force the import to fail.
+    monkeypatch.setitem(sys.modules, "becwright.mcp_server", None)
+    assert cli.main(["mcp"]) == 2

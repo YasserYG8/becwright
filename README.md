@@ -92,6 +92,11 @@ Claude Code plugin so an agent can install and drive it for you:
 It adds a `becwright` skill and a `/becwright` command. See
 [`integrations/claude-code/`](integrations/claude-code/).
 
+For structured results, `becwright check --json` prints a machine-readable
+summary, and `becwright mcp` (install the `mcp` extra: `pipx install
+"becwright[mcp]"`) runs an MCP server exposing `check` and `list_checks` to any
+agent. See [`documentation/mcp.md`](documentation/mcp.md).
+
 A rule in `.bec/rules.yaml`:
 
 ```yaml
