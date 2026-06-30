@@ -15,3 +15,40 @@ rules:
       - "tests/**/*.py"
     check: "python3 -m becwright.checks.redundant_comments"
     severity: warning
+
+  - id: no-debug-remnants
+    intent: >
+      The engine code must never ship a debugger or pdb statement.
+    why_it_matters: >
+      A forgotten breakpoint would hang becwright itself, in CI or for users.
+    # Scoped to top-level modules (src/becwright/*.py): the checks/ directory is
+    # excluded on purpose, since debug_remnants would match its own pattern
+    # definition (a check that searches for a string can't run over its own source).
+    paths:
+      - "src/becwright/*.py"
+    check: "python3 -m becwright.checks.debug_remnants"
+    severity: blocking
+
+  - id: no-wildcard-imports
+    intent: >
+      No 'from x import *' anywhere in the codebase.
+    why_it_matters: >
+      Wildcard imports hide where each name comes from and break static analysis.
+    paths:
+      - "src/becwright/**/*.py"
+      - "tests/**/*.py"
+    check: "python3 -m becwright.checks.wildcard_imports"
+    severity: blocking
+
+  - id: no-dangerous-eval
+    intent: >
+      The engine must not use eval() / exec().
+    why_it_matters: >
+      becwright runs inside other people's repos; arbitrary code execution in
+      the tool itself would be a serious risk.
+    # Same scoping note as no-debug-remnants: checks/ excluded (dangerous_eval
+    # matches its own pattern definition).
+    paths:
+      - "src/becwright/*.py"
+    check: "python3 -m becwright.checks.dangerous_eval"
+    severity: blocking
