@@ -1,88 +1,89 @@
-# becwright — contexto del proyecto
+# becwright — project context
 
-> Este archivo se carga en cada sesión. Es la fuente de verdad para entender
-> de qué va el proyecto, qué decisiones se tomaron y qué está dentro/fuera de
-> alcance. Mantenlo corto y actualizado.
+> This file is loaded every session. It is the source of truth for understanding
+> what the project is about, what decisions were made, and what is in/out of
+> scope. Keep it short and up to date.
 
-## Qué es
+## What it is
 
-becwright hace cumplir **restricciones (constraints) sobre el código de forma
-determinista**, frenando commits que las violan. La diferencia con
-`CLAUDE.md` / `.cursorrules`: esos *piden* a un agente que respete reglas
-(probabilístico, el agente puede ignorarlas); becwright **verifica el
-resultado** ejecutando un chequeo real sobre el código (garantizado, no
-depende del agente).
+becwright enforces **constraints on code deterministically**, blocking commits
+that violate them. The difference with `CLAUDE.md` / `.cursorrules`: those *ask*
+an agent to respect rules (probabilistic, the agent can ignore them); becwright
+**verifies the result** by running a real check against the code (guaranteed,
+does not depend on the agent).
 
-Las dos capas son complementarias: las notas previenen, becwright es la red
-de seguridad determinista para lo que se cuela.
+The two layers are complementary: notes prevent, becwright is the deterministic
+safety net for what slips through.
 
-## Concepto central: BEC (Bound Executable Constraint)
+## Core concept: BEC (Bound Executable Constraint)
 
-Una constraint con tres propiedades juntas:
+A constraint with three properties together:
 
-- **Bound (atada)** — nace ligada a la *intención* y el *por qué* que la creó.
-- **Executable (ejecutable)** — lleva un chequeo que corre y da pasa/no-pasa.
-- **Portable** — puede exportarse de un repo e importarse en otro.
+- **Bound** — born tied to the *intent* and the *why* that created it.
+- **Executable** — carries a check that runs and returns pass/fail.
+- **Portable** — can be exported from one repo and imported into another.
 
-Detalle completo en [`docs/concepto-bec.md`](docs/concepto-bec.md).
+Full detail in [`docs/concepto-bec.md`](docs/concepto-bec.md).
 
-## Estructura del repo
+## Repo structure
 
 ```
 becwright/
-├── CLAUDE.md                 # este archivo: contexto persistente
-├── README.md                 # documento conceptual público
-├── pyproject.toml            # empaquetado + comando `becwright` (setuptools)
-├── src/becwright/            # MOTOR empaquetado (instalable, no se copia a cada repo)
-│   ├── cli.py                # argparse: check / install / uninstall
-│   ├── engine.py             # matching de paths + corre checks + decide pasa/no-pasa
-│   ├── rules.py              # modelo Regla + carga de .bec/rules.yaml
-│   ├── git.py                # raíz del repo, archivos staged, hook nativo
-│   └── checks/               # checks incluidos (no_token_in_logs, ...)
+├── CLAUDE.md                 # this file: persistent context
+├── README.md                 # public conceptual document (English; README.es.md = Spanish)
+├── pyproject.toml            # packaging + `becwright` command (setuptools)
+├── src/becwright/            # packaged ENGINE (installable, not copied into each repo)
+│   ├── cli.py                # argparse: check / install / uninstall / export / import
+│   ├── engine.py             # path matching + runs checks + decides pass/fail
+│   ├── rules.py              # Rule model + loading of .bec/rules.yaml
+│   ├── bundle.py             # export/import of BECs (the portable bundle)
+│   ├── git.py                # repo root, staged files, native hook
+│   └── checks/               # included checks (no_token_in_logs, forbid, ...)
+├── becs/                     # catalog of importable BECs (.bec.yaml bundles)
 ├── tests/                    # pytest
-├── docs/                     # concepto, decisiones, estado-y-roadmap
-└── prototype/                # PROTOTIPO ARCHIVADO (referencia, no se construye encima sin avisar)
+├── docs/                     # concept, decisions, status-and-roadmap (Spanish, gitignored)
+└── prototype/                # ARCHIVED PROTOTYPE (reference, not built upon without notice)
 ```
 
-El repo que *adopta* becwright solo aporta su propio `.bec/rules.yaml`; el motor
-viene del paquete instalado.
+A repo that *adopts* becwright only contributes its own `.bec/rules.yaml`; the
+engine comes from the installed package.
 
-## Estado actual
+## Current status
 
-**MVP (A + B)** y **Fase 1** ("usable por otros") hechos. **Fase 2
-(Portabilidad, C)** hecha: `becwright export` / `import` mueven una BEC entre
-repos como un único `.bec.yaml` autocontenido (el código del check custom viaja
-embebido), con un gate de confianza que muestra el código antes de instalar.
-Comandos: `check / install / uninstall / export / import`. **Multi-lenguaje:** el
-motor es agnóstico (corre cualquier check sobre cualquier archivo); el check
-genérico `forbid` (regex por `--pattern`) deja escribir reglas para cualquier
-lenguaje sin código, y el catálogo trae BECs de Python y JS/TS. Checks incluidos:
-`forbid` (cualquier lenguaje), `hardcoded_secrets` y `dangerous_eval`
-(agnósticos), y `no_token_in_logs` / `debug_remnants` / `wildcard_imports`
-(Python). El prototipo original queda **archivado** en `prototype/` como
-referencia. Plan y norte en [`docs/plan.md`](docs/plan.md); detalle en
+**MVP (A + B)** and **Phase 1** ("usable by others") done. **Phase 2
+(Portability, C)** done: `becwright export` / `import` move a BEC between repos
+as a single self-contained `.bec.yaml` (a custom check's code travels embedded),
+with a trust gate that shows the code before installing. Commands:
+`check / install / uninstall / export / import`. **Multi-language:** the engine
+is agnostic (runs any check on any file); the generic `forbid` check (regex via
+`--pattern`) lets you write rules for any language without code, and the catalog
+includes Python and JS/TS BECs. Included checks: `forbid` (any language),
+`hardcoded_secrets` and `dangerous_eval` (agnostic), and `no_token_in_logs` /
+`debug_remnants` / `wildcard_imports` (Python). The original prototype is
+**archived** under `prototype/` as a reference. Plan and north star in
+[`docs/plan.md`](docs/plan.md); detail in
 [`docs/estado-y-roadmap.md`](docs/estado-y-roadmap.md).
 
-## Alcance y no-objetivos
+## Scope and non-goals
 
-**Dentro:** el MVP A + B (CLI instalable + hook nativo), la portabilidad C
-(export / import de BECs entre repos) y el soporte multi-lenguaje (motor
-agnóstico + check `forbid`); mantener documentación y prototipo de referencia al
-día.
+**In:** the MVP A + B (installable CLI + native hook), portability C (export /
+import of BECs between repos) and multi-language support (agnostic engine +
+`forbid` check); keep documentation and the reference prototype up to date.
 
-**Fuera (trabajo futuro, no tocar sin pedirlo):** análisis AST, tooling profundo
-por lenguaje (suites de checks específicas, AST por lenguaje),
-firma/verificación criptográfica de BECs, "mejorar" el regex de los checks.
+**Out (future work, do not touch without asking):** AST analysis, deep
+per-language tooling (language-specific check suites, per-language AST),
+cryptographic signing/verification of BECs, "improving" the checks' regexes.
 
-## Convenciones
+## Conventions
 
-- Código y comentarios **en ingles**.
-- Comentarios reservados para código complejo: si el código se entiende solo,
-  no se comenta. Nada de comentarios que repiten lo obvio.
-- Python 3.12 objetivo (el entorno actual tiene 3.14; anotarlo, no forzar).
-- Dependencias mínimas: solo `pyyaml`. No agregar otras sin preguntar.
-- No cambiar el formato de `rules.yaml` ni la lógica de `checks/` sin preguntar.
-- Simplicidad y claridad por encima de cantidad de features (esto aspira a ser
-  un estándar).
-- Commits **atómicos**: cada commit es un solo cambio lógico y completo (deja
-  los tests en verde). No mezclar cambios sin relación en un mismo commit.
+- Code and comments **in English**.
+- Comments reserved for complex code: if the code is self-explanatory, it is not
+  commented. No comments that restate the obvious.
+- Python 3.12 target (the current environment has 3.14; note it, do not force).
+- Minimal dependencies: only `pyyaml`. Do not add others without asking.
+- Do not change the `rules.yaml` format or the `checks/` logic without asking.
+- Simplicity and clarity over feature count (this aims to be a standard).
+- **Atomic** commits: each commit is a single, complete logical change (leaves
+  the tests green). Do not mix unrelated changes in one commit.
+- The repo is in English; the human-facing README has a Spanish variant
+  (`README.es.md`). `docs/` stays in Spanish and is gitignored.

@@ -1,210 +1,207 @@
+> **English** · [Español](README.es.md)
+
 # becwright
 
-**Reglas que se ejecutan, no notas que se ignoran.**
+**Rules that run, not notes that get ignored.**
 
-`becwright` hace cumplir restricciones (constraints) sobre tu código de forma
-determinista: en lugar de *pedirle* a un agente de IA que respete una regla
-(como hace `CLAUDE.md`, `.cursorrules`, etc. — que el agente puede leer e
-ignorar), becwright **verifica el resultado** y frena el commit si la regla
-se rompe.
+`becwright` enforces constraints on your code deterministically: instead of
+*asking* an AI agent to respect a rule (the way `CLAUDE.md`, `.cursorrules`,
+etc. do — which the agent can read and ignore), becwright **verifies the
+result** and blocks the commit if the rule is broken.
 
-## El problema
+## The problem
 
-Un agente de IA escribe código y deja una nota: *"esto nunca debe loguear
-tokens de sesión"*. Esa nota es texto. Tres meses después, otro agente
-regenera el módulo, no la lee, y mete el token en los logs. Nadie se entera
-hasta que explota en producción.
+An AI agent writes code and leaves a note: *"this must never log session
+tokens"*. That note is text. Three months later, another agent regenerates the
+module, doesn't read it, and drops the token into the logs. Nobody notices
+until it blows up in production.
 
-Las notas son **probabilísticas** (dependen de que el agente lea, entienda y
-obedezca). becwright es **determinista**: la regla se ejecuta sobre el código
-real y da pasa/no-pasa, sin importar qué agente o modelo hizo el cambio.
+Notes are **probabilistic** (they depend on the agent reading, understanding and
+obeying). becwright is **deterministic**: the rule runs against the real code
+and returns pass/fail, no matter which agent or model made the change.
 
-| | Nota en CLAUDE.md | Regla becwright |
+| | Note in CLAUDE.md | becwright rule |
 |---|---|---|
-| Qué hace | *Pide* que se respete | *Verifica* que se respetó |
-| Depende de | Que el agente la lea y obedezca | Nada — se ejecuta sobre el código |
-| Resultado | Probable | Garantizado |
-| Analogía | Letrero de "velocidad máxima" | Tope físico en la calle |
+| What it does | *Asks* to be respected | *Verifies* it was respected |
+| Depends on | The agent reading and obeying | Nothing — it runs against the code |
+| Result | Likely | Guaranteed |
+| Analogy | A "speed limit" sign | A physical bump in the road |
 
-Las dos capas son complementarias: CLAUDE.md previene (que el 95% salga bien
-a la primera), becwright es la red de seguridad para el 5% que se cuela.
+The two layers are complementary: CLAUDE.md prevents (so 95% comes out right the
+first time), becwright is the safety net for the 5% that slips through.
 
-## Concepto central: BEC (Bound Executable Constraint)
+## Core concept: BEC (Bound Executable Constraint)
 
-Una BEC es una constraint con tres propiedades que ningún artefacto actual
-tiene juntas:
+A BEC is a constraint with three properties that no current artifact has
+together:
 
-- **Bound (atada)** — la regla nace ligada a la *intención* y la decisión que
-  la creó (el *por qué*), no es una regla suelta sin contexto.
-- **Executable (ejecutable)** — lleva un chequeo que corre y devuelve
-  pasa/no-pasa, no es prosa que alguien promete respetar.
-- **Portable** — puede exportarse de un repo e importarse en otro, como un
-  paquete (esto es lo que genera el efecto de red a futuro).
+- **Bound** — the rule is born tied to the *intent* and the decision that
+  created it (the *why*); it is not a loose rule without context.
+- **Executable** — it carries a check that runs and returns pass/fail; it is not
+  prose someone promises to respect.
+- **Portable** — it can be exported from one repo and imported into another,
+  like a package (this is what creates the network effect over time).
 
-## Cómo se usa
+## How to use it
 
-becwright se instala una vez como herramienta; cada repo solo aporta su propio
+becwright is installed once as a tool; each repo only contributes its own
 `.bec/rules.yaml`.
 
 ```bash
-# 1. Instalar el motor (una vez, global)
-pipx install git+https://github.com/DataDave-Dev/becwright.git   # o local: pipx install .
+# 1. Install the engine (once, global)
+pipx install git+https://github.com/DataDave-Dev/becwright.git   # or local: pipx install .
 
-# 2. En el repo donde querés las reglas, instalar el hook de git
-becwright install                   # escribe .git/hooks/pre-commit
+# 2. In the repo where you want the rules, install the git hook
+becwright install                   # writes .git/hooks/pre-commit
 
-# 3. Escribir tus reglas en .bec/rules.yaml (ver ejemplos abajo)
-# 4. Listo: cada commit corre los chequeos; si una regla blocking falla, frena.
+# 3. Write your rules in .bec/rules.yaml (see examples below)
+# 4. Done: each commit runs the checks; if a blocking rule fails, it stops.
 ```
 
-Comandos disponibles:
+Available commands:
 
-| Comando | Qué hace |
+| Command | What it does |
 |---|---|
-| `becwright check` | Corre las reglas sobre los archivos en staging |
-| `becwright install` | Instala el hook `pre-commit` nativo |
-| `becwright uninstall` | Quita el hook |
+| `becwright check` | Runs the rules over the staged files |
+| `becwright install` | Installs the native `pre-commit` hook |
+| `becwright uninstall` | Removes the hook |
+| `becwright export <id>` | Exports a BEC to a `.bec.yaml` file |
+| `becwright import <file\|URL>` | Imports a BEC from another repo |
 
-Una regla en `.bec/rules.yaml`:
+A rule in `.bec/rules.yaml`:
 
 ```yaml
 rules:
   - id: no-token-in-logs
     intent: >
-      Los tokens de sesión y credenciales nunca deben llegar a ningún log.
+      Session tokens and credentials must never reach any log.
     why_it_matters: >
-      Si un token aparece en los logs, cualquiera con acceso a ellos puede
-      robar la sesión de un usuario.
+      If a token shows up in the logs, anyone with access to them can steal a
+      user's session.
     paths: ["src/**/*.py"]
     check: "python3 -m becwright.checks.no_token_in_logs"
-    severity: blocking   # blocking = frena el commit | warning = solo avisa
+    severity: blocking   # blocking = stops the commit | warning = only warns
 ```
 
-## Checks incluidos
+## Included checks
 
-becwright trae chequeos listos para usar. Cada uno es un módulo que se invoca
-desde el campo `check`. Son **basados en texto/regex** (no análisis AST), así
-que son conservadores y pueden tener casos límite; el valor está en atar cada
-regla a su *por qué*.
+becwright ships ready-to-use checks. Each one is a module invoked from the
+`check` field. They are **text/regex based** (no AST analysis), so they are
+conservative and may have edge cases; the value is in tying each rule to its
+*why*.
 
-| Check | Qué detecta | Lenguaje | Severidad sugerida |
+| Check | What it detects | Language | Suggested severity |
 |---|---|---|---|
-| `forbid` | Cualquier regex que le pases (`--pattern`) | cualquiera | según el caso |
-| `no_token_in_logs` | Tokens/credenciales en llamadas a logs | Python | `blocking` |
-| `hardcoded_secrets` | Claves AWS, claves privadas, `password = "..."` literales | cualquiera | `blocking` |
-| `debug_remnants` | `breakpoint()`, `pdb.set_trace()`, `import pdb` olvidados | Python | `blocking` |
-| `dangerous_eval` | Llamadas a `eval()` / `exec()` | cualquiera | `blocking` |
+| `forbid` | Any regex you pass (`--pattern`) | any | depends on the case |
+| `no_token_in_logs` | Tokens/credentials in log calls | Python | `blocking` |
+| `hardcoded_secrets` | AWS keys, private keys, `password = "..."` literals | any | `blocking` |
+| `debug_remnants` | Forgotten `breakpoint()`, `pdb.set_trace()`, `import pdb` | Python | `blocking` |
+| `dangerous_eval` | `eval()` / `exec()` calls | any | `blocking` |
 | `wildcard_imports` | `from x import *` | Python | `warning` |
 
-Reglas de ejemplo para copiar a tu `.bec/rules.yaml`:
+Example rules to copy into your `.bec/rules.yaml`:
 
 ```yaml
 rules:
   - id: no-hardcoded-secrets
     intent: >
-      Ningún secreto (clave, token, contraseña) debe quedar escrito en el código.
+      No secret (key, token, password) should be hardcoded in the code.
     why_it_matters: >
-      Un secreto en el repo queda en el historial de git para siempre y es
-      visible para cualquiera con acceso al código.
+      A secret in the repo stays in git history forever and is visible to
+      anyone with access to the code.
     paths: ["src/**/*.py"]
     check: "python3 -m becwright.checks.hardcoded_secrets"
     severity: blocking
 
   - id: no-debug-remnants
     intent: >
-      No se commitea código de depuración (breakpoints, pdb).
+      Debug code (breakpoints, pdb) must not be committed.
     why_it_matters: >
-      Un breakpoint olvidado cuelga el proceso en producción o en CI.
+      A forgotten breakpoint hangs the process in production or CI.
     paths: ["src/**/*.py"]
     check: "python3 -m becwright.checks.debug_remnants"
     severity: blocking
 
   - id: no-dangerous-eval
     intent: >
-      No usar eval()/exec(), que ejecutan código arbitrario.
+      Do not use eval()/exec(), which execute arbitrary code.
     why_it_matters: >
-      eval/exec sobre entrada no confiable es ejecución remota de código.
+      eval/exec on untrusted input is remote code execution.
     paths: ["src/**/*.py"]
     check: "python3 -m becwright.checks.dangerous_eval"
     severity: blocking
 
   - id: no-wildcard-imports
     intent: >
-      Evitar 'from x import *', que ensucia el namespace.
+      Avoid 'from x import *', which pollutes the namespace.
     why_it_matters: >
-      Los imports wildcard ocultan de dónde viene cada nombre y rompen el
-      análisis estático.
+      Wildcard imports hide where each name comes from and break static
+      analysis.
     paths: ["src/**/*.py"]
     check: "python3 -m becwright.checks.wildcard_imports"
     severity: warning
 ```
 
-## Cualquier lenguaje
+## Any language
 
-becwright es **agnóstico al lenguaje**: el motor solo filtra archivos por sus
-`paths` (globs) y corre el `check` como un comando; nunca asume Python. Podés
-vigilar JavaScript, Go, Rust, o lo que sea.
+becwright is **language-agnostic**: the engine only filters files by their
+`paths` (globs) and runs the `check` as a command; it never assumes Python. You
+can watch JavaScript, Go, Rust, or anything else.
 
-La forma más rápida de escribir una regla para otro lenguaje —sin escribir
-código— es el check `forbid`, que falla si un regex aparece en los archivos:
+The fastest way to write a rule for another language —without writing code— is
+the `forbid` check, which fails if a regex appears in the files:
 
 ```yaml
 rules:
   - id: no-debugger-js
     intent: >
-      No dejar 'debugger;' en el código JavaScript/TypeScript.
+      Do not leave 'debugger;' in JavaScript/TypeScript code.
     why_it_matters: >
-      Un 'debugger' olvidado detiene la ejecución y no debería llegar a producción.
+      A forgotten 'debugger' halts execution and should not reach production.
     paths: ["**/*.js", "**/*.ts"]
     check: "python3 -m becwright.checks.forbid --pattern '\\bdebugger\\b'"
     severity: blocking
 ```
 
-`forbid` acepta `--pattern REGEX`, `--ignore-case` y `--message TEXTO`. Para
-checks más finos, escribí tu propio script en el lenguaje que quieras (un
-ejecutable que lea la lista de archivos por stdin y salga con código 0/1) y
-apuntá `check` a él.
+`forbid` accepts `--pattern REGEX`, `--ignore-case` and `--message TEXT`. For
+finer checks, write your own script in whatever language you want (an executable
+that reads the file list from stdin and exits with code 0/1) and point `check`
+at it.
 
-## Compartir BECs entre repos
+## Sharing BECs between repos
 
-Una BEC es **portable**: podés sacarla de un repo e instalarla en otro. Un
-bundle es un único archivo `.bec.yaml` autocontenido (la regla + el código del
-check si es custom).
+A BEC is **portable**: you can take it out of one repo and install it in
+another. A bundle is a single self-contained `.bec.yaml` file (the rule + the
+check's code if it is custom).
 
 ```bash
-# En el repo de origen: exportar una regla a un archivo
+# In the source repo: export a rule to a file
 becwright export no-token-in-logs -o no-token-in-logs.bec.yaml
 
-# En otro repo: importar (desde archivo o URL http/https)
+# In another repo: import it (from a file or an http/https URL)
 becwright import no-token-in-logs.bec.yaml
-becwright import https://ejemplo.com/no-token-in-logs.bec.yaml
+becwright import https://example.com/no-token-in-logs.bec.yaml
 ```
 
-Al importar, becwright **muestra el código del check y pide confirmación** antes
-de instalarlo: importar una BEC es importar código que se ejecutará en cada
-commit. Usá `--yes` para saltar la confirmación en entornos automatizados.
+On import, becwright **shows the check's code and asks for confirmation** before
+installing it: importing a BEC is importing code that will run on every commit.
+Use `--yes` to skip the confirmation in automated environments.
 
-Hay un **catálogo de BECs listas para usar** en [`becs/`](becs/) que podés
-importar directo desde su URL cruda.
+There is a **catalog of ready-to-use BECs** in [`becs/`](becs/) that you can
+import directly from their raw URL.
 
-Los checks built-in (`python3 -m becwright.checks.*`) viajan con el paquete, así
-que el bundle solo guarda su nombre. Un check **custom** (`.bec/checks/foo.py`)
-viaja con su código embebido y aterriza en `.bec/checks/` del repo destino.
+Built-in checks (`python3 -m becwright.checks.*`) travel with the package, so
+the bundle only stores their name. A **custom** check (`.bec/checks/foo.py`)
+travels with its code embedded and lands in `.bec/checks/` of the target repo.
 
-## Estado actual
+## Current status
 
-El **MVP instalable** está construido y verificado end-to-end: motor empaquetado
+The **installable MVP** is built and verified end-to-end: packaged engine
 (`src/becwright/`), CLI (`check` / `install` / `uninstall` / `export` /
-`import`), hook de git nativo que frena un commit con un token en un log, checks
-incluidos (Python + el genérico `forbid` para cualquier lenguaje), portabilidad
-de BECs entre repos, catálogo con BECs de Python y JS/TS, y tests en verde. El
-prototipo original queda **archivado** en `prototype/` como referencia.
+`import`), native git hook that blocks a commit with a token in a log, included
+checks (Python + the generic `forbid` for any language), BEC portability between
+repos, a catalog with Python and JS/TS BECs, and a green test suite. The original
+prototype is **archived** under `prototype/` as a reference.
 
-- **Plan y norte del proyecto:** [`docs/plan.md`](docs/plan.md)
-- **Contexto del proyecto:** [`CLAUDE.md`](CLAUDE.md)
-- **El concepto BEC en detalle:** [`docs/concepto-bec.md`](docs/concepto-bec.md)
-- **Decisiones tomadas:** [`docs/decisiones.md`](docs/decisiones.md)
-- **Estado y roadmap:** [`docs/estado-y-roadmap.md`](docs/estado-y-roadmap.md)
-
-El trabajo futuro (análisis AST, tooling profundo por lenguaje, firma de
-verificaciones) está documentado en [`docs/plan.md`](docs/plan.md).
+Future work (AST analysis, deep per-language tooling, cryptographic signing of
+verifications) is documented in the project plan.
