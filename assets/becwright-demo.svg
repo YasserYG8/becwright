@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 432" width="760" height="432" role="img" aria-label="becwright demo terminal output: a sample commit is blocked" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+  <!-- window -->
+  <rect x="0" y="0" width="760" height="432" rx="12" fill="#111827"/>
+  <rect x="0" y="0" width="760" height="36" rx="12" fill="#1F2937"/>
+  <rect x="0" y="24" width="760" height="12" fill="#1F2937"/>
+  <circle cx="22" cy="18" r="5" fill="#EF4444"/>
+  <circle cx="42" cy="18" r="5" fill="#F59E0B"/>
+  <circle cx="62" cy="18" r="5" fill="#22C55E"/>
+  <text x="380" y="22" text-anchor="middle" fill="#9CA3AF">becwright demo</text>
+
+  <!-- body -->
+  <text x="24" y="68"><tspan fill="#BEF264" font-weight="700">$</tspan><tspan fill="#F9FAFB"> becwright demo</tspan></text>
+
+  <text x="24" y="100" fill="#9CA3AF">Pretend someone is about to commit this file:</text>
+  <text x="24" y="122" fill="#F9FAFB" font-weight="700">  checkout.py</text>
+  <text x="24" y="144" fill="#E5E7EB">      api_key = "x7Kp2mQ9vT4nB8wL"</text>
+  <text x="24" y="166" fill="#E5E7EB">      discount = eval(rule)</text>
+
+  <text x="24" y="206"><tspan fill="#F87171" font-weight="700">  BLOCK</tspan><tspan fill="#E5E7EB">  no-hardcoded-secrets  </tspan><tspan fill="#F87171" font-weight="700">(blocking)</tspan></text>
+  <text x="24" y="228" fill="#9CA3AF">        Why it matters: a secret stays in git history forever.</text>
+  <text x="24" y="258"><tspan fill="#F87171" font-weight="700">  BLOCK</tspan><tspan fill="#E5E7EB">  no-dangerous-eval     </tspan><tspan fill="#F87171" font-weight="700">(blocking)</tspan></text>
+  <text x="24" y="280" fill="#9CA3AF">        Why it matters: eval on untrusted input is remote code execution.</text>
+
+  <text x="24" y="324" fill="#F87171" font-weight="700">&gt;&gt;&gt; Commit BLOCKED: becwright caught it before it shipped.</text>
+
+  <text x="24" y="364" fill="#9CA3AF">To protect your own repo, run inside it:</text>
+  <text x="24" y="386" fill="#BEF264" font-weight="700">    becwright init</text>
+</svg>

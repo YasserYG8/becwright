@@ -78,6 +78,15 @@ def test_init_creates_rules_and_hook(tmp_path, monkeypatch):
     assert (tmp_path / ".git" / "hooks" / "pre-commit").exists()
 
 
+def test_init_prints_next_steps(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["init"]) == 0
+    out = capsys.readouterr().out
+    assert "Next steps" in out and "becwright check --all" in out
+
+
 def test_init_refuses_existing(tmp_path, monkeypatch, capsys):
     _init_repo(tmp_path)
     (tmp_path / ".bec").mkdir()

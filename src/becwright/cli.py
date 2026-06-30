@@ -227,7 +227,78 @@ def _cmd_init(args: argparse.Namespace) -> int:
           f"{_style(f'({len(rules)} starter rule(s); languages: {detected})', DIM)}")
     ok, msg = git.install_hook(root)
     print(_style(msg, GREEN if ok else YELLOW))
-    print(_style("Review your rules, then run `becwright check --all` to see the current state.", DIM))
+    print()
+    print(_style("Next steps:", BOLD))
+    print(f"  1. {_style('Look at your rules:', DIM)}      .bec/rules.yaml")
+    print(f"  2. {_style('See the current state:', DIM)}   becwright check --all")
+    print(f"  3. {_style('Just commit as usual', DIM)} — becwright runs automatically.")
+    return 0
+
+
+_DEMO_FILENAME = "checkout.py"
+_DEMO_CODE = (
+    "def charge(card, amount):\n"
+    '    api_key = "x7Kp2mQ9vT4nB8wL"   # secret hardcoded in the code\n'
+    "    rule = get_promo_rule(card)\n"
+    "    discount = eval(rule)                              # runs whatever the promo string says\n"  # becwright: ignore  (demo sample, not real eval)
+    "    return run_charge(card, amount - discount, api_key)\n"
+)
+
+
+def _demo_result(file_path: Path, display_name: str) -> Result:
+    from .checks import dangerous_eval, hardcoded_secrets
+    from .engine import RuleResult
+    from .rules import Rule
+
+    pairs = [
+        (Rule(
+            id="no-hardcoded-secrets", paths=("*.py",), check="becwright run hardcoded_secrets",
+            severity="blocking",
+            intent="No secret (key, token, password) should be hardcoded.",
+            why_it_matters="A secret in the code stays in git history forever, for anyone with repo access."),
+         hardcoded_secrets),
+        (Rule(
+            id="no-dangerous-eval", paths=("*.py",), check="becwright run dangerous_eval",
+            severity="blocking",
+            intent="Avoid eval/exec, which run arbitrary code.",
+            why_it_matters="eval on untrusted input is a remote-code-execution hole."),
+         dangerous_eval),
+    ]
+    per_rule = []
+    for rule, module in pairs:
+        violations = module.find_violations([str(file_path)])
+        output = "\n".join(f"  {display_name}:{ln}\n      > {text}" for _p, ln, text in violations)
+        per_rule.append(RuleResult(rule=rule, passed=not violations, output=output))
+    return Result(per_rule=per_rule)
+
+
+def _cmd_demo(_: argparse.Namespace) -> int:
+    import shutil
+    import tempfile
+
+    print(f"{_style('becwright demo', BOLD)} "
+          f"{_style('— a safe sandbox. Nothing in your project is created or changed.', DIM)}\n")
+    print(_style("Pretend someone is about to commit this file:", DIM))
+    print(f"  {_style(_DEMO_FILENAME, BOLD)}")
+    for line in _DEMO_CODE.splitlines():
+        print(f"      {line}")
+    print()
+
+    tmp = Path(tempfile.mkdtemp(prefix="becwright-demo-"))
+    try:
+        demo_file = tmp / _DEMO_FILENAME
+        demo_file.write_text(_DEMO_CODE, encoding="utf-8")
+        result = _demo_result(demo_file, _DEMO_FILENAME)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+    print(f"{_style('BEC -- 1 file(s) against 2 rule(s)', BOLD)}\n")
+    _print_result(result)
+    print(_style(">>> Commit BLOCKED: becwright caught it before it shipped.", RED, BOLD))
+    print()
+    print(_style("That's the whole idea. To protect your own repo, run this inside it:", DIM))
+    print(f"    {_style('becwright init', GREEN)}   "
+          f"{_style('# detects your languages, adds starter rules, installs the hook', DIM)}")
     return 0
 
 
@@ -325,6 +396,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("args", nargs=argparse.REMAINDER, help="arguments forwarded to the check")
     p_run.set_defaults(func=_cmd_run)
 
+    sub.add_parser("demo", help="see becwright block a sample bad commit (no setup, no git needed)").set_defaults(func=_cmd_demo)
     sub.add_parser("list", help="list the built-in checks").set_defaults(func=_cmd_list)
     sub.add_parser("mcp", help="run the MCP server for AI agents (needs the 'mcp' extra)").set_defaults(func=_cmd_mcp)
     sub.add_parser("install", help="install the pre-commit hook").set_defaults(func=_cmd_install)

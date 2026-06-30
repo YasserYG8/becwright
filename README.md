@@ -12,6 +12,16 @@
 
 **Rules that run, not notes that get ignored.**
 
+<p align="center">
+  <img src="assets/becwright-demo.svg" alt="becwright blocking a commit that hardcodes a secret and calls eval" width="640">
+</p>
+
+> **See it in 5 seconds** — no setup, no git, nothing on your machine is touched:
+> ```bash
+> becwright demo                  # after installing (see below)
+> # zero-install: npx becwright demo   ·   or: pipx run becwright demo
+> ```
+
 `becwright` enforces constraints on your code deterministically: instead of
 *asking* an AI agent to respect a rule (the way `CLAUDE.md`, `.cursorrules`,
 etc. do — which the agent can read and ignore), becwright **verifies the
@@ -75,38 +85,43 @@ together:
 
 ## How to use it
 
-You install becwright once on your machine; each project (repo) only adds its
-own small rules file, `.bec/rules.yaml`. You can mix and match the install
-command with your stack — they all give you the same `becwright` command.
+You install becwright once; each project only adds a small `.bec/rules.yaml`.
+**Two steps and you're done.**
+
+**1. Install** — one line:
 
 ```bash
-# 1. Install the tool. Pick the line that matches what you already use.
-#    Via npm/pnpm there is NO Python required — it ships a ready-made program.
-npm install --save-dev becwright    # or global: npm install -g becwright
-pnpm add -D becwright
-pipx install becwright              # or: pip install becwright
-
-# 2. Inside your project, set it up. One command does everything:
-becwright init                      # writes a starter .bec/rules.yaml and installs the pre-commit hook
-
-# 3. That's it. From now on every `git commit` runs the checks automatically.
-#    If a blocking rule fails, the commit is stopped until you fix it.
+npm install -g becwright
 ```
 
-**What each step means:** step 1 puts the `becwright` program on your computer.
-Step 2 creates the rules file (with a few sensible rules already filled in) and
-wires it into git so it runs by itself. Step 3 is just you working normally —
-becwright does its job at commit time without you calling it.
+<details>
+<summary>Prefer pnpm, pip, or a project-local install? →</summary>
 
-Installed as a devDependency, the pre-commit hook resolves the local binary from
-`node_modules/.bin`, so it works without a global install. The npm packages cover
-`linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64` and `win32-x64`; on any
-other platform use `pipx install becwright`.
+```bash
+pnpm add -g becwright
+pipx install becwright                # or: pip install becwright
+npm install --save-dev becwright      # project-local; the hook finds it in node_modules/.bin
+```
+
+Via npm/pnpm there's **no Python required** — a self-contained binary ships per
+platform (`linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`, `win32-x64`).
+On any other platform, use `pipx install becwright`.
+</details>
+
+**2. Set it up** — inside your project:
+
+```bash
+becwright init   # detects your language, writes .bec/rules.yaml, installs the pre-commit hook
+```
+
+That's it. From now on every `git commit` runs the checks by itself, and stops a
+commit that breaks a blocking rule. You never call becwright by hand again.
 
 Available commands:
 
 | Command | What it does |
 |---|---|
+| `becwright demo` | Show becwright block a sample bad commit (no setup, no git needed) |
 | `becwright init` | Scaffold a starter `.bec/rules.yaml` and install the hook |
 | `becwright list` | List the built-in checks |
 | `becwright check` | Runs the rules over the staged files |
@@ -209,6 +224,27 @@ rules:
     severity: warning
 ```
 
+## Ready-made rules (no writing required)
+
+Don't want to write rules yourself? Import one from the [catalog](becs/) with a
+single command — becwright shows you the rule, then drops it into your
+`.bec/rules.yaml`, ready to go:
+
+```bash
+# Python
+becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/no-token-in-logs.bec.yaml
+becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/no-debug-remnants.bec.yaml
+
+# JavaScript / TypeScript
+becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/no-debugger-js.bec.yaml
+becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/no-console-log-js.bec.yaml
+
+# Any language
+becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/no-hardcoded-secrets.bec.yaml
+```
+
+The full list (Python, JS/TS, Go, Rust) lives in [`becs/`](becs/).
+
 ## Any language
 
 becwright is **language-agnostic**: the engine only filters files by their
@@ -280,8 +316,8 @@ plain-language summary and then goes deeper, so start wherever you are:
 
 becwright is **published and installable on every platform**: via npm/pnpm as a
 self-contained binary (no Python) and via pip/pipx. The packaged engine
-(`src/becwright/`) ships a CLI (`init` / `list` / `check` (with `--json`) /
-`run` / `install` / `uninstall` / `export` / `import` / `mcp`), a native git
+(`src/becwright/`) ships a CLI (`demo` / `init` / `list` / `check` (with
+`--json`) / `run` / `install` / `uninstall` / `export` / `import` / `mcp`), a native git
 hook, built-in checks (Python + the generic `forbid` for any language), BEC
 portability between repos, and a catalog with Python, JS/TS, Go and Rust BECs.
 

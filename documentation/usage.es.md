@@ -32,6 +32,7 @@ a mano: `becwright install` más un `.bec/rules.yaml` que escribas vos.)
 
 | Comando | Descripción |
 |---|---|
+| `becwright demo` | Muestra a becwright frenando un commit malo de ejemplo (sin configurar nada, sin git) |
 | `becwright init` | Genera un `.bec/rules.yaml` de arranque e instala el hook |
 | `becwright list` | Lista los checks incluidos |
 | `becwright check` | Corre las reglas sobre los archivos en staging |

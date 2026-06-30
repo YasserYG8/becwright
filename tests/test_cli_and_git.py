@@ -196,6 +196,32 @@ def test_run_unknown_check_returns_2(monkeypatch):
     assert cli.main(["run", "nope_check"]) == 2
 
 
+# --- the demo subcommand ---
+
+def test_demo_blocks_with_both_rules(tmp_path, monkeypatch, capsys):
+    # No git repo and no .bec here: demo must work anywhere, with zero setup.
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["demo"]) == 0
+    out = capsys.readouterr().out
+    assert "Commit BLOCKED" in out
+    assert "no-hardcoded-secrets" in out and "no-dangerous-eval" in out
+    assert "becwright init" in out
+
+
+def test_demo_does_not_touch_cwd(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    cli.main(["demo"])
+    assert list(tmp_path.iterdir()) == []  # the sandbox is temporary and cleaned up
+
+
+def test_demo_result_flags_both_violations(tmp_path):
+    demo_file = tmp_path / cli._DEMO_FILENAME
+    demo_file.write_text(cli._DEMO_CODE, encoding="utf-8")
+    res = cli._demo_result(demo_file, cli._DEMO_FILENAME)
+    assert [r.passed for r in res.per_rule] == [False, False]
+    assert res.had_blocking
+
+
 # --- the mcp subcommand ---
 
 def test_mcp_subcommand_without_extra(monkeypatch):

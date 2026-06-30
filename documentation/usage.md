@@ -31,6 +31,7 @@ From then on, every `git commit` runs the checks. (You can also set up by hand:
 
 | Command | Description |
 |---|---|
+| `becwright demo` | Show becwright block a sample bad commit (no setup, no git needed) |
 | `becwright init` | Scaffold a starter `.bec/rules.yaml` and install the hook |
 | `becwright list` | List the built-in checks |
 | `becwright check` | Run rules over the staged files |
