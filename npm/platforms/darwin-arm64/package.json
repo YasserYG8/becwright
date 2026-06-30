@@ -1,6 +1,6 @@
 {
   "name": "@becwright/darwin-arm64",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "macOS arm64 (Apple Silicon) binary for becwright.",
   "os": [
     "darwin"

@@ -34,15 +34,30 @@ jobs:
           node npm/stage.mjs win32-x64    artifacts/becwright-win32-x64/becwright.exe
       - name: Set version from tag
         run: node npm/set-version.mjs "${GITHUB_REF_NAME#v}"
+      # Use leading "./" so npm treats the argument as a folder, not a GitHub
+      # "owner/repo" shorthand. Skip versions already on the registry so a re-run
+      # after a partial failure is safe (npm publish is not idempotent).
       - name: Publish platform packages
         run: |
           for dir in npm/platforms/*/; do
-            npm publish "$dir" --access public
+            name=$(node -p "require('./${dir}package.json').name")
+            ver=$(node -p "require('./${dir}package.json').version")
+            if npm view "$name@$ver" version >/dev/null 2>&1; then
+              echo "skip $name@$ver (already published)"
+            else
+              npm publish "./$dir" --access public
+            fi
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Publish launcher package
-        run: npm publish npm/becwright --access public
+        run: |
+          ver=$(node -p "require('./npm/becwright/package.json').version")
+          if npm view "becwright@$ver" version >/dev/null 2>&1; then
+            echo "skip becwright@$ver (already published)"
+          else
+            npm publish ./npm/becwright --access public
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
