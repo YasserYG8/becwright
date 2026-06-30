@@ -74,3 +74,5 @@ verificaciones, "mejorar" el regex de los checks.
 - No cambiar el formato de `rules.yaml` ni la lógica de `checks/` sin preguntar.
 - Simplicidad y claridad por encima de cantidad de features (esto aspira a ser
   un estándar).
+- Commits **atómicos**: cada commit es un solo cambio lógico y completo (deja
+  los tests en verde). No mezclar cambios sin relación en un mismo commit.
