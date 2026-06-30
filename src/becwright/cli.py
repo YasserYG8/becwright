@@ -138,31 +138,53 @@ def _cmd_list(_: argparse.Namespace) -> int:
 
 
 _SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", ".tox"}
-_EXT_LANG = {".py": "python", ".js": "js", ".ts": "ts"}
+_EXT_LANG = {
+    ".py": "python",
+    ".js": "js",
+    ".ts": "ts",
+    ".go": "go",
+    ".rs": "rust",
+}
 
 
 def _detect_languages(root: Path) -> list[str]:
     found: set[str] = set()
+
     for path in root.rglob("*"):
         if not path.is_file():
             continue
         if any(part in _SKIP_DIRS for part in path.relative_to(root).parts):
             continue
+
         lang = _EXT_LANG.get(path.suffix)
         if lang:
             found.add(lang)
-    return [lang for lang in ("python", "js", "ts") if lang in found]
+
+    return [lang for lang in ("python", "js", "ts", "go", "rust") if lang in found]
 
 
 def _starter_rules(langs: list[str]) -> list[dict]:
-    source_globs = [g for lang, g in (("python", "**/*.py"), ("js", "**/*.js"), ("ts", "**/*.ts")) if lang in langs]
+    source_globs = [
+        g
+        for lang, g in (
+            ("python", "**/*.py"),
+            ("js", "**/*.js"),
+            ("ts", "**/*.ts"),
+            ("go", "**/*.go"),
+            ("rust", "**/*.rs"),
+        )
+        if lang in langs
+    ]
+
     rules: list[dict] = []
+
     if source_globs:
         rules.append(dict(
             id="no-hardcoded-secrets", paths=source_globs, severity="blocking",
             check="becwright run hardcoded_secrets",
             intent="No secret (key, token, password) should be hardcoded in the code.",
             why="A secret in the repo stays in git history forever and is visible to anyone with access to the code."))
+
     if "python" in langs:
         rules.append(dict(
             id="no-debug-remnants", paths=["**/*.py"], severity="blocking",
@@ -174,6 +196,7 @@ def _starter_rules(langs: list[str]) -> list[dict]:
             check="becwright run dangerous_eval",
             intent="Avoid eval and exec, which run arbitrary code.",
             why="Dynamic eval/exec on untrusted input is remote code execution."))
+
     if "js" in langs or "ts" in langs:
         js_globs = [g for g in source_globs if g.endswith((".js", ".ts"))]
         rules.append(dict(
@@ -186,6 +209,21 @@ def _starter_rules(langs: list[str]) -> list[dict]:
             check="becwright run forbid --pattern 'console\\.log\\s*\\('",
             intent="Avoid 'console.log(...)' in JavaScript/TypeScript code.",
             why="Debug console.log statements clutter production output."))
+
+    if "go" in langs:
+        rules.append(dict(
+            id="no-debug-go", paths=["**/*.go"], severity="blocking",
+            check=r"becwright run forbid --pattern 'fmt\.Println\s*\(|panic\s*\('",
+            intent="Do not leave debug output or panic calls in Go code.",
+            why="Debug statements and unexpected panic calls should not reach production."))
+
+    if "rust" in langs:
+        rules.append(dict(
+            id="no-debug-rust", paths=["**/*.rs"], severity="blocking",
+            check=r"becwright run forbid --pattern 'dbg!\s*\(|println!\s*\('",
+            intent="Do not leave debug output in Rust code.",
+            why="Debug macros and leftover println! calls should not reach production."))
+
     return rules
 
 

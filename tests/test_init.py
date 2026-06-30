@@ -32,6 +32,16 @@ def test_detect_languages_none(tmp_path):
     (tmp_path / "README.md").write_text("# hi\n", encoding="utf-8")
     assert cli._detect_languages(tmp_path) == []
 
+def test_detect_languages_go(tmp_path):
+    (tmp_path / "main.go").write_text("package main\n", encoding="utf-8")
+
+    assert cli._detect_languages(tmp_path) == ["go"]
+
+
+def test_detect_languages_rust(tmp_path):
+    (tmp_path / "main.rs").write_text("fn main() {}\n", encoding="utf-8")
+
+    assert cli._detect_languages(tmp_path) == ["rust"]
 
 # --- starter rules ---
 
@@ -44,12 +54,65 @@ def test_starter_rules_js():
     ids = [r["id"] for r in cli._starter_rules(["js"])]
     assert ids == ["no-hardcoded-secrets", "no-debugger-js", "no-console-log-js"]
 
+def test_starter_rules_go():
+    rules = cli._starter_rules(["go"])
+
+    assert [rule["id"] for rule in rules] == [
+        "no-hardcoded-secrets",
+        "no-debug-go",
+    ]
+
+    secrets_rule = rules[0]
+    debug_rule = rules[1]
+
+    assert secrets_rule["paths"] == ["**/*.go"]
+    assert debug_rule["paths"] == ["**/*.go"]
+    assert debug_rule["severity"] == "blocking"
+    assert debug_rule["check"] == (
+        r"becwright run forbid --pattern 'fmt\.Println\s*\(|panic\s*\('"
+    )
+
+
+def test_starter_rules_rust():
+    rules = cli._starter_rules(["rust"])
+
+    assert [rule["id"] for rule in rules] == [
+        "no-hardcoded-secrets",
+        "no-debug-rust",
+    ]
+
+    secrets_rule = rules[0]
+    debug_rule = rules[1]
+
+    assert secrets_rule["paths"] == ["**/*.rs"]
+    assert debug_rule["paths"] == ["**/*.rs"]
+    assert debug_rule["severity"] == "blocking"
+    assert debug_rule["check"] == (
+        r"becwright run forbid --pattern 'dbg!\s*\(|println!\s*\('"
+    )
 
 def test_starter_rules_empty():
     assert cli._starter_rules([]) == []
 
 
 # --- rendering ---
+
+def test_render_yaml_parses_go_and_rust_forbid_rules(tmp_path):
+    rules_path = tmp_path / "rules.yaml"
+
+    rules_path.write_text(
+        cli._render_rules_yaml(cli._starter_rules(["go", "rust"])),
+        encoding="utf-8",
+    )
+
+    rules = load_rules(rules_path)
+    rule_ids = {rule.id for rule in rules}
+
+    assert rule_ids == {
+        "no-hardcoded-secrets",
+        "no-debug-go",
+        "no-debug-rust",
+    }
 
 def test_render_yaml_parses_and_keeps_forbid(tmp_path):
     p = tmp_path / "rules.yaml"
