@@ -79,6 +79,19 @@ Available commands:
 | `becwright export <id>` | Exports a BEC to a `.bec.yaml` file |
 | `becwright import <file\|URL>` | Imports a BEC from another repo |
 
+### Use with AI agents (Claude Code)
+
+becwright is the deterministic net for what an AI agent lets slip. There is a
+Claude Code plugin so an agent can install and drive it for you:
+
+```text
+/plugin marketplace add DataDave-Dev/becwright
+/plugin install becwright@becwright
+```
+
+It adds a `becwright` skill and a `/becwright` command. See
+[`integrations/claude-code/`](integrations/claude-code/).
+
 A rule in `.bec/rules.yaml`:
 
 ```yaml

@@ -1,0 +1,18 @@
+{
+  "name": "becwright",
+  "owner": {
+    "name": "DataDave-Dev",
+    "url": "https://github.com/DataDave-Dev"
+  },
+  "metadata": {
+    "description": "Official marketplace for becwright — deterministic, commit-blocking constraints (BECs) for AI-assisted codebases."
+  },
+  "plugins": [
+    {
+      "name": "becwright",
+      "source": "./integrations/claude-code",
+      "description": "Deterministic commit-blocking constraints (BECs). Install and use becwright from any Claude Code session.",
+      "version": "0.1.0"
+    }
+  ]
+}

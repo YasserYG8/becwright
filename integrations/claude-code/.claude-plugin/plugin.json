@@ -1,0 +1,18 @@
+{
+  "name": "becwright",
+  "description": "Deterministic, commit-blocking constraints (BECs) on your code. Install and use becwright from any session; the guaranteed safety net that complements CLAUDE.md. No Python required.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Alonso David De Leon Rodarte"
+  },
+  "homepage": "https://github.com/DataDave-Dev/becwright",
+  "repository": "https://github.com/DataDave-Dev/becwright",
+  "license": "MIT",
+  "keywords": [
+    "pre-commit",
+    "git-hooks",
+    "constraints",
+    "code-quality",
+    "guardrails"
+  ]
+}

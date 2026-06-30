@@ -80,6 +80,19 @@ Comandos disponibles:
 | `becwright export <id>` | Exporta una BEC a un archivo `.bec.yaml` |
 | `becwright import <archivo\|URL>` | Importa una BEC de otro repo |
 
+### Uso con agentes de IA (Claude Code)
+
+becwright es la red determinista para lo que un agente de IA deja pasar. Hay un
+plugin de Claude Code para que un agente lo instale y lo maneje por vos:
+
+```text
+/plugin marketplace add DataDave-Dev/becwright
+/plugin install becwright@becwright
+```
+
+Agrega un skill `becwright` y un comando `/becwright`. Ver
+[`integrations/claude-code/`](integrations/claude-code/).
+
 Una regla en `.bec/rules.yaml`:
 
 ```yaml
