@@ -1,0 +1,16 @@
+{
+  "name": "@becwright/darwin-x64",
+  "version": "0.1.0",
+  "description": "macOS x64 binary for becwright.",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "becwright"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/DataDave-Dev/becwright"
+}

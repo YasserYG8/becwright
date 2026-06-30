@@ -51,7 +51,7 @@ rules:
       - "Redactar al loguear -> demasiado fácil de saltarse"
     paths:                      # globs de los archivos a los que aplica la regla
       - "src/**/*.py"
-    check: "python3 -m becwright.checks.no_token_in_logs"
+    check: "becwright run no_token_in_logs"
     severity: blocking          # blocking (frena el commit) | warning (solo avisa)
 ```
 

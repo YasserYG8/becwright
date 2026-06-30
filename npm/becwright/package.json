@@ -1,0 +1,34 @@
+{
+  "name": "becwright",
+  "version": "0.1.0",
+  "description": "Deterministically enforces constraints (BECs) on your code, blocking commits that violate them. No Python required.",
+  "bin": {
+    "becwright": "bin/becwright.js"
+  },
+  "files": [
+    "bin/"
+  ],
+  "keywords": [
+    "lint",
+    "pre-commit",
+    "git-hooks",
+    "constraints",
+    "code-quality"
+  ],
+  "homepage": "https://github.com/DataDave-Dev/becwright",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DataDave-Dev/becwright.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=16"
+  },
+  "optionalDependencies": {
+    "@becwright/linux-x64": "0.1.0",
+    "@becwright/linux-arm64": "0.1.0",
+    "@becwright/darwin-x64": "0.1.0",
+    "@becwright/darwin-arm64": "0.1.0",
+    "@becwright/win32-x64": "0.1.0"
+  }
+}

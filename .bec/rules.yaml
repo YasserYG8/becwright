@@ -13,7 +13,7 @@ rules:
     paths:
       - "src/**/*.py"
       - "tests/**/*.py"
-    check: "python3 -m becwright.checks.redundant_comments"
+    check: "becwright run redundant_comments"
     severity: warning
 
   - id: no-debug-remnants
@@ -26,7 +26,7 @@ rules:
     # definition (a check that searches for a string can't run over its own source).
     paths:
       - "src/becwright/*.py"
-    check: "python3 -m becwright.checks.debug_remnants"
+    check: "becwright run debug_remnants"
     severity: blocking
 
   - id: no-wildcard-imports
@@ -37,7 +37,7 @@ rules:
     paths:
       - "src/becwright/**/*.py"
       - "tests/**/*.py"
-    check: "python3 -m becwright.checks.wildcard_imports"
+    check: "becwright run wildcard_imports"
     severity: blocking
 
   - id: no-dangerous-eval
@@ -50,5 +50,5 @@ rules:
     # matches its own pattern definition).
     paths:
       - "src/becwright/*.py"
-    check: "python3 -m becwright.checks.dangerous_eval"
+    check: "becwright run dangerous_eval"
     severity: blocking

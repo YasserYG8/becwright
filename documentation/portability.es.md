@@ -51,9 +51,12 @@ Al exportar una regla, su comando `check` se clasifica:
 
 | Tipo | Cuándo | Qué viaja en el bundle |
 |---|---|---|
-| `builtin` | `python3 -m becwright.checks.X [args]` | el nombre del módulo (y los args) |
+| `builtin` | `becwright run X [args]` | el nombre del módulo (y los args) |
 | `script` | referencia un archivo del repo, p.ej. `.bec/checks/foo.py` | el código fuente del script, embebido |
 | `command` | cualquier otra cosa | el string crudo del comando (se avisa al importar) |
+
+La forma antigua `python3 -m becwright.checks.X` se sigue reconociendo al
+importar, así que los bundles exportados por versiones previas siguen funcionando.
 
 Un bundle `script` aterriza su código embebido en `.bec/checks/` del repo
 destino, así un check propio viaja con su código. Un bundle `builtin` solo

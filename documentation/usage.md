@@ -50,7 +50,7 @@ rules:
       - "Redact at log time -> too easy to bypass"
     paths:                      # glob patterns of files this rule applies to
       - "src/**/*.py"
-    check: "python3 -m becwright.checks.no_token_in_logs"
+    check: "becwright run no_token_in_logs"
     severity: blocking          # blocking (stops commit) | warning (only warns)
 ```
 

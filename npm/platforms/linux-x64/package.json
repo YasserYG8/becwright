@@ -1,0 +1,16 @@
+{
+  "name": "@becwright/linux-x64",
+  "version": "0.1.0",
+  "description": "Linux x64 binary for becwright.",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "becwright"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/DataDave-Dev/becwright"
+}

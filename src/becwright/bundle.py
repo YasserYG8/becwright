@@ -11,7 +11,11 @@ from .rules import Rule
 
 BUNDLE_VERSION = 1
 
-_BUILTIN = re.compile(r"^python3?\s+-m\s+becwright\.checks\.(\w+)(?:\s+(.*))?$")
+# Accept the current `becwright run <module>` form and the legacy
+# `python3 -m becwright.checks.<module>` form so older bundles still import.
+_BUILTIN = re.compile(
+    r"^(?:becwright\s+run\s+(\w+)|python3?\s+-m\s+becwright\.checks\.(\w+))(?:\s+(.*))?$"
+)
 _PY_PATH = re.compile(r"[\w./-]+\.py")
 _ITEM_INDENT = re.compile(r"^([ \t]+)-\s", re.MULTILINE)
 _EMPTY_RULES = re.compile(r"^rules:[ \t]*(?:\[[ \t]*\]|\{[ \t]*\})[ \t]*$", re.MULTILINE)
@@ -41,9 +45,9 @@ def classify_check(command: str, root: Path) -> dict:
     command = command.strip()
     builtin = _BUILTIN.match(command)
     if builtin:
-        out = {"kind": "builtin", "module": builtin.group(1)}
-        if builtin.group(2):
-            out["args"] = builtin.group(2).strip()
+        out = {"kind": "builtin", "module": builtin.group(1) or builtin.group(2)}
+        if builtin.group(3):
+            out["args"] = builtin.group(3).strip()
         return out
     for token in _PY_PATH.findall(command):
         candidate = root / token
@@ -108,7 +112,7 @@ def materialize(bundle: dict, root: Path) -> dict:
     check = bundle["check"]
     kind = check.get("kind")
     if kind == "builtin":
-        command = f"python3 -m becwright.checks.{check['module']}"
+        command = f"becwright run {check['module']}"
         if check.get("args"):
             command += f" {check['args']}"
     elif kind == "script":

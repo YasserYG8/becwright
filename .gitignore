@@ -15,6 +15,11 @@ dist/
 .env
 .DS_Store
 
+# npm: staged binaries (built in CI) and installed deps
+node_modules/
+npm/platforms/*/becwright
+npm/platforms/*/becwright.exe
+
 # Prototype and documentation
 prototype/
 docs/

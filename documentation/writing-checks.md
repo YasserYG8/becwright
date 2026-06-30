@@ -20,7 +20,7 @@ generic check:
 ```yaml
   - id: no-debugger-js
     paths: ["**/*.js", "**/*.ts"]
-    check: "python3 -m becwright.checks.forbid --pattern '\\bdebugger\\b'"
+    check: "becwright run forbid --pattern '\\bdebugger\\b'"
     severity: blocking
 ```
 

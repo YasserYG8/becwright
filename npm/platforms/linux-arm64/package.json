@@ -1,0 +1,16 @@
+{
+  "name": "@becwright/linux-arm64",
+  "version": "0.1.0",
+  "description": "Linux arm64 binary for becwright.",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "files": [
+    "becwright"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/DataDave-Dev/becwright"
+}

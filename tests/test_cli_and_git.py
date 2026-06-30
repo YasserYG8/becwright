@@ -140,3 +140,28 @@ def test_main_install_uninstall(tmp_path, monkeypatch):
 def test_main_outside_repo_returns_2(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     assert cli.main(["install"]) == 2
+
+
+# --- the run subcommand ---
+
+def test_run_forwards_pattern_and_blocks(tmp_path, monkeypatch, capsys):
+    import io
+    f = tmp_path / "app.js"
+    f.write_text("  debugger;\n", encoding="utf-8")
+    monkeypatch.setattr("sys.stdin", io.StringIO(str(f) + "\n"))
+    assert cli.main(["run", "forbid", "--pattern", r"\bdebugger\b"]) == 1
+    assert str(f) in capsys.readouterr().out
+
+
+def test_run_no_arg_check_reads_stdin(tmp_path, monkeypatch):
+    import io
+    f = tmp_path / "bad.py"
+    f.write_text("breakpoint()\n", encoding="utf-8")
+    monkeypatch.setattr("sys.stdin", io.StringIO(str(f) + "\n"))
+    assert cli.main(["run", "debug_remnants"]) == 1
+
+
+def test_run_unknown_check_returns_2(monkeypatch):
+    import io
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    assert cli.main(["run", "nope_check"]) == 2

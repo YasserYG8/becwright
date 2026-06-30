@@ -87,8 +87,19 @@ def _builtin_check_names() -> list[str]:
     return sorted(m.name for m in pkgutil.iter_modules(checks.__path__) if not m.name.startswith("_"))
 
 
+def _cmd_run(args: argparse.Namespace) -> int:
+    if args.module not in _builtin_check_names():
+        print(f"{RED}Unknown built-in check: {args.module}{RESET}", file=sys.stderr)
+        return 2
+    from importlib import import_module
+    # Forward any args to the check through sys.argv: checks that take options
+    # (e.g. forbid --pattern) read sys.argv[1:]; the rest just ignore it.
+    sys.argv = [f"becwright run {args.module}", *args.args]
+    return import_module(f"becwright.checks.{args.module}").main()
+
+
 def _cmd_list(_: argparse.Namespace) -> int:
-    print(f"{BOLD}Built-in checks{RESET} {DIM}(use as: python3 -m becwright.checks.<name>){RESET}")
+    print(f"{BOLD}Built-in checks{RESET} {DIM}(use as: becwright run <name>){RESET}")
     for name in _builtin_check_names():
         desc = _CHECK_DESCRIPTIONS.get(name, "")
         line = f"  {GREEN}{name}{RESET}"
@@ -123,30 +134,30 @@ def _starter_rules(langs: list[str]) -> list[dict]:
     if source_globs:
         rules.append(dict(
             id="no-hardcoded-secrets", paths=source_globs, severity="blocking",
-            check="python3 -m becwright.checks.hardcoded_secrets",
+            check="becwright run hardcoded_secrets",
             intent="No secret (key, token, password) should be hardcoded in the code.",
             why="A secret in the repo stays in git history forever and is visible to anyone with access to the code."))
     if "python" in langs:
         rules.append(dict(
             id="no-debug-remnants", paths=["**/*.py"], severity="blocking",
-            check="python3 -m becwright.checks.debug_remnants",
+            check="becwright run debug_remnants",
             intent="Debug code (breakpoints, pdb) must not be committed.",
             why="A forgotten breakpoint hangs the process in production or CI."))
         rules.append(dict(
             id="no-dangerous-eval", paths=["**/*.py"], severity="blocking",
-            check="python3 -m becwright.checks.dangerous_eval",
+            check="becwright run dangerous_eval",
             intent="Avoid eval and exec, which run arbitrary code.",
             why="Dynamic eval/exec on untrusted input is remote code execution."))
     if "js" in langs or "ts" in langs:
         js_globs = [g for g in source_globs if g.endswith((".js", ".ts"))]
         rules.append(dict(
             id="no-debugger-js", paths=js_globs, severity="blocking",
-            check="python3 -m becwright.checks.forbid --pattern '\\bdebugger\\b'",
+            check="becwright run forbid --pattern '\\bdebugger\\b'",
             intent="Do not leave 'debugger;' in JavaScript/TypeScript code.",
             why="A forgotten 'debugger' halts execution and should not reach production."))
         rules.append(dict(
             id="no-console-log-js", paths=js_globs, severity="warning",
-            check="python3 -m becwright.checks.forbid --pattern 'console\\.log\\s*\\('",
+            check="becwright run forbid --pattern 'console\\.log\\s*\\('",
             intent="Avoid 'console.log(...)' in JavaScript/TypeScript code.",
             why="Debug console.log statements clutter production output."))
     return rules
@@ -277,6 +288,11 @@ def _build_parser() -> argparse.ArgumentParser:
     p_init = sub.add_parser("init", help="scaffold a starter .bec/rules.yaml and install the hook")
     p_init.add_argument("--force", action="store_true", help="overwrite an existing .bec/rules.yaml")
     p_init.set_defaults(func=_cmd_init)
+
+    p_run = sub.add_parser("run", help="run a built-in check against files on stdin (used inside rules)")
+    p_run.add_argument("module", help="built-in check name (see `becwright list`)")
+    p_run.add_argument("args", nargs=argparse.REMAINDER, help="arguments forwarded to the check")
+    p_run.set_defaults(func=_cmd_run)
 
     sub.add_parser("list", help="list the built-in checks").set_defaults(func=_cmd_list)
     sub.add_parser("install", help="install the pre-commit hook").set_defaults(func=_cmd_install)

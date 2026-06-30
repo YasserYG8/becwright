@@ -1,0 +1,47 @@
+name: Build binaries
+
+# Freezes a standalone `becwright` binary per platform with PyInstaller.
+# These artifacts are what the npm packages ship, so users without Python can
+# install becwright via npm/pnpm. Release publishing is wired in publish.yml.
+on:
+  workflow_dispatch:
+  workflow_call: # invoked by release.yml on a published release
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, target: linux-x64, ext: "" }
+          - { os: ubuntu-24.04-arm, target: linux-arm64, ext: "" }
+          - { os: macos-13, target: darwin-x64, ext: "" }
+          - { os: macos-14, target: darwin-arm64, ext: "" }
+          - { os: windows-latest, target: win32-x64, ext: ".exe" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install ".[build]"
+      - name: Build
+        run: pyinstaller --clean --noconfirm packaging/becwright.spec
+      - name: Smoke test
+        shell: bash
+        run: |
+          BIN="dist/becwright${{ matrix.ext }}"
+          "$BIN" --version
+          "$BIN" list
+          echo 'console.log(1)' > x.js
+          if echo x.js | "$BIN" run forbid --pattern 'console\.log'; then
+            echo "forbid should have exited non-zero on a match"; exit 1
+          fi
+          echo "frozen 'run' dispatch works"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: becwright-${{ matrix.target }}
+          path: dist/becwright${{ matrix.ext }}
+          if-no-files-found: error

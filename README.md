@@ -50,7 +50,10 @@ becwright is installed once as a tool; each repo only contributes its own
 `.bec/rules.yaml`.
 
 ```bash
-# 1. Install the engine (once, global)
+# 1. Install the engine. Pick your ecosystem — no Python needed via npm/pnpm,
+#    which ship a self-contained binary:
+npm install --save-dev becwright    # or global: npm install -g becwright
+pnpm add -D becwright
 pipx install becwright              # or: pip install becwright
 
 # 2. In your repo, scaffold rules + install the hook
@@ -58,6 +61,11 @@ becwright init                      # detects your language, writes .bec/rules.y
 
 # 3. Done: each commit runs the checks; if a blocking rule fails, it stops.
 ```
+
+Installed as a devDependency, the pre-commit hook resolves the local binary from
+`node_modules/.bin`, so it works without a global install. The npm packages cover
+`linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64` and `win32-x64`; on any
+other platform use `pipx install becwright`.
 
 Available commands:
 
@@ -82,7 +90,7 @@ rules:
       If a token shows up in the logs, anyone with access to them can steal a
       user's session.
     paths: ["src/**/*.py"]
-    check: "python3 -m becwright.checks.no_token_in_logs"
+    check: "becwright run no_token_in_logs"
     severity: blocking   # blocking = stops the commit | warning = only warns
 ```
 
@@ -113,7 +121,7 @@ rules:
       A secret in the repo stays in git history forever and is visible to
       anyone with access to the code.
     paths: ["src/**/*.py"]
-    check: "python3 -m becwright.checks.hardcoded_secrets"
+    check: "becwright run hardcoded_secrets"
     severity: blocking
 
   - id: no-debug-remnants
@@ -122,7 +130,7 @@ rules:
     why_it_matters: >
       A forgotten breakpoint hangs the process in production or CI.
     paths: ["src/**/*.py"]
-    check: "python3 -m becwright.checks.debug_remnants"
+    check: "becwright run debug_remnants"
     severity: blocking
 
   - id: no-dangerous-eval
@@ -131,7 +139,7 @@ rules:
     why_it_matters: >
       eval/exec on untrusted input is remote code execution.
     paths: ["src/**/*.py"]
-    check: "python3 -m becwright.checks.dangerous_eval"
+    check: "becwright run dangerous_eval"
     severity: blocking
 
   - id: no-wildcard-imports
@@ -141,7 +149,7 @@ rules:
       Wildcard imports hide where each name comes from and break static
       analysis.
     paths: ["src/**/*.py"]
-    check: "python3 -m becwright.checks.wildcard_imports"
+    check: "becwright run wildcard_imports"
     severity: warning
 ```
 
@@ -162,7 +170,7 @@ rules:
     why_it_matters: >
       A forgotten 'debugger' halts execution and should not reach production.
     paths: ["**/*.js", "**/*.ts"]
-    check: "python3 -m becwright.checks.forbid --pattern '\\bdebugger\\b'"
+    check: "becwright run forbid --pattern '\\bdebugger\\b'"
     severity: blocking
 ```
 
@@ -193,7 +201,7 @@ Use `--yes` to skip the confirmation in automated environments.
 There is a **catalog of ready-to-use BECs** in [`becs/`](becs/) that you can
 import directly from their raw URL.
 
-Built-in checks (`python3 -m becwright.checks.*`) travel with the package, so
+Built-in checks (`becwright run *`) travel with the package, so
 the bundle only stores their name. A **custom** check (`.bec/checks/foo.py`)
 travels with its code embedded and lands in `.bec/checks/` of the target repo.
 

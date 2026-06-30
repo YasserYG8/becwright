@@ -1,0 +1,62 @@
+name: Release
+
+# On a published GitHub release: build the per-platform binaries, publish the
+# npm packages (launcher + 5 platform packages) and publish to PyPI. The tag
+# name (e.g. v0.1.0) drives the version.
+on:
+  release:
+    types: [published]
+
+jobs:
+  binaries:
+    uses: ./.github/workflows/build-binaries.yml
+
+  npm:
+    needs: binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+      - name: Download built binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Stage binaries into platform packages
+        run: |
+          node npm/stage.mjs linux-x64    artifacts/becwright-linux-x64/becwright
+          node npm/stage.mjs linux-arm64  artifacts/becwright-linux-arm64/becwright
+          node npm/stage.mjs darwin-x64   artifacts/becwright-darwin-x64/becwright
+          node npm/stage.mjs darwin-arm64 artifacts/becwright-darwin-arm64/becwright
+          node npm/stage.mjs win32-x64    artifacts/becwright-win32-x64/becwright.exe
+      - name: Set version from tag
+        run: node npm/set-version.mjs "${GITHUB_REF_NAME#v}"
+      - name: Publish platform packages
+        run: |
+          for dir in npm/platforms/*/; do
+            npm publish "$dir" --access public
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish launcher package
+        run: npm publish npm/becwright --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  pypi:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # PyPI Trusted Publishing (OIDC)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build
+        run: |
+          pip install build
+          python -m build
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
