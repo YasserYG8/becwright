@@ -21,6 +21,14 @@ class BundleError(RuntimeError):
     pass
 
 
+def _clean(value):
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, list):
+        return [v.strip() if isinstance(v, str) else v for v in value]
+    return value
+
+
 def _origin(root: Path) -> str:
     res = subprocess.run(
         ["git", "config", "--get", "remote.origin.url"],
@@ -119,7 +127,7 @@ def materialize(bundle: dict, root: Path) -> dict:
     out: dict = {"id": rule["id"]}
     for key in ("intent", "why_it_matters", "rejected_alternatives"):
         if rule.get(key):
-            out[key] = rule[key]
+            out[key] = _clean(rule[key])
     out["paths"] = rule.get("paths", [])
     out["check"] = command
     out["severity"] = rule.get("severity", "blocking")

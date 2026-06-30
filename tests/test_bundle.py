@@ -113,6 +113,17 @@ def test_materialize_script_conflict_raises(tmp_path):
         bundle.materialize(data, tmp_path)
 
 
+def test_materialize_strips_metadata_whitespace(tmp_path):
+    data = {"rule": {"id": "r", "intent": "texto\n\n", "why_it_matters": "  por qué  ",
+                     "rejected_alternatives": ["a\n", " b "], "paths": ["*.py"],
+                     "severity": "blocking"},
+            "check": {"kind": "builtin", "module": "debug_remnants"}}
+    rd = bundle.materialize(data, tmp_path)
+    assert rd["intent"] == "texto"
+    assert rd["why_it_matters"] == "por qué"
+    assert rd["rejected_alternatives"] == ["a", "b"]
+
+
 def test_append_rule_creates_and_preserves(tmp_path):
     rules_path = tmp_path / ".bec" / "rules.yaml"
     rules_path.parent.mkdir(parents=True)
