@@ -2,6 +2,8 @@
 
 # becwright
 
+[![CI](https://github.com/DataDave-Dev/becwright/actions/workflows/ci.yml/badge.svg)](https://github.com/DataDave-Dev/becwright/actions/workflows/ci.yml)
+
 **Rules that run, not notes that get ignored.**
 
 `becwright` enforces constraints on your code deterministically: instead of

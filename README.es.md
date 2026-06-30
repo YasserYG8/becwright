@@ -2,6 +2,8 @@
 
 # becwright
 
+[![CI](https://github.com/DataDave-Dev/becwright/actions/workflows/ci.yml/badge.svg)](https://github.com/DataDave-Dev/becwright/actions/workflows/ci.yml)
+
 **Reglas que se ejecutan, no notas que se ignoran.**
 
 `becwright` hace cumplir restricciones (constraints) sobre tu código de forma
