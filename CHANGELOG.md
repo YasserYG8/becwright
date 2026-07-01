@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   timeout (30s, override with `BECWRIGHT_CHECK_TIMEOUT`, `0` disables).
 - A misspelled `severity` or malformed `.bec/rules.yaml` now fails with a clear
   error instead of silently downgrading a rule or dumping a raw traceback.
+- A rule pointing `check:` at a `becwright run <name>` that isn't a built-in check
+  now reports a config problem (exit 2) naming the rule and check, instead of
+  looking like a real violation that blocks the commit.
 
 ## [0.2.2] — 2026-06-30
 

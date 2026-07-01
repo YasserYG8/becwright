@@ -46,9 +46,38 @@ def _print_result(result: Result) -> None:
         print()
 
 
+def _unknown_builtin_checks(rules, root: Path) -> list[tuple[str, str]]:
+    """Rules whose `check` uses the `becwright run <name>` form with a <name> that
+    is not a built-in check. Such a rule can never pass — the check exits with an
+    error that otherwise reads like a real violation — so it is a config problem,
+    not a broken commit. Custom scripts and opaque shell commands are left alone."""
+    from . import bundle
+    known = set(_builtin_check_names())
+    found: list[tuple[str, str]] = []
+    for rule in rules:
+        info = bundle.classify_check(rule.check, root)
+        if info.get("kind") == "builtin" and info["module"] not in known:
+            found.append((rule.id, info["module"]))
+    return found
+
+
+def _print_unknown_checks(unknown: list[tuple[str, str]]) -> None:
+    print(_style("Config problem in .bec/rules.yaml:", RED, BOLD), file=sys.stderr)
+    for rule_id, module in unknown:
+        print(_style(f"  rule '{rule_id}' uses check '{module}', "
+                     "which is not a built-in check.", RED), file=sys.stderr)
+    print(_style("  Run `becwright list` to see valid checks, or point `check:` "
+                 "at a custom script path.", DIM), file=sys.stderr)
+
+
 def _cmd_check(args: argparse.Namespace) -> int:
     root = git.repo_root()
     rules, files, result = report.gather(root, all_files=args.all)
+
+    unknown = _unknown_builtin_checks(rules, root)
+    if unknown:
+        _print_unknown_checks(unknown)
+        return 2
 
     if args.json:
         import json

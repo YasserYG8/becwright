@@ -170,6 +170,42 @@ def test_check_reports_invalid_rules_file_cleanly(tmp_path, monkeypatch, capsys)
     assert "invalid severity" in capsys.readouterr().err
 
 
+def test_unknown_builtin_checks_helper(tmp_path):
+    rules = [
+        Rule(id="ok", paths=("*.py",), check="becwright run debug_remnants"),
+        Rule(id="bad", paths=("*.py",), check="becwright run ghost"),
+        Rule(id="cmd", paths=("*.py",), check="grep -r TODO ."),  # opaque command, left alone
+    ]
+    assert cli._unknown_builtin_checks(rules, tmp_path) == [("bad", "ghost")]
+
+
+def test_check_flags_unknown_builtin_check(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir()
+    (tmp_path / ".bec" / "rules.yaml").write_text(
+        'rules:\n  - id: r1\n    paths: ["**/*.py"]\n'
+        "    check: 'becwright run no_such_check'\n    severity: blocking\n", encoding="utf-8")
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "a.py")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check"]) == 2
+    err = capsys.readouterr().err
+    assert "no_such_check" in err and "becwright list" in err
+
+
+def test_check_does_not_flag_opaque_command(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir()
+    (tmp_path / ".bec" / "rules.yaml").write_text(
+        'rules:\n  - id: r1\n    paths: ["**/*.py"]\n'
+        "    check: 'true'\n    severity: blocking\n", encoding="utf-8")
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "a.py")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check"]) == 0
+    assert "All good" in capsys.readouterr().out
+
+
 def test_main_install_uninstall(tmp_path, monkeypatch):
     _init_repo(tmp_path)
     monkeypatch.chdir(tmp_path)
