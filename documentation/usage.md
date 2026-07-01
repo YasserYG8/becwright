@@ -41,7 +41,9 @@ From then on, every `git commit` runs the checks. (You can also set up by hand:
 > per-file line cap ("files under 800 lines" → `max_lines`), ignoring
 > function-length rules it can't enforce. A broad phrase like "follow good
 > practices" expands to the deterministic hygiene set (no secrets, `eval`, debug
-> leftovers, or merge-conflict markers). This is best-effort and language-aware,
+> leftovers, or merge-conflict markers), and phrases like "conventional commits"
+> or "no AI attribution" become `commit-msg` rules. This is best-effort and
+> language-aware,
 > so **review the result**; judgment-based guidance (architecture, naming,
 > immutability) has no deterministic check and stays in `CLAUDE.md`. Combine with
 > `--baseline` to adopt on a dirty repo in one step.
@@ -94,13 +96,14 @@ rules:
 | Field | Required | Meaning |
 |---|---|---|
 | `id` | yes | Unique rule id |
-| `paths` | yes | Glob patterns (see below) |
+| `paths` | yes* | Glob patterns (see below); not needed for `commit-msg` rules |
 | `check` | yes | Shell command to run (the executable check) |
 | `exclude` | no | Globs subtracted from `paths` (see below) |
 | `intent` | no | What the rule enforces |
 | `why_it_matters` | no | Why it matters; printed when the rule fails |
 | `rejected_alternatives` | no | Context: approaches that were dismissed |
 | `severity` | no | `blocking` (default) or `warning` |
+| `target` | no | `files` (default) or `commit-msg` (see below) |
 
 ### Globs
 
@@ -108,6 +111,28 @@ rules:
 - `**` matches across directories.
 - e.g. `src/**/*.py` matches `src/a.py` and `src/x/y/z.py`; `src/*.py` matches
   only the top level.
+
+### Commit message rules (`target: commit-msg`)
+
+A rule with `target: commit-msg` checks the **commit message** instead of the
+changed files (`becwright init` installs a `commit-msg` hook alongside the
+`pre-commit` one). It needs no `paths`; the message is fed to the check, so the
+generic `require` / `forbid` checks work on it. Two examples `--from-claude-md`
+can generate for you (from phrases like "conventional commits" / "no AI
+attribution"):
+
+```yaml
+  - id: conventional-commits
+    target: commit-msg
+    check: |-
+      becwright run require --pattern '^(feat|fix|docs|refactor|test|chore|ci|perf|build|style|revert)(\(.+\))?!?: '
+    severity: blocking
+  - id: no-ai-attribution
+    target: commit-msg
+    check: |-
+      becwright run forbid --ignore-case --pattern 'co-authored-by:.*(claude|anthropic|gpt|copilot)|generated with.*(claude|chatgpt|copilot)'
+    severity: blocking
+```
 
 ### Excluding files
 

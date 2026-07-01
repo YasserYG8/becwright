@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-from becwright.engine import evaluate
+from becwright.engine import evaluate, evaluate_message
 from becwright.rules import Rule
 
 _SRC = Path(__file__).resolve().parents[1] / "src"
@@ -66,6 +66,37 @@ def test_evaluate_exclude_keeps_checking_other_files(tmp_path):
     assert result.had_blocking is True
     assert "app.py" in result.per_rule[0].output
     assert "logger.py" not in result.per_rule[0].output
+
+
+def _msg_rule(pattern: str) -> Rule:
+    check = f'{_check_cmd("require")} --pattern "{pattern}"'
+    return Rule(id="conv", paths=(), target="commit-msg", check=check, severity="blocking")
+
+
+def test_evaluate_message_blocks_when_pattern_missing(tmp_path):
+    msg = tmp_path / "MSG"
+    msg.write_text("update stuff\n", encoding="utf-8")
+    result = evaluate_message([_msg_rule("^(feat|fix): ")], str(msg), tmp_path)
+    assert result.per_rule[0].passed is False and result.had_blocking is True
+
+
+def test_evaluate_message_passes_good_message(tmp_path):
+    msg = tmp_path / "MSG"
+    msg.write_text("feat: add the thing\n", encoding="utf-8")
+    result = evaluate_message([_msg_rule("^(feat|fix): ")], str(msg), tmp_path)
+    assert result.per_rule[0].passed is True
+
+
+def test_evaluate_message_ignores_file_rules(tmp_path):
+    file_rule = Rule(id="f", paths=("**/*.py",), check="false", severity="blocking")
+    assert evaluate_message([file_rule], "MSG", tmp_path).per_rule == []
+
+
+def test_evaluate_ignores_commit_msg_rules(tmp_path):
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    msg_rule = Rule(id="conv", paths=("**/*.py",), target="commit-msg",
+                    check="false", severity="blocking")
+    assert evaluate([msg_rule], ["a.py"], tmp_path).per_rule == []
 
 
 def test_evaluate_times_out_a_hung_check(tmp_path, monkeypatch):

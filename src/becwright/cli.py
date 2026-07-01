@@ -104,14 +104,37 @@ def _cmd_check(args: argparse.Namespace) -> int:
 
 
 def _cmd_install(_: argparse.Namespace) -> int:
-    ok, msg = git.install_hook(git.repo_root())
-    print(_style(msg, GREEN if ok else YELLOW))
+    root = git.repo_root()
+    for install in (git.install_hook, git.install_msg_hook):
+        ok, msg = install(root)
+        print(_style(msg, GREEN if ok else YELLOW))
     return 0
 
 
 def _cmd_uninstall(_: argparse.Namespace) -> int:
-    ok, msg = git.uninstall_hook(git.repo_root())
-    print(_style(msg, GREEN if ok else YELLOW))
+    root = git.repo_root()
+    for uninstall in (git.uninstall_hook, git.uninstall_msg_hook):
+        ok, msg = uninstall(root)
+        print(_style(msg, GREEN if ok else YELLOW))
+    return 0
+
+
+def _cmd_check_msg(args: argparse.Namespace) -> int:
+    root = git.repo_root()
+    rules = load_rules(root / ".bec" / "rules.yaml")
+    if not any(r.target == "commit-msg" for r in rules):
+        return 0
+    from .engine import evaluate_message
+    result = evaluate_message(rules, str(Path(args.msgfile).resolve()), root)
+    if not result.per_rule:
+        return 0
+    print(f"{_style(f'BEC -- commit message against {len(result.per_rule)} rule(s)', BOLD)}\n")
+    _print_result(result)
+    if result.had_blocking:
+        print(_style(">>> Commit BLOCKED: the message breaks a blocking rule.", RED, BOLD))
+        print(_style("    Fix the commit message, or edit .bec/rules.yaml if the rule is wrong.", DIM))
+        return 1
+    print(_style(">>> Commit message OK.", GREEN, BOLD))
     return 0
 
 
@@ -352,6 +375,27 @@ _GOOD_PRACTICES_TRIGGERS = (
 _CONFLICT_TRIGGERS = ("conflict marker", "merge conflict",
                       "marcador de conflicto", "conflicto de merge")
 
+# Rules about the commit *message* (target: commit-msg), recognized from the prose.
+# They reuse the generic require/forbid checks against the message file.
+_COMMIT_MSG_SIGNALS = (
+    dict(id="conventional-commits", severity="blocking",
+         triggers=("conventional commit", "commit convention", "commits convencionales",
+                   "convención de commit", "convencion de commit"),
+         check=(r"becwright run require --pattern "
+                r"'^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?!?: '"),
+         intent="Commit messages must follow the Conventional Commits format.",
+         why="A consistent commit format keeps history readable and enables automated changelogs."),
+    dict(id="no-ai-attribution", severity="blocking",
+         triggers=("no ai attribution", "sin atribución de ia", "sin atribucion de ia",
+                   "co-authored-by", "generated with", "no menciones a claude",
+                   "atribución de ia", "atribucion de ia", "no ai credit"),
+         check=(r"becwright run forbid --ignore-case --pattern "
+                r"'co-authored-by:.*(claude|anthropic|gpt|copilot)"
+                r"|generated with.*(claude|chatgpt|copilot)'"),
+         intent="Commit messages must not include AI attribution or co-author trailers.",
+         why="Keeps the history free of tool boilerplate; commits stand on their content."),
+)
+
 
 def _rules_from_claude_md(text: str, langs: list[str]) -> list[tuple[dict, str]]:
     """Best-effort mapping from prohibitions written in CLAUDE.md to executable
@@ -398,6 +442,15 @@ def _rules_from_claude_md(text: str, langs: list[str]) -> list[tuple[dict, str]]
             intent=f"Files should stay under {cap} lines.",
             why="Large files are hard to read, review and keep cohesive."),
             f"{cap} lines"))
+
+    for signal in _COMMIT_MSG_SIGNALS:
+        trigger = next((t for t in signal["triggers"] if t in lowered), None)
+        if trigger is None:
+            continue
+        derived.append((dict(
+            id=signal["id"], target="commit-msg", severity=signal["severity"],
+            check=signal["check"], intent=signal["intent"], why=signal["why"]),
+            trigger))
     return derived
 
 
@@ -411,8 +464,14 @@ def _render_rules_yaml(rules: list[dict]) -> str:
         return header + "rules: []\n"
     blocks = []
     for r in rules:
-        paths = "\n".join(f'      - "{p}"' for p in r["paths"])
         note = f"  # {r['note']}\n" if r.get("note") else ""
+        target = ""
+        if r.get("target") and r["target"] != "files":
+            target = f"    target: {r['target']}\n"
+        paths = ""
+        if r.get("paths"):
+            lines = "\n".join(f'      - "{p}"' for p in r["paths"])
+            paths = f"    paths:\n{lines}\n"
         exclude = ""
         if r.get("exclude"):
             lines = "\n".join(f'      - "{p}"' for p in r["exclude"])
@@ -422,9 +481,12 @@ def _render_rules_yaml(rules: list[dict]) -> str:
             f"  - id: {r['id']}\n"
             f"    intent: >\n      {r['intent']}\n"
             f"    why_it_matters: >\n      {r['why']}\n"
-            f"    paths:\n{paths}\n"
+            f"{target}"
+            f"{paths}"
             f"{exclude}"
-            f"    check: {r['check']}\n"
+            # Block scalar: the check can contain ': ', quotes and backslashes that
+            # would break a plain YAML scalar; `|-` takes it verbatim.
+            f"    check: |-\n      {r['check']}\n"
             f"    severity: {r['severity']}\n"
         )
     return header + "rules:\n" + "\n".join(blocks)
@@ -442,8 +504,9 @@ def _apply_baseline(root: Path, rules: list[dict]) -> list[tuple[str, int]]:
     if not files:
         return []
     rule_objs = [
-        Rule(id=r["id"], paths=tuple(r["paths"]), check=r["check"], severity=r["severity"])
+        Rule(id=r["id"], paths=tuple(r.get("paths", [])), check=r["check"], severity=r["severity"])
         for r in rules
+        if r.get("target", "files") == "files"
     ]
     by_id = {rr.rule.id: rr for rr in evaluate(rule_objs, files, root).per_rule}
     downgraded: list[tuple[str, int]] = []
@@ -518,8 +581,9 @@ def _cmd_init(args: argparse.Namespace) -> int:
         _print_claude_summary(derived)
     if args.baseline:
         _print_baseline(rules, downgraded)
-    ok, msg = git.install_hook(root)
-    print(_style(msg, GREEN if ok else YELLOW))
+    for install in (git.install_hook, git.install_msg_hook):
+        ok, msg = install(root)
+        print(_style(msg, GREEN if ok else YELLOW))
     print()
     print(_style("Next steps:", BOLD))
     print(f"  1. {_style('Look at your rules:', DIM)}      .bec/rules.yaml")
@@ -734,11 +798,15 @@ def _build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("args", nargs=argparse.REMAINDER, help="arguments forwarded to the check")
     p_run.set_defaults(func=_cmd_run)
 
+    p_check_msg = sub.add_parser("check-msg", help="check a commit message against commit-msg rules (used by the hook)")
+    p_check_msg.add_argument("msgfile", help="path to the commit message file (git passes this to the hook)")
+    p_check_msg.set_defaults(func=_cmd_check_msg)
+
     sub.add_parser("demo", help="see becwright block a sample bad commit (no setup, no git needed)").set_defaults(func=_cmd_demo)
     sub.add_parser("list", help="list the built-in checks").set_defaults(func=_cmd_list)
     sub.add_parser("mcp", help="run the MCP server for AI agents (needs the 'mcp' extra)").set_defaults(func=_cmd_mcp)
-    sub.add_parser("install", help="install the pre-commit hook").set_defaults(func=_cmd_install)
-    sub.add_parser("uninstall", help="remove the pre-commit hook").set_defaults(func=_cmd_uninstall)
+    sub.add_parser("install", help="install the pre-commit and commit-msg hooks").set_defaults(func=_cmd_install)
+    sub.add_parser("uninstall", help="remove the becwright hooks").set_defaults(func=_cmd_uninstall)
 
     p_export = sub.add_parser("export", help="export a BEC to a .bec.yaml file")
     p_export.add_argument("rule_id", help="id of the rule to export")

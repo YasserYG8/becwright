@@ -39,6 +39,16 @@ def test_install_hook_roundtrip(tmp_path):
     assert not hook.exists()
 
 
+def test_msg_hook_roundtrip(tmp_path):
+    (tmp_path / ".git").mkdir()
+    ok, _ = git.install_msg_hook(tmp_path)
+    hook = tmp_path / ".git" / "hooks" / "commit-msg"
+    assert ok and hook.exists() and "check-msg" in hook.read_text(encoding="utf-8")
+    assert git.install_msg_hook(tmp_path)[0] is False  # idempotent
+    assert git.uninstall_msg_hook(tmp_path)[0] is True
+    assert not hook.exists()
+
+
 def test_install_refuses_foreign_hook(tmp_path):
     hooks = tmp_path / ".git" / "hooks"
     hooks.mkdir(parents=True)
@@ -210,8 +220,50 @@ def test_main_install_uninstall(tmp_path, monkeypatch):
     _init_repo(tmp_path)
     monkeypatch.chdir(tmp_path)
     assert cli.main(["install"]) == 0
-    assert (tmp_path / ".git" / "hooks" / "pre-commit").exists()
+    hooks = tmp_path / ".git" / "hooks"
+    assert (hooks / "pre-commit").exists() and (hooks / "commit-msg").exists()
     assert cli.main(["uninstall"]) == 0
+    assert not (hooks / "pre-commit").exists() and not (hooks / "commit-msg").exists()
+
+
+def test_check_msg_blocks_bad_message(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir()
+    (tmp_path / ".bec" / "rules.yaml").write_text(
+        "rules:\n  - id: conv\n    target: commit-msg\n"
+        "    check: 'becwright run require --pattern \"^(feat|fix): \"'\n    severity: blocking\n",
+        encoding="utf-8")
+    msg = tmp_path / "MSG"
+    msg.write_text("update stuff\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check-msg", str(msg)]) == 1
+    assert "Commit BLOCKED" in capsys.readouterr().out
+
+
+def test_check_msg_passes_good_message(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir()
+    (tmp_path / ".bec" / "rules.yaml").write_text(
+        "rules:\n  - id: conv\n    target: commit-msg\n"
+        "    check: 'becwright run require --pattern \"^(feat|fix): \"'\n    severity: blocking\n",
+        encoding="utf-8")
+    msg = tmp_path / "MSG"
+    msg.write_text("feat: add the thing\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check-msg", str(msg)]) == 0
+    assert "message OK" in capsys.readouterr().out
+
+
+def test_check_msg_no_message_rules_is_noop(tmp_path, monkeypatch):
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir()
+    (tmp_path / ".bec" / "rules.yaml").write_text(
+        "rules:\n  - id: f\n    paths: ['**/*.py']\n    check: 'true'\n    severity: blocking\n",
+        encoding="utf-8")
+    msg = tmp_path / "MSG"
+    msg.write_text("anything\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check-msg", str(msg)]) == 0
 
 
 def test_main_outside_repo_returns_2(tmp_path, monkeypatch):

@@ -6,6 +6,7 @@ from pathlib import Path
 import yaml
 
 _VALID_SEVERITIES = ("blocking", "warning")
+_VALID_TARGETS = ("files", "commit-msg")
 
 
 class RulesError(RuntimeError):
@@ -23,6 +24,7 @@ class Rule:
     why_it_matters: str = ""
     rejected_alternatives: tuple[str, ...] = ()
     severity: str = "blocking"  # blocking = stops the commit | warning = only warns
+    target: str = "files"  # files = the changed files | commit-msg = the commit message
 
     @property
     def is_blocking(self) -> bool:
@@ -41,6 +43,12 @@ def _to_rule(raw: dict) -> Rule:
             f"rule '{raw['id']}': invalid severity {severity!r} "
             f"(use one of: {', '.join(_VALID_SEVERITIES)})."
         )
+    target = raw.get("target", "files")
+    if target not in _VALID_TARGETS:
+        raise RulesError(
+            f"rule '{raw['id']}': invalid target {target!r} "
+            f"(use one of: {', '.join(_VALID_TARGETS)})."
+        )
     return Rule(
         id=raw["id"],
         paths=tuple(raw.get("paths", [])),
@@ -50,6 +58,7 @@ def _to_rule(raw: dict) -> Rule:
         why_it_matters=(raw.get("why_it_matters") or "").strip(),
         rejected_alternatives=tuple(raw.get("rejected_alternatives", [])),
         severity=severity,
+        target=target,
     )
 
 

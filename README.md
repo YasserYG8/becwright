@@ -128,6 +128,8 @@ together:
   `console.log`, `dbg!`, stray `panic()`.
 - **Ban risky APIs / enforce conventions** — `eval` / `exec`, a file-length cap,
   file-name rules, or any pattern you forbid with a one-line regex rule.
+- **Enforce commit-message rules** — Conventional Commits, or block AI attribution
+  trailers, via a `target: commit-msg` rule and the `commit-msg` hook.
 - **Guard AI-written code** — the deterministic net for what an agent regenerates
   and forgets.
 - **Enforce team conventions** — encode a decision once as a BEC and share it

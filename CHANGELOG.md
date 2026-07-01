@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Commit-message rules.** A rule with `target: commit-msg` checks the commit
+  message instead of the files; `becwright init` now installs a `commit-msg` hook
+  alongside `pre-commit`, and `becwright check-msg <file>` runs those rules.
+  `--from-claude-md` maps "conventional commits" and "no AI attribution" phrases
+  into ready-made commit-msg rules.
 - `conflict_markers` check: fails on leftover git merge conflict markers
   (`<<<<<<<`, `>>>>>>>`, `|||||||`).
 - `becwright init --from-claude-md` expands a broad "good practices" / "buenas

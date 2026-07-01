@@ -76,29 +76,44 @@ class Result:
         return any(not r.passed and r.rule.is_blocking for r in self.per_rule)
 
 
+def _run_check(rule: Rule, stdin: str, root: Path) -> RuleResult:
+    try:
+        proc = subprocess.run(
+            rule.check, shell=True, cwd=root,
+            input=stdin, capture_output=True, text=True,
+            timeout=_check_timeout(),
+        )
+    except subprocess.TimeoutExpired:
+        return RuleResult(
+            rule=rule, passed=False,
+            output=f"check timed out after {_check_timeout():g}s (its command hung)",
+        )
+    output = proc.stdout.strip() or proc.stderr.strip()
+    return RuleResult(rule=rule, passed=proc.returncode == 0, output=output)
+
+
 def evaluate(rules: list[Rule], files: list[str], root: Path) -> Result:
     results: list[RuleResult] = []
     for rule in rules:
+        if rule.target != "files":
+            continue
         relevant = [
             f for f in files
             if matches(f, rule.paths) and not matches(f, rule.exclude)
         ]
         if not relevant:
             continue
-        try:
-            proc = subprocess.run(
-                rule.check, shell=True, cwd=root,
-                input="\n".join(relevant), capture_output=True, text=True,
-                timeout=_check_timeout(),
-            )
-        except subprocess.TimeoutExpired:
-            results.append(RuleResult(
-                rule=rule, passed=False,
-                output=f"check timed out after {_check_timeout():g}s (its command hung)",
-            ))
-            continue
-        output = proc.stdout.strip() or proc.stderr.strip()
-        results.append(
-            RuleResult(rule=rule, passed=proc.returncode == 0, output=output)
-        )
+        results.append(_run_check(rule, "\n".join(relevant), root))
+    return Result(per_rule=results)
+
+
+def evaluate_message(rules: list[Rule], message_path: str, root: Path) -> Result:
+    """Run the `commit-msg` rules against the commit message. The message file
+    path is fed to each check on stdin, exactly like a source file, so the generic
+    `forbid` / `require` checks work on the message with no special casing."""
+    results = [
+        _run_check(rule, message_path, root)
+        for rule in rules
+        if rule.target == "commit-msg"
+    ]
     return Result(per_rule=results)

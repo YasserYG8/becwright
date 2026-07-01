@@ -43,7 +43,9 @@ a mano: `becwright install` más un `.bec/rules.yaml` que escribas vos.)
 > También detecta un límite de líneas por archivo ("archivos < 800 líneas" →
 > `max_lines`), ignorando reglas de largo de función que no puede enforzar. Una
 > frase amplia como "seguir buenas prácticas" se expande al set determinista de
-> higiene (sin secretos, `eval`, restos de debug ni marcadores de conflicto). Es
+> higiene (sin secretos, `eval`, restos de debug ni marcadores de conflicto), y
+> frases como "conventional commits" o "sin atribución de IA" se vuelven reglas
+> `commit-msg`. Es
 > best-effort y según el lenguaje, así que **revisá el resultado**; lo de criterio
 > (arquitectura, naming, inmutabilidad) no tiene check determinista y se queda en
 > `CLAUDE.md`. Combinalo con `--baseline` para adoptar en un repo sucio de una.
@@ -97,13 +99,14 @@ rules:
 | Campo | Requerido | Significado |
 |---|---|---|
 | `id` | sí | Id único de la regla |
-| `paths` | sí | Globs (ver abajo) |
+| `paths` | sí* | Globs (ver abajo); no hace falta en reglas `commit-msg` |
 | `check` | sí | Comando de shell a correr (el check ejecutable) |
 | `exclude` | no | Globs restados de `paths` (ver abajo) |
 | `intent` | no | Qué hace cumplir la regla |
 | `why_it_matters` | no | Por qué importa; se imprime cuando la regla falla |
 | `rejected_alternatives` | no | Contexto: enfoques descartados |
 | `severity` | no | `blocking` (por defecto) o `warning` |
+| `target` | no | `files` (por defecto) o `commit-msg` (ver abajo) |
 
 ### Globs
 
@@ -111,6 +114,27 @@ rules:
 - `**` matchea a través de directorios.
 - p.ej. `src/**/*.py` matchea `src/a.py` y `src/x/y/z.py`; `src/*.py` matchea
   solo el nivel superior.
+
+### Reglas sobre el mensaje del commit (`target: commit-msg`)
+
+Una regla con `target: commit-msg` revisa el **mensaje del commit** en vez de los
+archivos (`becwright init` instala un hook `commit-msg` además del `pre-commit`).
+No necesita `paths`; el mensaje se le pasa al check, así que los checks genéricos
+`require` / `forbid` funcionan sobre él. Dos ejemplos que `--from-claude-md` puede
+generar (a partir de frases como "conventional commits" / "sin atribución de IA"):
+
+```yaml
+  - id: conventional-commits
+    target: commit-msg
+    check: |-
+      becwright run require --pattern '^(feat|fix|docs|refactor|test|chore|ci|perf|build|style|revert)(\(.+\))?!?: '
+    severity: blocking
+  - id: no-ai-attribution
+    target: commit-msg
+    check: |-
+      becwright run forbid --ignore-case --pattern 'co-authored-by:.*(claude|anthropic|gpt|copilot)|generated with.*(claude|chatgpt|copilot)'
+    severity: blocking
+```
 
 ### Excluir archivos
 

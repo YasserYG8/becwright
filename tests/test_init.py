@@ -337,6 +337,23 @@ def test_rules_from_claude_md_conflict_markers_on_explicit_mention():
     assert ids == {"no-conflict-markers"}
 
 
+def test_rules_from_claude_md_maps_commit_message_rules():
+    text = "Use conventional commits. No AI attribution in commit messages."
+    by_id = {r["id"]: r for r, _ in cli._rules_from_claude_md(text, ["python"])}
+    assert by_id["conventional-commits"]["target"] == "commit-msg"
+    assert by_id["no-ai-attribution"]["target"] == "commit-msg"
+    assert "paths" not in by_id["conventional-commits"]
+
+
+def test_render_yaml_emits_commit_msg_rule(tmp_path):
+    rules = [{"id": "conv", "intent": "x", "why": "y", "target": "commit-msg",
+              "check": "becwright run require --pattern '^feat'", "severity": "blocking"}]
+    p = tmp_path / "rules.yaml"
+    p.write_text(cli._render_rules_yaml(rules), encoding="utf-8")
+    loaded = load_rules(p)
+    assert loaded[0].target == "commit-msg" and loaded[0].paths == ()
+
+
 def test_rules_from_claude_md_good_practices_keeps_specific_trigger():
     # a specific mention wins the trigger label, and the rule is not duplicated
     derived = cli._rules_from_claude_md(

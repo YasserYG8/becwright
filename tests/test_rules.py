@@ -55,3 +55,19 @@ def test_loads_exclude(tmp_path):
 def test_exclude_defaults_empty(tmp_path):
     path = _write(tmp_path, 'rules:\n  - id: r1\n    check: "true"\n')
     assert load_rules(path)[0].exclude == ()
+
+
+def test_loads_commit_msg_target(tmp_path):
+    path = _write(tmp_path, 'rules:\n  - id: r1\n    check: "true"\n    target: commit-msg\n')
+    assert load_rules(path)[0].target == "commit-msg"
+
+
+def test_target_defaults_to_files(tmp_path):
+    path = _write(tmp_path, 'rules:\n  - id: r1\n    check: "true"\n')
+    assert load_rules(path)[0].target == "files"
+
+
+def test_invalid_target_raises(tmp_path):
+    path = _write(tmp_path, 'rules:\n  - id: r1\n    check: "true"\n    target: mensaje\n')
+    with pytest.raises(RulesError, match="invalid target"):
+        load_rules(path)

@@ -131,6 +131,8 @@ tiene juntas:
 - **Prohibir APIs riesgosas / hacer cumplir convenciones** — `eval` / `exec`, un
   límite de líneas por archivo, reglas de nombre de archivo, o cualquier patrón que
   vetes con una regla regex de una línea.
+- **Reglas sobre el mensaje del commit** — Conventional Commits, o bloquear líneas
+  de atribución de IA, con una regla `target: commit-msg` y el hook `commit-msg`.
 - **Proteger código escrito por IA** — la red determinista para lo que un agente
   regenera y olvida.
 - **Hacer cumplir convenciones del equipo** — codificá una decisión una vez como
