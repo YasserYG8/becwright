@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `conflict_markers` check: fails on leftover git merge conflict markers
+  (`<<<<<<<`, `>>>>>>>`, `|||||||`).
+- `becwright init --from-claude-md` expands a broad "good practices" / "buenas
+  prácticas" phrase into the deterministic code-hygiene rule set (no secrets,
+  `eval`, debug leftovers, or conflict markers), language-aware and de-duplicated.
+
 ## [0.3.0] — 2026-07-01
 
 ### Added

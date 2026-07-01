@@ -126,6 +126,7 @@ _CHECK_DESCRIPTIONS = {
     "max_lines": "fail if a file exceeds --max lines (any language)",
     "require": "fail if a regex (--pattern) is missing from the files (any language)",
     "filename": "fail on file names matching --forbid or not matching --require (any language)",
+    "conflict_markers": "leftover git merge conflict markers (any language)",
 }
 
 
@@ -336,6 +337,22 @@ def _max_lines_cap(text: str) -> int | None:
     return cap if 50 <= cap <= 5000 else None
 
 
+# "Good practices" / "clean commits" is too broad to map to one check, so it
+# expands to the deterministic hygiene subset of the signals above (plus conflict
+# markers). Opinionated or narrow signals (wildcard imports, tokens in logs) are
+# left out — they only fire on their own explicit mention.
+_HYGIENE_IDS = frozenset({
+    "no-hardcoded-secrets", "no-dangerous-eval", "no-debug-remnants",
+    "no-debugger-js", "no-console-log-js",
+})
+_GOOD_PRACTICES_TRIGGERS = (
+    "good practices", "best practices", "buenas practicas", "buenas prácticas",
+    "mejores practicas", "mejores prácticas", "clean commit", "commit hygiene",
+)
+_CONFLICT_TRIGGERS = ("conflict marker", "merge conflict",
+                      "marcador de conflicto", "conflicto de merge")
+
+
 def _rules_from_claude_md(text: str, langs: list[str]) -> list[tuple[dict, str]]:
     """Best-effort mapping from prohibitions written in CLAUDE.md to executable
     rules becwright can actually enforce. Returns (rule_dict, matched_trigger)
@@ -347,6 +364,7 @@ def _rules_from_claude_md(text: str, langs: list[str]) -> list[tuple[dict, str]]
         "python": ["**/*.py"] if "python" in langs else [],
         "jsts": [g for g in source if g.endswith((".js", ".ts"))],
     }
+    good = any(t in lowered for t in _GOOD_PRACTICES_TRIGGERS)
     derived: list[tuple[dict, str]] = []
     for signal in _CLAUDE_SIGNALS:
         paths = paths_for[signal["lang"]]
@@ -354,11 +372,23 @@ def _rules_from_claude_md(text: str, langs: list[str]) -> list[tuple[dict, str]]
             continue
         trigger = next((t for t in signal["triggers"] if t in lowered), None)
         if trigger is None:
-            continue
+            if good and signal["id"] in _HYGIENE_IDS:
+                trigger = "good practices"
+            else:
+                continue
         derived.append((dict(
             id=signal["id"], paths=paths, check=signal["check"],
             intent=signal["intent"], why=signal["why"], severity=signal["severity"],
         ), trigger))
+
+    conflict_trigger = next((t for t in _CONFLICT_TRIGGERS if t in lowered), None)
+    if good or conflict_trigger:
+        derived.append((dict(
+            id="no-conflict-markers", paths=["**/*"], severity="blocking",
+            check="becwright run conflict_markers",
+            intent="Merge conflict markers must never be committed.",
+            why="A committed conflict marker (<<<<<<<) means unmerged code shipped."),
+            conflict_trigger or "good practices"))
 
     cap = _max_lines_cap(text)
     if cap is not None and source:

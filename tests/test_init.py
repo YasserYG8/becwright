@@ -322,6 +322,29 @@ def test_rules_from_claude_md_maps_file_line_cap():
     assert by_id["max-file-lines"]["severity"] == "warning"
 
 
+def test_rules_from_claude_md_good_practices_expands_hygiene():
+    derived = cli._rules_from_claude_md("Always follow good practices.", ["python", "ts"])
+    ids = {r["id"] for r, _ in derived}
+    assert {"no-hardcoded-secrets", "no-dangerous-eval", "no-debug-remnants",
+            "no-debugger-js", "no-console-log-js", "no-conflict-markers"} <= ids
+    # opinionated/narrow signals are not pulled in by the broad phrase
+    assert "no-wildcard-imports" not in ids and "no-token-in-logs" not in ids
+
+
+def test_rules_from_claude_md_conflict_markers_on_explicit_mention():
+    ids = {r["id"] for r, _ in cli._rules_from_claude_md(
+        "Never commit merge conflict markers.", ["python"])}
+    assert ids == {"no-conflict-markers"}
+
+
+def test_rules_from_claude_md_good_practices_keeps_specific_trigger():
+    # a specific mention wins the trigger label, and the rule is not duplicated
+    derived = cli._rules_from_claude_md(
+        "No hardcoded secrets. Follow good practices.", ["python"])
+    secrets = [(r, t) for r, t in derived if r["id"] == "no-hardcoded-secrets"]
+    assert len(secrets) == 1 and secrets[0][1] == "hardcod"
+
+
 def test_init_from_claude_md_composes_with_baseline(tmp_path, monkeypatch):
     monkeypatch.setenv("PYTHONPATH", str(_SRC))
     _init_repo(tmp_path)

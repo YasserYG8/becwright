@@ -306,6 +306,7 @@ atar cada regla a su *por qué*.
 | `hardcoded_secrets` | Claves AWS, claves privadas, `password = "..."` literales | cualquiera | `blocking` |
 | `debug_remnants` | `breakpoint()`, `pdb.set_trace()`, `import pdb` olvidados | Python | `blocking` |
 | `dangerous_eval` | Llamadas a `eval()` / `exec()` | cualquiera | `blocking` |
+| `conflict_markers` | Marcadores de conflicto de merge olvidados (`<<<<<<<`) | cualquiera | `blocking` |
 | `wildcard_imports` | `from x import *` | Python | `warning` |
 
 ## Reglas listas para usar (sin escribir nada)

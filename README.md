@@ -296,6 +296,7 @@ may miss exotic cases, and the real value is in tying each rule to its *why*.
 | `hardcoded_secrets` | AWS keys, private keys, `password = "..."` literals | any | `blocking` |
 | `debug_remnants` | Forgotten `breakpoint()`, `pdb.set_trace()`, `import pdb` | Python | `blocking` |
 | `dangerous_eval` | `eval()` / `exec()` calls | any | `blocking` |
+| `conflict_markers` | Leftover git merge conflict markers (`<<<<<<<`) | any | `blocking` |
 | `wildcard_imports` | `from x import *` | Python | `warning` |
 
 Example rules to copy into your `.bec/rules.yaml`:

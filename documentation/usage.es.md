@@ -41,7 +41,9 @@ a mano: `becwright install` más un `.bec/rules.yaml` que escribas vos.)
 > `debugger`, `console.log`, breakpoints, imports con `*`, tokens en logs — y
 > convierte cada una en una regla enforzable, informando qué frase la disparó.
 > También detecta un límite de líneas por archivo ("archivos < 800 líneas" →
-> `max_lines`), ignorando reglas de largo de función que no puede enforzar. Es
+> `max_lines`), ignorando reglas de largo de función que no puede enforzar. Una
+> frase amplia como "seguir buenas prácticas" se expande al set determinista de
+> higiene (sin secretos, `eval`, restos de debug ni marcadores de conflicto). Es
 > best-effort y según el lenguaje, así que **revisá el resultado**; lo de criterio
 > (arquitectura, naming, inmutabilidad) no tiene check determinista y se queda en
 > `CLAUDE.md`. Combinalo con `--baseline` para adoptar en un repo sucio de una.

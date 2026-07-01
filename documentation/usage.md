@@ -39,7 +39,9 @@ From then on, every `git commit` runs the checks. (You can also set up by hand:
 > `console.log`, breakpoints, wildcard imports, tokens in logs — and turns each
 > into an enforceable rule, reporting which phrase matched. It also picks up a
 > per-file line cap ("files under 800 lines" → `max_lines`), ignoring
-> function-length rules it can't enforce. This is best-effort and language-aware,
+> function-length rules it can't enforce. A broad phrase like "follow good
+> practices" expands to the deterministic hygiene set (no secrets, `eval`, debug
+> leftovers, or merge-conflict markers). This is best-effort and language-aware,
 > so **review the result**; judgment-based guidance (architecture, naming,
 > immutability) has no deterministic check and stays in `CLAUDE.md`. Combine with
 > `--baseline` to adopt on a dirty repo in one step.

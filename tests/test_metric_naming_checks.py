@@ -1,6 +1,6 @@
 import io
 
-from becwright.checks import filename, max_lines, require
+from becwright.checks import conflict_markers, filename, max_lines, require
 
 
 def _write(tmp_path, name, text):
@@ -98,3 +98,24 @@ def test_filename_main_flags_and_exits_one(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr("sys.stdin", io.StringIO(bad + "\n"))
     assert filename.main(["--forbid", "tipos"]) == 1
     assert "forbidden pattern" in capsys.readouterr().out
+
+
+# --- conflict_markers ---
+
+def test_conflict_markers_flags_angle_markers(tmp_path):
+    f = _write(tmp_path, "a.py", "x = 1\n<<<<<<< HEAD\ny = 2\n>>>>>>> branch\n")
+    v = conflict_markers.find_violations([f])
+    assert {ln for _p, ln, _l in v} == {2, 4}
+
+
+def test_conflict_markers_ignores_markdown_underline(tmp_path):
+    # `=======` is a legit Markdown h1 underline; only angle/pipe markers are flagged.
+    f = _write(tmp_path, "r.md", "Title\n=======\nbody\n")
+    assert conflict_markers.find_violations([f]) == []
+
+
+def test_conflict_markers_main(tmp_path, monkeypatch, capsys):
+    f = _write(tmp_path, "a.py", "||||||| base\n")
+    monkeypatch.setattr("sys.stdin", io.StringIO(f + "\n"))
+    assert conflict_markers.main() == 1
+    assert f in capsys.readouterr().out
