@@ -274,6 +274,9 @@ may miss exotic cases, and the real value is in tying each rule to its *why*.
 | Check | What it detects | Language | Suggested severity |
 |---|---|---|---|
 | `forbid` | Any regex you pass (`--pattern`) | any | depends on the case |
+| `require` | A regex (`--pattern`) that *must* appear (e.g. a license header) | any | depends on the case |
+| `max_lines` | Files longer than `--max` lines | any | `warning` |
+| `filename` | File names matching `--forbid` or not matching `--require` | any | depends on the case |
 | `no_token_in_logs` | Tokens/credentials in log calls | Python | `blocking` |
 | `hardcoded_secrets` | AWS keys, private keys, `password = "..."` literals | any | `blocking` |
 | `debug_remnants` | Forgotten `breakpoint()`, `pdb.set_trace()`, `import pdb` | Python | `blocking` |

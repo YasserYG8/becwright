@@ -122,6 +122,9 @@ _CHECK_DESCRIPTIONS = {
     "dangerous_eval": "eval / exec calls (any language)",
     "wildcard_imports": "wildcard star imports (Python)",
     "redundant_comments": "comments that restate the obvious code (Python, heuristic)",
+    "max_lines": "fail if a file exceeds --max lines (any language)",
+    "require": "fail if a regex (--pattern) is missing from the files (any language)",
+    "filename": "fail on file names matching --forbid or not matching --require (any language)",
 }
 
 

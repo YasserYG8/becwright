@@ -283,6 +283,9 @@ atar cada regla a su *por qué*.
 | Check | Qué detecta | Lenguaje | Severidad sugerida |
 |---|---|---|---|
 | `forbid` | Cualquier regex que le pases (`--pattern`) | cualquiera | según el caso |
+| `require` | Un regex (`--pattern`) que *debe* aparecer (p. ej. un header de licencia) | cualquiera | según el caso |
+| `max_lines` | Archivos con más de `--max` líneas | cualquiera | `warning` |
+| `filename` | Nombres de archivo que matchean `--forbid` o no matchean `--require` | cualquiera | según el caso |
 | `no_token_in_logs` | Tokens/credenciales en llamadas a logs | Python | `blocking` |
 | `hardcoded_secrets` | Claves AWS, claves privadas, `password = "..."` literales | cualquiera | `blocking` |
 | `debug_remnants` | `breakpoint()`, `pdb.set_trace()`, `import pdb` olvidados | Python | `blocking` |

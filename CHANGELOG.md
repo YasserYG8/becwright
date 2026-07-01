@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   breakpoints, wildcard imports, tokens in logs) to enforceable checks and
   reporting which phrase matched each. Judgment-based guidance is left for
   `CLAUDE.md`. Composes with `--baseline`.
+- Three language-agnostic checks that cover common `CLAUDE.md` rules without an
+  AST: `max_lines` (file length cap via `--max`), `require` (a regex that must be
+  present — the inverse of `forbid`), and `filename` (file-name conventions via
+  `--forbid` / `--require`, matched against the base name).
 
 ### Changed
 - The pre-commit path now checks the **staged content** of files, not the
