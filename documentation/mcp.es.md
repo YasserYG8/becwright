@@ -55,6 +55,15 @@ pipx install "becwright[mcp]"     # o: pip install "becwright[mcp]"
 |---|---|---|
 | `check` | `all_files` (bool), `path` (dir del repo, opcional) | el mismo resumen que `check --json` |
 | `list_checks` | — | los checks built-in como `{name, description}` |
+| `preview_rule` | `check`, `paths`, `exclude` (opcional), `all_files`, `path` | `{matched_files, passed, output, note}` — un dry-run sin escribir la regla |
+
+**`preview_rule`** deja que un agente *valide una regla antes de escribirla*. Dado
+un `check` candidato y sus `paths`, corre el check contra el repo e informa cuántos
+archivos seleccionan los globs, si la regla pasaría y qué marca — detectando una
+regla que no matchea nada o que nombra un check inexistente. Es el piso
+determinista sobre el que un agente construye al traducir un `CLAUDE.md` a BECs:
+becwright garantiza la *ejecución*; el agente hace la *traducción*, usando
+`list_checks` como vocabulario y `preview_rule` para chequear su trabajo.
 
 ### Configuración del cliente
 

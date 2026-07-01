@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   AST: `max_lines` (file length cap via `--max`), `require` (a regex that must be
   present — the inverse of `forbid`), and `filename` (file-name conventions via
   `--forbid` / `--require`, matched against the base name).
+- MCP tool `preview_rule`: dry-run a candidate rule (`check` + `paths`) against
+  the repo without writing it, returning matched-file count, pass/fail, and what
+  it flags — so an agent can validate a rule it translated from a `CLAUDE.md`
+  before committing to it.
 
 ### Changed
 - The pre-commit path now checks the **staged content** of files, not the
