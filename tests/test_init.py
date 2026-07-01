@@ -129,6 +129,14 @@ def test_render_empty_is_valid(tmp_path):
     assert load_rules(p) == []
 
 
+def test_render_yaml_emits_exclude(tmp_path):
+    rules = [{"id": "no-log", "intent": "x", "why": "y", "paths": ["**/*.ts"],
+              "exclude": ["lib/logger.ts"], "check": "true", "severity": "warning"}]
+    p = tmp_path / "rules.yaml"
+    p.write_text(cli._render_rules_yaml(rules), encoding="utf-8")
+    assert load_rules(p)[0].exclude == ("lib/logger.ts",)
+
+
 # --- the init command ---
 
 def test_init_creates_rules_and_hook(tmp_path, monkeypatch):
@@ -181,3 +189,52 @@ def test_init_generated_rule_blocks_via_check(tmp_path, monkeypatch):
     assert cli.main(["init"]) == 0
     _git(tmp_path, "add", "app.js")
     assert cli.main(["check", "--all"]) == 1
+
+
+# --- baseline adoption ---
+
+def test_init_baseline_downgrades_dirty_rules_only(tmp_path, monkeypatch):
+    monkeypatch.setenv("PYTHONPATH", str(_SRC))
+    _init_repo(tmp_path)
+    (tmp_path / "app.py").write_text("breakpoint()\n", encoding="utf-8")   # trips no-debug-remnants
+    (tmp_path / "clean.py").write_text("x = 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "app.py", "clean.py")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["init", "--baseline"]) == 0
+    rules = {r.id: r for r in load_rules(tmp_path / ".bec" / "rules.yaml")}
+    assert rules["no-debug-remnants"].severity == "warning"      # dirty -> warning
+    assert rules["no-hardcoded-secrets"].severity == "blocking"  # clean -> stays blocking
+
+
+def test_init_baseline_writes_note_and_summary(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("PYTHONPATH", str(_SRC))
+    _init_repo(tmp_path)
+    (tmp_path / "app.py").write_text("breakpoint()\n", encoding="utf-8")
+    _git(tmp_path, "add", "app.py")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["init", "--baseline"]) == 0
+    out = capsys.readouterr().out
+    assert "started as warning" in out and "no-debug-remnants" in out
+    assert "graduate to blocking" in (tmp_path / ".bec" / "rules.yaml").read_text(encoding="utf-8")
+
+
+def test_init_baseline_clean_repo_keeps_all_blocking(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("PYTHONPATH", str(_SRC))
+    _init_repo(tmp_path)
+    (tmp_path / "clean.py").write_text("x = 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "clean.py")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["init", "--baseline"]) == 0
+    rules = load_rules(tmp_path / ".bec" / "rules.yaml")
+    assert rules and all(r.is_blocking for r in rules)
+    assert "clean repo" in capsys.readouterr().out
+
+
+def test_init_without_baseline_keeps_default_severity(tmp_path, monkeypatch):
+    _init_repo(tmp_path)
+    (tmp_path / "app.py").write_text("breakpoint()\n", encoding="utf-8")
+    _git(tmp_path, "add", "app.py")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["init"]) == 0
+    rules = {r.id: r for r in load_rules(tmp_path / ".bec" / "rules.yaml")}
+    assert rules["no-debug-remnants"].severity == "blocking"

@@ -79,7 +79,10 @@ class Result:
 def evaluate(rules: list[Rule], files: list[str], root: Path) -> Result:
     results: list[RuleResult] = []
     for rule in rules:
-        relevant = [f for f in files if matches(f, rule.paths)]
+        relevant = [
+            f for f in files
+            if matches(f, rule.paths) and not matches(f, rule.exclude)
+        ]
         if not relevant:
             continue
         try:

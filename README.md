@@ -152,12 +152,18 @@ becwright init   # detects your language, writes .bec/rules.yaml, installs the p
 That's it. From now on every `git commit` runs the checks by itself, and stops a
 commit that breaks a blocking rule. You never call becwright by hand again.
 
+**Adopting on an existing codebase?** Use `becwright init --baseline`: rules that
+*already* have violations start as `warning` (nothing legitimate is blocked)
+while clean rules start as `blocking`. Fix the debt over time, then graduate each
+rule to `blocking`.
+
 Available commands:
 
 | Command | What it does |
 |---|---|
 | `becwright demo` | Show becwright block a sample bad commit (no setup, no git needed) |
 | `becwright init` | Scaffold a starter `.bec/rules.yaml` and install the hook |
+| `becwright init --baseline` | Same, but start already-violated rules as `warning` (adopt without blocking) |
 | `becwright list` | List the built-in checks |
 | `becwright check` | Runs the rules over the staged files |
 | `becwright search [query]` | Lists ready-made BECs from the built-in catalog |
@@ -222,9 +228,16 @@ rules:
       If a token shows up in the logs, anyone with access to them can steal a
       user's session.
     paths: ["src/**/*.py"]
+    exclude: ["src/logging_setup.py"]   # optional: globs carved out of paths
     check: "becwright run no_token_in_logs"
     severity: blocking   # blocking = stops the commit | warning = only warns
 ```
+
+`exclude` subtracts globs from `paths`, so one rule can cover a whole language
+while skipping the files that would only produce false positives — vendored or
+generated code, or the check's own implementation. It travels with the rule
+through `export` / `import`. Full field reference:
+[`documentation/usage.md`](documentation/usage.md).
 
 ## How becwright compares
 

@@ -18,6 +18,7 @@ class Rule:
     id: str
     paths: tuple[str, ...]
     check: str
+    exclude: tuple[str, ...] = ()  # globs carved out of `paths` (vendored code, generated files, the check's own implementation)
     intent: str = ""
     why_it_matters: str = ""
     rejected_alternatives: tuple[str, ...] = ()
@@ -44,6 +45,7 @@ def _to_rule(raw: dict) -> Rule:
         id=raw["id"],
         paths=tuple(raw.get("paths", [])),
         check=raw["check"],
+        exclude=tuple(raw.get("exclude", [])),
         intent=(raw.get("intent") or "").strip(),
         why_it_matters=(raw.get("why_it_matters") or "").strip(),
         rejected_alternatives=tuple(raw.get("rejected_alternatives", [])),

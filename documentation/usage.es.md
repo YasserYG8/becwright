@@ -28,12 +28,21 @@ el estado actual.
 A partir de ahí, cada `git commit` corre los checks. (También podés configurarlo
 a mano: `becwright install` más un `.bec/rules.yaml` que escribas vos.)
 
+> **¿Adoptándolo en un código que ya existe?** Corré `becwright init --baseline`.
+> Corre las reglas de arranque contra tu código actual y arranca en `warning`
+> (en vez de `blocking`) toda regla que *ya* tiene violaciones, así becwright
+> nunca frena un commit por deuda preexistente. Las reglas limpias quedan
+> `blocking` — guardarraíl desde el día uno. Cada regla degradada queda anotada
+> con su conteo de violaciones; limpiá la deuda con el tiempo y volvela a
+> `blocking`.
+
 ## Comandos
 
 | Comando | Descripción |
 |---|---|
 | `becwright demo` | Muestra a becwright frenando un commit malo de ejemplo (sin configurar nada, sin git) |
 | `becwright init` | Genera un `.bec/rules.yaml` de arranque e instala el hook |
+| `becwright init --baseline` | Igual, pero arranca en `warning` las reglas que ya tienen violaciones (adoptar en un código sucio sin frenar commits) |
 | `becwright list` | Lista los checks incluidos |
 | `becwright check` | Corre las reglas sobre los archivos en staging |
 | `becwright check --all` | Corre las reglas sobre todo el repo (`git ls-files`) |
@@ -64,6 +73,8 @@ rules:
       - "Redactar al loguear -> demasiado fácil de saltarse"
     paths:                      # globs de los archivos a los que aplica la regla
       - "src/**/*.py"
+    exclude:                    # opcional: globs restados de `paths`
+      - "src/logging_setup.py"  #   (p.ej. la implementación del propio check)
     check: "becwright run no_token_in_logs"
     severity: blocking          # blocking (frena el commit) | warning (solo avisa)
 ```
@@ -75,6 +86,7 @@ rules:
 | `id` | sí | Id único de la regla |
 | `paths` | sí | Globs (ver abajo) |
 | `check` | sí | Comando de shell a correr (el check ejecutable) |
+| `exclude` | no | Globs restados de `paths` (ver abajo) |
 | `intent` | no | Qué hace cumplir la regla |
 | `why_it_matters` | no | Por qué importa; se imprime cuando la regla falla |
 | `rejected_alternatives` | no | Contexto: enfoques descartados |
@@ -86,6 +98,26 @@ rules:
 - `**` matchea a través de directorios.
 - p.ej. `src/**/*.py` matchea `src/a.py` y `src/x/y/z.py`; `src/*.py` matchea
   solo el nivel superior.
+
+### Excluir archivos
+
+`exclude` recorta globs de `paths`, así una sola regla puede cubrir todo un
+lenguaje salteando archivos que solo darían falsos positivos — código vendored,
+archivos generados, o la implementación del propio check. Un archivo que matchea
+tanto `paths` como `exclude` se saltea.
+
+```yaml
+  - id: no-console-log
+    paths:
+      - "**/*.ts"
+    exclude:
+      - "lib/logger.ts"   # el logger envuelve console.log de forma legítima
+    check: "becwright run forbid --pattern 'console\\.log'"
+    severity: warning
+```
+
+`exclude` viaja con la regla en `export` / `import`, así que el recorte es
+portable junto con la BEC.
 
 ## Reglas listas para usar
 

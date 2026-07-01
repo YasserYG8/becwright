@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from a catalog that now ships **inside** the package — no URL, works offline.
 - `.pre-commit-hooks.yaml`: use becwright through the
   [pre-commit](https://pre-commit.com) framework, plus Husky setup in the README.
+- Per-rule `exclude:` globs, subtracted from `paths`, so one rule can cover a
+  whole language while skipping vendored/generated files or the check's own
+  implementation. Travels with the rule through `export` / `import`.
+- `becwright init --baseline`: start already-violated rules as `warning` and
+  clean ones as `blocking`, so becwright can be adopted on a dirty codebase
+  without blocking commits on pre-existing debt.
 
 ### Changed
 - The pre-commit path now checks the **staged content** of files, not the

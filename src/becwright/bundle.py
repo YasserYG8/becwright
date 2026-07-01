@@ -69,6 +69,8 @@ def export_bec(rule: Rule, root: Path) -> str:
     if rule.rejected_alternatives:
         rule_fields["rejected_alternatives"] = list(rule.rejected_alternatives)
     rule_fields["paths"] = list(rule.paths)
+    if rule.exclude:
+        rule_fields["exclude"] = list(rule.exclude)
     rule_fields["severity"] = rule.severity
 
     bundle = {
@@ -138,6 +140,8 @@ def materialize(bundle: dict, root: Path) -> dict:
         if rule.get(key):
             out[key] = _clean(rule[key])
     out["paths"] = rule.get("paths", [])
+    if rule.get("exclude"):
+        out["exclude"] = _clean(rule["exclude"])
     out["check"] = command
     out["severity"] = rule.get("severity", "blocking")
     return out

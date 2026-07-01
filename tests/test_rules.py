@@ -41,3 +41,17 @@ def test_non_list_rules_raises(tmp_path):
     path = _write(tmp_path, "rules: not-a-list\n")
     with pytest.raises(RulesError, match="'rules:' list"):
         load_rules(path)
+
+
+def test_loads_exclude(tmp_path):
+    path = _write(
+        tmp_path,
+        'rules:\n  - id: r1\n    check: "true"\n    paths: ["**/*.py"]\n'
+        '    exclude: ["lib/logger.py"]\n',
+    )
+    assert load_rules(path)[0].exclude == ("lib/logger.py",)
+
+
+def test_exclude_defaults_empty(tmp_path):
+    path = _write(tmp_path, 'rules:\n  - id: r1\n    check: "true"\n')
+    assert load_rules(path)[0].exclude == ()

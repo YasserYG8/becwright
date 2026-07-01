@@ -238,15 +238,64 @@ def _render_rules_yaml(rules: list[dict]) -> str:
     blocks = []
     for r in rules:
         paths = "\n".join(f'      - "{p}"' for p in r["paths"])
+        note = f"  # {r['note']}\n" if r.get("note") else ""
+        exclude = ""
+        if r.get("exclude"):
+            lines = "\n".join(f'      - "{p}"' for p in r["exclude"])
+            exclude = f"    exclude:\n{lines}\n"
         blocks.append(
+            f"{note}"
             f"  - id: {r['id']}\n"
             f"    intent: >\n      {r['intent']}\n"
             f"    why_it_matters: >\n      {r['why']}\n"
             f"    paths:\n{paths}\n"
+            f"{exclude}"
             f"    check: {r['check']}\n"
             f"    severity: {r['severity']}\n"
         )
     return header + "rules:\n" + "\n".join(blocks)
+
+
+def _apply_baseline(root: Path, rules: list[dict]) -> list[tuple[str, int]]:
+    """Downgrade to `warning` any starter rule that already has violations in the
+    current code, so adopting becwright never blocks a commit on pre-existing debt.
+    Clean rules stay `blocking` (a guardrail from day one). Returns the (id, count)
+    pairs that were downgraded so the caller can report the adoption ramp."""
+    from .engine import evaluate
+    from .rules import Rule
+
+    files = git.files_to_check(root, all_files=True)
+    if not files:
+        return []
+    rule_objs = [
+        Rule(id=r["id"], paths=tuple(r["paths"]), check=r["check"], severity=r["severity"])
+        for r in rules
+    ]
+    by_id = {rr.rule.id: rr for rr in evaluate(rule_objs, files, root).per_rule}
+    downgraded: list[tuple[str, int]] = []
+    for r in rules:
+        result = by_id.get(r["id"])
+        if result and not result.passed:
+            count = sum(1 for line in result.output.splitlines() if line.strip()) or 1
+            r["severity"] = "warning"
+            r["note"] = (f"baseline: {count} pre-existing violation(s) on adoption; "
+                         "graduate to blocking once clean")
+            downgraded.append((r["id"], count))
+    return downgraded
+
+
+def _print_baseline(rules: list[dict], downgraded: list[tuple[str, int]]) -> None:
+    if not downgraded:
+        print(_style("Baseline: clean repo — every rule starts as blocking.", GREEN))
+        return
+    blocking = len(rules) - len(downgraded)
+    print(_style("Baseline:", BOLD),
+          f"{blocking} rule(s) blocking, {len(downgraded)} started as warning "
+          "so adoption never blocks a commit on pre-existing debt:")
+    for rule_id, count in downgraded:
+        print(f"  {_style('warning', YELLOW)}  {rule_id}  "
+              f"{_style(f'({count} pre-existing)', DIM)}")
+    print(_style("  Clean each up, then flip it to 'blocking' in .bec/rules.yaml.", DIM))
 
 
 def _cmd_init(args: argparse.Namespace) -> int:
@@ -257,12 +306,15 @@ def _cmd_init(args: argparse.Namespace) -> int:
         return 1
     langs = _detect_languages(root)
     rules = _starter_rules(langs)
+    downgraded = _apply_baseline(root, rules) if args.baseline else []
     rules_path.parent.mkdir(parents=True, exist_ok=True)
     rules_path.write_text(_render_rules_yaml(rules), encoding="utf-8")
 
     detected = ", ".join(langs) if langs else "none"
     print(f"{_style(f'Created {rules_path}', GREEN)} "
           f"{_style(f'({len(rules)} starter rule(s); languages: {detected})', DIM)}")
+    if args.baseline:
+        _print_baseline(rules, downgraded)
     ok, msg = git.install_hook(root)
     print(_style(msg, GREEN if ok else YELLOW))
     print()
@@ -468,6 +520,8 @@ def _build_parser() -> argparse.ArgumentParser:
 
     p_init = sub.add_parser("init", help="scaffold a starter .bec/rules.yaml and install the hook")
     p_init.add_argument("--force", action="store_true", help="overwrite an existing .bec/rules.yaml")
+    p_init.add_argument("--baseline", action="store_true",
+                        help="start rules that already have violations as warning (adopt on dirty code without blocking)")
     p_init.set_defaults(func=_cmd_init)
 
     p_run = sub.add_parser("run", help="run a built-in check against files on stdin (used inside rules)")

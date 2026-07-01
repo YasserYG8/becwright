@@ -99,6 +99,21 @@ def test_roundtrip_builtin_args_preserved(tmp_path):
     assert bundle.materialize(data, tmp_path)["check"] == rule.check
 
 
+def test_exclude_roundtrips(tmp_path):
+    rule = Rule(id="no-log", paths=("**/*.ts",), exclude=("lib/logger.ts",),
+                check=r"becwright run forbid --pattern 'console\.log'", severity="warning")
+    data = bundle.parse_bundle(bundle.export_bec(rule, tmp_path))
+    assert data["rule"]["exclude"] == ["lib/logger.ts"]
+    assert bundle.materialize(data, tmp_path)["exclude"] == ["lib/logger.ts"]
+
+
+def test_export_omits_empty_exclude(tmp_path):
+    rule = Rule(id="r", paths=("*.py",),
+                check="becwright run debug_remnants", severity="blocking")
+    data = bundle.parse_bundle(bundle.export_bec(rule, tmp_path))
+    assert "exclude" not in data["rule"]
+
+
 def test_legacy_check_materializes_to_new_form(tmp_path):
     rule = Rule(id="no-dbg", paths=("**/*.py",),
                 check="python3 -m becwright.checks.debug_remnants",

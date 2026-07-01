@@ -42,6 +42,32 @@ def test_evaluate_skips_rule_with_no_matching_files(tmp_path):
     assert result.per_rule == []
 
 
+def _rule_excluding(*globs: str) -> Rule:
+    return Rule(
+        id="no-debug",
+        paths=("**/*.py",),
+        exclude=globs,
+        check=_check_cmd("debug_remnants"),
+        severity="blocking",
+    )
+
+
+def test_evaluate_carves_out_excluded_file(tmp_path):
+    # The excluded file is the only match, so the rule has nothing left to run on.
+    (tmp_path / "logger.py").write_text("breakpoint()\n", encoding="utf-8")
+    result = evaluate([_rule_excluding("logger.py")], ["logger.py"], tmp_path)
+    assert result.per_rule == []
+
+
+def test_evaluate_exclude_keeps_checking_other_files(tmp_path):
+    (tmp_path / "logger.py").write_text("breakpoint()\n", encoding="utf-8")
+    (tmp_path / "app.py").write_text("breakpoint()\n", encoding="utf-8")
+    result = evaluate([_rule_excluding("logger.py")], ["logger.py", "app.py"], tmp_path)
+    assert result.had_blocking is True
+    assert "app.py" in result.per_rule[0].output
+    assert "logger.py" not in result.per_rule[0].output
+
+
 def test_evaluate_times_out_a_hung_check(tmp_path, monkeypatch):
     monkeypatch.setenv("BECWRIGHT_CHECK_TIMEOUT", "0.3")
     (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")

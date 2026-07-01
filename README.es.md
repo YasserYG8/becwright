@@ -154,6 +154,11 @@ becwright init   # detecta tu lenguaje, escribe .bec/rules.yaml, instala el hook
 Listo. A partir de ahora cada `git commit` corre los chequeos solo, y frena un
 commit que rompa una regla blocking. No volvés a llamar a becwright a mano.
 
+**¿Adoptándolo en un código que ya existe?** Usá `becwright init --baseline`: las
+reglas que *ya* tienen violaciones arrancan en `warning` (no se frena nada
+legítimo) y las limpias arrancan en `blocking`. Limpiá la deuda con el tiempo y
+después graduá cada regla a `blocking`.
+
 Instalado como devDependency, el hook de pre-commit resuelve el binario local
 desde `node_modules/.bin`, así funciona sin instalación global. Los paquetes npm
 cubren `linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64` y `win32-x64`; en
@@ -165,6 +170,7 @@ Comandos disponibles:
 |---|---|
 | `becwright demo` | Muestra a becwright frenando un commit malo de ejemplo (sin configurar nada, sin git) |
 | `becwright init` | Genera un `.bec/rules.yaml` de arranque e instala el hook |
+| `becwright init --baseline` | Igual, pero arranca en `warning` las reglas que ya tienen violaciones (adoptar sin frenar commits) |
 | `becwright list` | Lista los checks incluidos |
 | `becwright check` | Corre las reglas sobre los archivos en staging |
 | `becwright search [texto]` | Lista BECs listas del catálogo incluido |
@@ -229,9 +235,16 @@ rules:
       Si un token aparece en los logs, cualquiera con acceso a ellos puede
       robar la sesión de un usuario.
     paths: ["src/**/*.py"]
+    exclude: ["src/logging_setup.py"]   # opcional: globs restados de paths
     check: "becwright run no_token_in_logs"
     severity: blocking   # blocking = frena el commit | warning = solo avisa
 ```
+
+`exclude` resta globs de `paths`, así una sola regla puede cubrir todo un
+lenguaje salteando los archivos que solo darían falsos positivos — código
+vendored o generado, o la implementación del propio check. Viaja con la regla en
+`export` / `import`. Referencia completa de campos:
+[`documentation/usage.es.md`](documentation/usage.es.md).
 
 ## Cómo se compara becwright
 
