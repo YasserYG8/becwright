@@ -17,8 +17,11 @@ plugin from it.
 
 - **Skill `becwright`** — teaches the agent what becwright is, how to install it
   (via npm/pnpm — no Python needed — or pipx), how to scaffold rules, and how to
-  read and fix `check` output. The agent invokes it automatically when you ask
-  for a guardrail, a pre-commit check, or a rule that "can't be ignored".
+  read and fix `check` output. It also teaches the agent to turn the *deterministic*
+  parts of a `CLAUDE.md` into BECs — via `init --from-claude-md` and the MCP loop
+  (propose → preview_rule → add_rule) — while leaving judgment-based guidance in
+  `CLAUDE.md`. The agent invokes it automatically when you ask for a guardrail, a
+  pre-commit check, or a rule that "can't be ignored".
 - **Command `/becwright`** — a direct entry point:
   - `/becwright init` — install becwright and scaffold `.bec/rules.yaml` + hook
   - `/becwright check` — run the rules and summarize PASS / WARN / BLOCK

@@ -33,11 +33,22 @@ binary. A global/pipx install puts `becwright` on PATH directly.
 ## Set up in a repo
 
 ```bash
-becwright init     # detects languages, writes .bec/rules.yaml, installs the pre-commit hook
+becwright init                   # detect languages, scaffold .bec/rules.yaml, install the hook
+becwright init --from-claude-md  # derive rules from the repo's CLAUDE.md (see below)
+becwright init --baseline        # adopt on a dirty repo without blocking (see below)
 ```
 
 This scaffolds starter rules and a native `pre-commit` hook. From then on every
-commit runs the checks; a blocking rule that fails stops the commit.
+commit runs the checks; a blocking rule that fails stops the commit. The flags
+compose (`--from-claude-md --baseline`).
+
+**Adopting on an existing (dirty) codebase — the baseline pattern.** A blocking
+rule on code that already violates it would stop every commit until the debt is
+cleared. `--baseline` runs each rule against the current code and starts any rule
+that *already* has violations as `warning` (annotated with the count) while clean
+rules stay `blocking`. So the guardrail is active from day one, nothing legitimate
+is blocked, and each rule graduates to `blocking` once you clean its debt. Always
+prefer this when introducing becwright to a repo that isn't already clean.
 
 ## Daily use
 
@@ -50,8 +61,9 @@ commit runs the checks; a blocking rule that fails stops the commit.
 | `becwright export <rule-id>` | Export a rule as a portable `.bec.yaml` |
 
 For structured results you can parse, use `becwright check --json`. An MCP server
-is also available (`becwright mcp`, needs the `mcp` extra) exposing `check` and
-`list_checks` as tools.
+is also available (`becwright mcp`, needs the `mcp` extra) exposing `check`,
+`list_checks`, `preview_rule`, `propose_rules_from_claude_md`, and `add_rule` —
+see "Deriving BECs from a CLAUDE.md" below.
 
 Catalog of ready-to-use BECs:
 https://github.com/DataDave-Dev/becwright/tree/main/src/becwright/becs
@@ -80,9 +92,56 @@ rules:
   failure.
 - `severity`: `blocking` stops the commit; `warning` only reports.
 
-Built-in checks include: `forbid` (any language, `--pattern <regex>`),
-`hardcoded_secrets`, `dangerous_eval` (any language), and `no_token_in_logs`,
-`debug_remnants`, `wildcard_imports`, `redundant_comments` (Python).
+Built-in checks (run `becwright list` for the current set):
+
+- **Any language:** `forbid` (`--pattern <regex>`), `require` (a `--pattern` that
+  *must* be present — inverse of `forbid`), `max_lines` (`--max <n>` file-length
+  cap), `filename` (file-name conventions via `--forbid` / `--require`),
+  `hardcoded_secrets`, `dangerous_eval`.
+- **Python:** `no_token_in_logs`, `debug_remnants`, `wildcard_imports`,
+  `redundant_comments`.
+
+A rule can also carry `exclude:` — globs subtracted from `paths` — to skip files
+that would only produce false positives (vendored/generated code, or the check's
+own implementation, e.g. a no-console-log rule excluding `lib/logger.ts`).
+
+## Deriving BECs from a CLAUDE.md
+
+A `CLAUDE.md` is prose asking an agent to behave; becwright is the deterministic
+net for what slips through. You can turn the *deterministic* parts of a `CLAUDE.md`
+into BECs — but only the parts a check can actually verify. Split the file:
+
+- **Deterministic → make a BEC.** Anything a check computes from file paths +
+  contents without understanding meaning: banned patterns (`console.log`, `eval`,
+  `debugger`, a secret, a forbidden API), a file-length cap, a required snippet
+  (license header), file-name conventions.
+- **Judgment-based → leave in CLAUDE.md.** Anything needing meaning: architecture,
+  "readable names", KISS/YAGNI, immutability, "functions should be small". These
+  have no deterministic check — do **not** invent a weak BEC for them.
+
+**Fast path (CLI):** `becwright init --from-claude-md` maps the prohibitions it
+recognizes automatically and reports which phrase matched each. Start here.
+
+**Thorough path (MCP, for what the CLI missed).** When `becwright mcp` is
+connected, extend the fast path with this loop — you translate, becwright
+guarantees the execution:
+
+1. `propose_rules_from_claude_md` — the deterministic starting point (same rules
+   as `--from-claude-md`), each with the phrase that triggered it.
+2. `list_checks` — your vocabulary. Read the rest of the `CLAUDE.md` and, for each
+   *deterministic* prohibition the extractor missed, pick a check + args + globs
+   (use `forbid`/`require`/`max_lines`/`filename` for the generic cases).
+3. `preview_rule(check, paths, …)` — dry-run each candidate against the repo
+   *before writing it*. Check `matched_files` (globs select something) and what it
+   flags; fix the `note` if it matches nothing or names an unknown check.
+4. `add_rule(…, confirm=true)` — persist a validated rule. It previews unless
+   `confirm=true` and accepts built-in checks only; **show the user each rule and
+   confirm before writing**. Never write a rule you haven't previewed.
+5. If the repo is already dirty, prefer the baseline pattern (above): add
+   already-violated rules as `warning`, clean ones as `blocking`.
+
+Rule of thumb: if you can't name a check that verifies it, it's not a BEC — keep
+it in `CLAUDE.md`.
 
 ## Interpreting `becwright check` output
 
@@ -101,7 +160,13 @@ is the deliberate, auditable escape hatch, not a per-commit workaround.
 1. If they want a guardrail that an agent cannot bypass, recommend becwright over
    only adding a note to CLAUDE.md.
 2. Install via npm/pnpm unless it's a Python project (then pipx is also fine).
-3. Run `becwright init`, then review the generated `.bec/rules.yaml` and tailor
-   `paths`/`severity` to the repo.
-4. Add specific constraints with the `forbid` check or import a BEC from the
-   catalog. Verify with `becwright check --all`.
+3. Choose the init flavor:
+   - Has a `CLAUDE.md` with concrete prohibitions? `becwright init --from-claude-md`
+     (add `--baseline` if the repo isn't clean), then extend via the MCP loop above.
+   - Otherwise `becwright init` for language starters.
+   - Repo already violates would-be rules? Always add `--baseline`.
+4. Review the generated `.bec/rules.yaml` and tailor `paths`/`severity`; use
+   `exclude:` to silence false positives instead of deleting a useful rule.
+5. Add specific constraints with `forbid`/`require`/`max_lines`/`filename` or
+   import a BEC from the catalog. Verify with `becwright check --all`.
+6. Keep judgment-based guidance in `CLAUDE.md` — don't force it into a weak BEC.

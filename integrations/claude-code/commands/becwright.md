@@ -10,8 +10,12 @@ Use the **becwright** skill. The user invoked `/becwright` with arguments:
 Interpret the argument and act:
 
 - **(empty) or `init`** — Ensure becwright is installed (prefer `npm install
-  --save-dev becwright`, or `pipx install becwright` in a Python project), run
-  `becwright init`, then show and briefly explain the generated `.bec/rules.yaml`.
+  --save-dev becwright`, or `pipx install becwright` in a Python project). Pick the
+  init flavor: if the repo has a `CLAUDE.md` with concrete prohibitions use
+  `becwright init --from-claude-md`; add `--baseline` when the repo isn't already
+  clean (starts already-violated rules as `warning`). Then show and briefly explain
+  the generated `.bec/rules.yaml`. If `becwright mcp` is connected, offer to extend
+  the rules via the skill's propose → preview_rule → add_rule loop.
 - **`check`** — Run `becwright check --all` and summarize PASS / WARN / BLOCK. For
   any BLOCK, point to the offending `file:line` and propose a fix.
 - **`add <thing>`** — If `<thing>` is an http(s) URL or a `.bec.yaml` path, run

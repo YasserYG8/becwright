@@ -39,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MCP tool `add_rule`: persists a rule to `.bec/rules.yaml`, but never blindly —
   it previews unless `confirm=true`, and accepts built-in checks only (arbitrary
   shell commands must go through the CLI `import`, which shows the code first).
+- The Claude Code skill/plugin now teaches deriving BECs from a `CLAUDE.md`: the
+  `--from-claude-md` / `--baseline` init flavors and the MCP authoring loop
+  (`propose_rules_from_claude_md` → `preview_rule` → `add_rule`), keeping
+  judgment-based guidance in `CLAUDE.md`.
 
 ### Changed
 - The pre-commit path now checks the **staged content** of files, not the
