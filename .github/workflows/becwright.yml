@@ -1,0 +1,19 @@
+# Dogfood the official becwright action on our own pull requests: it installs the
+# checked-out becwright (version: .) and checks only the files this PR changes
+# against the repo's own .bec/rules.yaml. This both verifies the action works and
+# guards this repo the same way we ask others to guard theirs.
+name: becwright
+
+on:
+  pull_request:
+
+jobs:
+  becwright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so the merge-base with the PR base exists
+      - uses: ./
+        with:
+          version: .

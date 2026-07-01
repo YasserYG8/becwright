@@ -1,7 +1,8 @@
 # becwright — Claude Code plugin
 
-A Claude Code plugin so any agent session can install and drive becwright: the
-deterministic, commit-blocking safety net that complements `CLAUDE.md`.
+A Claude Code plugin so any agent session can install and drive becwright — the
+enforcement layer for AI coding agents: the deterministic, commit-blocking safety
+net that complements `CLAUDE.md`.
 
 ## Install
 

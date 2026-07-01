@@ -1,0 +1,70 @@
+name: becwright
+description: >-
+  Enforce BECs (Bound Executable Constraints) on the files a pull request changes.
+  A commit hook can be skipped with `git commit --no-verify`; a required CI check
+  cannot — so this closes that gap and makes the rules infrastructure, not a suggestion.
+author: DataDave-Dev
+branding:
+  icon: shield
+  color: red
+
+inputs:
+  base:
+    description: >-
+      Git ref to diff against. Defaults to the PR base branch
+      (origin/$GITHUB_BASE_REF) on pull_request events, or the repository default
+      branch otherwise. Only files changed vs this ref are checked.
+    required: false
+    default: ''
+  version:
+    description: >-
+      pip requirement specifier used to install becwright — e.g. "becwright",
+      "becwright==0.4.0", or "." to install the checked-out repo (for dogfooding).
+    required: false
+    default: becwright
+  python-version:
+    description: Python version used to run becwright.
+    required: false
+    default: '3.x'
+  args:
+    description: Extra arguments appended to `becwright check` (e.g. "--json").
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install becwright
+      shell: bash
+      run: pip install "${{ inputs.version }}"
+
+    - name: Check changed files
+      shell: bash
+      env:
+        BEC_BASE: ${{ inputs.base }}
+        BEC_ARGS: ${{ inputs.args }}
+        GH_BASE_REF: ${{ github.base_ref }}
+        GH_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      run: |
+        set -euo pipefail
+        base="$BEC_BASE"
+        if [ -z "$base" ]; then
+          if [ -n "${GH_BASE_REF:-}" ]; then
+            base="origin/${GH_BASE_REF}"
+          else
+            base="origin/${GH_DEFAULT_BRANCH}"
+          fi
+        fi
+        # Make the base ref available even if the checkout was shallow. Harmless if
+        # it is already present; requires fetch-depth: 0 for the merge-base to exist.
+        branch="${GH_BASE_REF:-$GH_DEFAULT_BRANCH}"
+        if [ -n "$branch" ]; then
+          git fetch --no-tags --quiet origin "$branch" || true
+        fi
+        echo "becwright: checking files changed vs ${base}"
+        becwright check --diff "$base" $BEC_ARGS

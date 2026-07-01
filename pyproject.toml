@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "becwright"
 version = "0.4.0"
-description = "Deterministic, portable constraints (BECs) that block commits violating your rules — a safety net for AI-written and human-written code."
+description = "The enforcement layer for AI coding agents — deterministic, portable constraints (BECs) that block a commit when a rule breaks, for AI-written and human-written code."
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [{ name = "Alonso David De Leon Rodarte" }]

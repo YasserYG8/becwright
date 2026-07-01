@@ -37,8 +37,8 @@ def _repo(path):
 def test_tools_registered():
     tools = asyncio.run(mcp_server.mcp.list_tools())
     assert {t.name for t in tools} == {
-        "check", "list_checks", "preview_rule", "propose_rules_from_claude_md",
-        "add_rule",
+        "check", "list_checks", "list_rules", "preview_rule",
+        "propose_rules_from_claude_md", "add_rule",
     }
 
 
@@ -46,6 +46,18 @@ def test_list_checks_tool_returns_all_builtins():
     names = [c["name"] for c in mcp_server.list_checks()]
     assert "forbid" in names and "hardcoded_secrets" in names
     assert names == sorted(names)
+
+
+def test_list_rules_tool_returns_decision_records(tmp_path):
+    _repo_with_rule(tmp_path)
+    records = mcp_server.list_rules(path=str(tmp_path))
+    assert [r["id"] for r in records] == ["no-bp"]
+    assert records[0]["severity"] == "blocking" and "check" in records[0]
+
+
+def test_list_rules_tool_empty_when_no_rules(tmp_path):
+    _repo(tmp_path)
+    assert mcp_server.list_rules(path=str(tmp_path)) == []
 
 
 def test_check_tool_reports_block(tmp_path):

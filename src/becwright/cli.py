@@ -50,6 +50,76 @@ def _print_result(result: Result) -> None:
         print()
 
 
+def _severity_label(rule, width: int = 0) -> str:
+    codes = {"blocking": (RED, BOLD), "advisory": (CYAN,)}.get(rule.severity, (YELLOW,))
+    return _style(rule.severity.ljust(width), *codes)
+
+
+def _one_line(text: str, limit: int = 72) -> str:
+    collapsed = " ".join(text.split())
+    return collapsed if len(collapsed) <= limit else collapsed[: limit - 1].rstrip() + "…"
+
+
+def _print_rules_overview(rules) -> None:
+    print(f"{_style('becwright why', BOLD)} "
+          f"{_style(f'— the decisions this repo enforces ({len(rules)} rule(s))', DIM)}\n")
+    width = max(len(r.id) for r in rules)
+    for r in rules:
+        intent = _one_line(r.intent) if r.intent else _style("(no intent recorded)", DIM)
+        print(f"  {_style(r.id.ljust(width), GREEN)}  {_severity_label(r, 8)}  {intent}")
+    print(_style("\n  Run `becwright why <id>` for the full record of one rule, "
+                 "or add --json for agents.", DIM))
+
+
+def _print_rule_detail(rule) -> None:
+    print(f"{_style('becwright why', BOLD)}  {_style(rule.id, GREEN)}  ({_severity_label(rule)})\n")
+    if rule.intent:
+        print(f"  {_style('Intent:', DIM)}")
+        print(f"    {rule.intent}")
+    if rule.why_it_matters:
+        print(f"  {_style('Why it matters:', DIM)}")
+        print(f"    {rule.why_it_matters}")
+    if rule.rejected_alternatives:
+        print(f"  {_style('Rejected alternatives:', DIM)}")
+        for alt in rule.rejected_alternatives:
+            print(f"    - {alt}")
+    applies = "the commit message" if rule.target == "commit-msg" else (
+        ", ".join(rule.paths) or "(no paths)")
+    print(f"  {_style('Applies to:', DIM)} {applies}")
+    if rule.exclude:
+        print(f"  {_style('Excluding:', DIM)}  {', '.join(rule.exclude)}")
+    print(f"  {_style('Check:', DIM)}      {rule.check}")
+
+
+def _cmd_why(args: argparse.Namespace) -> int:
+    root = git.repo_root()
+    rules = load_rules(root / ".bec" / "rules.yaml")
+    if args.rule_id:
+        rule = next((r for r in rules if r.id == args.rule_id), None)
+        if rule is None:
+            print(_style(f"No rule with id '{args.rule_id}' in .bec/rules.yaml.", RED),
+                  file=sys.stderr)
+            if rules:
+                print(_style(f"  Known ids: {', '.join(r.id for r in rules)}", DIM),
+                      file=sys.stderr)
+            return 1
+        if args.json:
+            import json
+            print(json.dumps(report.rule_record(rule), indent=2))
+            return 0
+        _print_rule_detail(rule)
+        return 0
+    if args.json:
+        import json
+        print(json.dumps({"rules": [report.rule_record(r) for r in rules]}, indent=2))
+        return 0
+    if not rules:
+        print(_style("No .bec/rules.yaml with rules. Run `becwright init` to create some.", YELLOW))
+        return 0
+    _print_rules_overview(rules)
+    return 0
+
+
 def _unknown_builtin_checks(rules, root: Path) -> list[tuple[str, str]]:
     """Rules whose `check` uses the `becwright run <name>` form with a <name> that
     is not a built-in check. Such a rule can never pass — the check exits with an
@@ -76,7 +146,7 @@ def _print_unknown_checks(unknown: list[tuple[str, str]]) -> None:
 
 def _cmd_check(args: argparse.Namespace) -> int:
     root = git.repo_root()
-    rules, files, result = report.gather(root, all_files=args.all)
+    rules, files, result = report.gather(root, all_files=args.all, diff_base=args.diff)
 
     unknown = _unknown_builtin_checks(rules, root)
     if unknown:
@@ -784,7 +854,10 @@ def _build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_check = sub.add_parser("check", help="check the code against the rules")
-    p_check.add_argument("--all", action="store_true", help="check the whole repo, not just staging")
+    scope = p_check.add_mutually_exclusive_group()
+    scope.add_argument("--all", action="store_true", help="check the whole repo, not just staging")
+    scope.add_argument("--diff", metavar="BASE",
+                       help="check only files changed vs BASE ref (e.g. origin/main) — for CI/PR")
     p_check.add_argument("--json", action="store_true", help="output results as JSON")
     p_check.set_defaults(func=_cmd_check)
 
@@ -795,6 +868,11 @@ def _build_parser() -> argparse.ArgumentParser:
     p_init.add_argument("--from-claude-md", action="store_true",
                         help="derive rules from the repo's CLAUDE.md (best-effort: maps prohibitions to enforceable checks)")
     p_init.set_defaults(func=_cmd_init)
+
+    p_why = sub.add_parser("why", help="show the intent + why behind the rules (the repo's decision memory)")
+    p_why.add_argument("rule_id", nargs="?", help="rule id to explain (default: list every rule)")
+    p_why.add_argument("--json", action="store_true", help="output as JSON (for AI agents to consult before writing code)")
+    p_why.set_defaults(func=_cmd_why)
 
     p_run = sub.add_parser("run", help="run a built-in check against files on stdin (used inside rules)")
     p_run.add_argument("module", help="built-in check name (see `becwright list`)")
@@ -836,7 +914,7 @@ def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     try:
         return args.func(args)
-    except (git.NotAGitRepo, RulesError) as e:
+    except (git.NotAGitRepo, git.GitError, RulesError) as e:
         print(_style(str(e), RED), file=sys.stderr)
         return 2
 

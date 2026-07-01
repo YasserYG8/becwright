@@ -346,6 +346,172 @@ def test_demo_result_flags_both_violations(tmp_path):
     assert res.had_blocking
 
 
+# --- diff mode (CI / PR): only the files a branch changed ---
+
+def _current_branch(root):
+    return subprocess.run(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        cwd=root, capture_output=True, text=True,
+    ).stdout.strip()
+
+
+def _branch_with_change(tmp_path):
+    """Base commit with old.py, then a `feature` branch adding new.py. Returns the
+    base branch name to diff against."""
+    _init_repo(tmp_path)
+    (tmp_path / "old.py").write_text("x = 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-m", "base")
+    base = _current_branch(tmp_path)
+    _git(tmp_path, "checkout", "-b", "feature")
+    return base
+
+
+def test_files_to_check_diff_base_returns_only_changed(tmp_path):
+    base = _branch_with_change(tmp_path)
+    (tmp_path / "new.py").write_text("y = 2\n", encoding="utf-8")
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-m", "feature")
+    assert git.files_to_check(tmp_path, diff_base=base) == ["new.py"]
+
+
+def test_files_to_check_diff_base_unknown_ref_raises(tmp_path):
+    _init_repo(tmp_path)
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-m", "c")
+    with pytest.raises(git.GitError):
+        git.files_to_check(tmp_path, diff_base="origin/does-not-exist")
+
+
+def test_check_diff_blocks_on_changed_file(tmp_path, monkeypatch, capsys):
+    base = _branch_with_change(tmp_path)
+    (tmp_path / ".bec").mkdir()
+    (tmp_path / ".bec" / "rules.yaml").write_text(_rules_yaml("debug_remnants"), encoding="utf-8")
+    (tmp_path / "bad.py").write_text("breakpoint()\n", encoding="utf-8")
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-m", "feature")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check", "--diff", base]) == 1
+    assert "Commit BLOCKED" in capsys.readouterr().out
+
+
+def test_check_diff_ignores_violation_outside_the_diff(tmp_path, monkeypatch, capsys):
+    # A pre-existing violation on the base must not fail CI: --diff only checks what
+    # the branch actually changed, so a clean change passes regardless of old debt.
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir()
+    (tmp_path / ".bec" / "rules.yaml").write_text(_rules_yaml("debug_remnants"), encoding="utf-8")
+    (tmp_path / "legacy.py").write_text("breakpoint()\n", encoding="utf-8")
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-m", "base")
+    base = _current_branch(tmp_path)
+    _git(tmp_path, "checkout", "-b", "feature")
+    (tmp_path / "feature.py").write_text("z = 3\n", encoding="utf-8")
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-m", "feature")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check", "--diff", base]) == 0
+    assert "All good" in capsys.readouterr().out
+
+
+def test_check_all_and_diff_are_mutually_exclusive():
+    with pytest.raises(SystemExit):
+        cli.main(["check", "--all", "--diff", "main"])
+
+
+# --- the why subcommand (decision memory) ---
+
+_WHY_RULES = """\
+rules:
+  - id: no-eval
+    intent: "Avoid eval and exec."
+    why_it_matters: "Arbitrary code execution is a security hole."
+    rejected_alternatives:
+      - "sandboxing eval"
+    paths: ["**/*.py"]
+    exclude: ["tests/**"]
+    check: "becwright run dangerous_eval"
+    severity: blocking
+  - id: conv
+    target: commit-msg
+    intent: "Use Conventional Commits."
+    check: 'becwright run require --pattern "^feat: "'
+    severity: warning
+"""
+
+
+def _write_why_rules(tmp_path):
+    (tmp_path / ".bec").mkdir()
+    (tmp_path / ".bec" / "rules.yaml").write_text(_WHY_RULES, encoding="utf-8")
+
+
+def test_why_lists_all_rules(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    _write_why_rules(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["why"]) == 0
+    out = capsys.readouterr().out
+    assert "no-eval" in out and "conv" in out
+    assert "Avoid eval and exec." in out
+
+
+def test_why_detail_shows_full_record(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    _write_why_rules(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["why", "no-eval"]) == 0
+    out = capsys.readouterr().out
+    assert "Intent:" in out and "Why it matters:" in out
+    assert "Rejected alternatives:" in out and "sandboxing eval" in out
+    assert "dangerous_eval" in out and "tests/**" in out
+
+
+def test_why_commit_msg_rule_applies_to_message(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    _write_why_rules(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["why", "conv"]) == 0
+    assert "the commit message" in capsys.readouterr().out
+
+
+def test_why_unknown_id_returns_1_and_lists_ids(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    _write_why_rules(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["why", "ghost"]) == 1
+    err = capsys.readouterr().err
+    assert "ghost" in err and "no-eval" in err
+
+
+def test_why_json_lists_all(tmp_path, monkeypatch, capsys):
+    import json
+    _init_repo(tmp_path)
+    _write_why_rules(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["why", "--json"]) == 0
+    data = json.loads(capsys.readouterr().out)
+    assert [r["id"] for r in data["rules"]] == ["no-eval", "conv"]
+    assert data["rules"][0]["why_it_matters"].startswith("Arbitrary code execution")
+
+
+def test_why_json_single_rule(tmp_path, monkeypatch, capsys):
+    import json
+    _init_repo(tmp_path)
+    _write_why_rules(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["why", "no-eval", "--json"]) == 0
+    rec = json.loads(capsys.readouterr().out)
+    assert rec["id"] == "no-eval" and rec["rejected_alternatives"] == ["sandboxing eval"]
+
+
+def test_why_no_rules_is_friendly(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["why"]) == 0
+    assert "No .bec/rules.yaml" in capsys.readouterr().out
+
+
 # --- the mcp subcommand ---
 
 def test_mcp_subcommand_without_extra(monkeypatch):

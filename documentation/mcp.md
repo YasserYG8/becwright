@@ -53,9 +53,16 @@ pipx install "becwright[mcp]"     # or: pip install "becwright[mcp]"
 |---|---|---|
 | `check` | `all_files` (bool), `path` (optional repo dir) | the same summary as `check --json` |
 | `list_checks` | — | the built-in checks as `{name, description}` |
+| `list_rules` | `path` (optional repo dir) | the repo's rules as decision records (`id`, `severity`, `intent`, `why_it_matters`, `rejected_alternatives`, `paths`, `check`) |
 | `preview_rule` | `check`, `paths`, `exclude` (optional), `all_files`, `path` | `{matched_files, passed, output, note}` — a dry-run without writing the rule |
 | `propose_rules_from_claude_md` | `path` (optional repo dir) | `{rules, unmapped_hint}` — the rules becwright can derive from the repo's CLAUDE.md |
 | `add_rule` | `id`, `check`, `paths`, `intent`, `why_it_matters`, `severity`, `exclude`, `confirm`, `path` | writes a rule to `.bec/rules.yaml` — preview unless `confirm=true` |
+
+**`list_rules`** is the decision memory: it returns every rule with its intent,
+the reason behind it and the check that enforces it, so an agent can read the
+decisions it must not violate *before* writing code — the same data `check`
+surfaces on failure, but available up front. It mirrors the CLI `becwright why
+--json`.
 
 **`propose_rules_from_claude_md`** returns the rules becwright can derive
 deterministically from the prose (each with the phrase that triggered it) — the

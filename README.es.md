@@ -10,8 +10,11 @@
 [![npm](https://img.shields.io/npm/v/becwright?logo=npm)](https://www.npmjs.com/package/becwright)
 [![PyPI](https://img.shields.io/pypi/v/becwright?logo=pypi&logoColor=white)](https://pypi.org/project/becwright/)
 
-**Reglas que se ejecutan, no notas que se ignoran.**
-Tu `CLAUDE.md` es un *cartel*. becwright es el *guardia*.
+**La capa de enforcement para agentes de IA.**
+
+Reglas que se ejecutan, no notas que se ignoran. Tu `CLAUDE.md` es un *cartel*;
+becwright es el *guardia* — corre tus reglas sobre el código y frena el commit
+cuando una se rompe, sin importar qué modelo (o persona) lo escribió.
 
 <sub>Determinista, no probabilístico · cualquier lenguaje · sin Python · frena el commit **y** lleva el *por qué*.</sub>
 
@@ -202,6 +205,7 @@ Comandos disponibles:
 | `becwright list` | Lista los checks incluidos |
 | `becwright check` | Corre las reglas sobre los archivos en staging |
 | `becwright check --diff <base>` | Corre las reglas solo sobre los archivos cambiados vs `<base>` (para CI/PR) |
+| `becwright why [id]` | Muestra la intención + el por qué de las reglas — la memoria de decisiones del repo (`--json` para agentes) |
 | `becwright search [texto]` | Lista BECs listas del catálogo incluido |
 | `becwright add <nombre>` | Instala una BEC del catálogo en `.bec/rules.yaml` (sin conexión) |
 | `becwright install` | Instala el hook `pre-commit` nativo |
@@ -295,8 +299,22 @@ Agrega un skill `becwright` y un comando `/becwright`. Ver
 Para resultados estructurados, `becwright check --json` imprime un resumen
 legible por máquina, y `becwright mcp` (instalá el extra `mcp`: `pipx install
 "becwright[mcp]"`) levanta un servidor MCP — MCP es una forma estándar de que
-las herramientas de IA se conecten a habilidades extra — que expone `check` y
-`list_checks` a cualquier agente. Ver [`documentation/mcp.md`](documentation/mcp.md).
+las herramientas de IA se conecten a habilidades extra — que expone `check`,
+`list_checks` y `list_rules` a cualquier agente. Ver [`documentation/mcp.md`](documentation/mcp.md).
+
+Mejor aún, un agente puede leer las reglas *antes* de escribir código: `becwright
+why --json` le entrega las decisiones que no puede violar (la intención de cada
+regla y su razón), así las esquiva en vez de descubrir la regla recién cuando el
+commit se bloquea. El catálogo `.bec/rules.yaml` se vuelve la memoria de
+decisiones consultable del repo.
+
+En ambos casos la señal se mantiene magra. Un commit bloqueado devuelve la única
+regla que se rompió, su *por qué* y las líneas exactas — el agente arregla justo
+eso en vez de releer la guía de estilo entera en el contexto. El consejo de
+siempre es "dale más contexto al modelo"; becwright lo da vuelta — le pasás la
+constraint puntual que rompió, verificada de forma determinista, no el reglamento
+completo. Menos tokens, loop más ajustado, y la garantía no depende de que el
+modelo haya leído nada.
 
 Una regla en `.bec/rules.yaml`:
 

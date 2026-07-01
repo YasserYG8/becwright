@@ -48,6 +48,24 @@ def list_checks() -> list[dict]:
 
 
 @mcp.tool()
+def list_rules(path: str | None = None) -> list[dict]:
+    """List the repo's rules as decision records — each with its intent, the reason
+    behind it, rejected alternatives and the check that enforces it.
+
+    Read these *before* writing code: they are the decisions this repo will not let
+    you violate, so you can steer clear of a blocked commit instead of discovering a
+    rule only when it fires. This is the queryable half of the same data `check`
+    surfaces on failure.
+
+    Args:
+        path: a directory inside the target git repo (defaults to the cwd).
+    """
+    from .rules import load_rules
+    root = git.repo_root(Path(path) if path else None)
+    return [report.rule_record(r) for r in load_rules(root / ".bec" / "rules.yaml")]
+
+
+@mcp.tool()
 def preview_rule(check: str, paths: list[str], exclude: list[str] | None = None,
                  all_files: bool = True, path: str | None = None) -> dict:
     """Dry-run a candidate rule without writing it to `.bec/rules.yaml`.

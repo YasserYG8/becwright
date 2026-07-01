@@ -40,6 +40,10 @@ class NotAGitRepo(RuntimeError):
     pass
 
 
+class GitError(RuntimeError):
+    pass
+
+
 def repo_root(cwd: Path | None = None) -> Path:
     res = subprocess.run(
         ["git", "rev-parse", "--show-toplevel"],
@@ -50,12 +54,36 @@ def repo_root(cwd: Path | None = None) -> Path:
     return Path(res.stdout.strip())
 
 
-def files_to_check(root: Path, *, all_files: bool) -> list[str]:
+def files_to_check(
+    root: Path, *, all_files: bool = False, diff_base: str | None = None
+) -> list[str]:
+    if diff_base:
+        return _files_changed_since(root, diff_base)
     if all_files:
         cmd = ["git", "ls-files"]
     else:
         cmd = ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"]
     res = subprocess.run(cmd, cwd=root, capture_output=True, text=True)
+    return [line for line in res.stdout.splitlines() if line.strip()]
+
+
+def _files_changed_since(root: Path, base: str) -> list[str]:
+    """Files added/copied/modified between `base` and HEAD, using the three-dot
+    range (`base...HEAD`) so it reports exactly what the branch introduced since it
+    diverged — the same set a pull request shows as "Files changed". Raises `GitError`
+    when `base` is unknown so a CI run fails loudly instead of silently passing on an
+    empty file list (e.g. a shallow clone without the base ref)."""
+    res = subprocess.run(
+        ["git", "diff", "--name-only", "--diff-filter=ACM", f"{base}...HEAD"],
+        cwd=root, capture_output=True, text=True,
+    )
+    if res.returncode != 0:
+        detail = res.stderr.strip() or f"unknown ref '{base}'"
+        raise GitError(
+            f"Could not diff against '{base}': {detail}\n"
+            "In CI, check out full history (actions/checkout with fetch-depth: 0) "
+            "and make sure the base branch is fetched."
+        )
     return [line for line in res.stdout.splitlines() if line.strip()]
 
 
