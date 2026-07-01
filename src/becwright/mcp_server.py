@@ -11,7 +11,13 @@ from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 
 from . import git, report
-from .cli import _CHECK_DESCRIPTIONS, _builtin_check_names
+from .cli import (
+    _CHECK_DESCRIPTIONS,
+    _builtin_check_names,
+    _detect_languages,
+    _read_claude_md,
+    _rules_from_claude_md,
+)
 
 mcp = FastMCP("becwright")
 
@@ -83,6 +89,47 @@ def preview_rule(check: str, paths: list[str], exclude: list[str] | None = None,
     outcome = result.per_rule[0]
     return {"matched_files": len(relevant), "passed": outcome.passed,
             "output": outcome.output or "", "note": None}
+
+
+_UNMAPPED_HINT = (
+    "These are the rules becwright can derive deterministically from the prose. "
+    "Read the rest of the CLAUDE.md and add rules for prohibitions it missed, "
+    "using list_checks as the vocabulary and preview_rule to validate each one. "
+    "Judgment-based guidance (architecture, naming quality, immutability) has no "
+    "deterministic check and should stay in CLAUDE.md."
+)
+
+
+@mcp.tool()
+def propose_rules_from_claude_md(path: str | None = None) -> dict:
+    """Read the repo's CLAUDE.md and return the rules becwright can deterministically
+    derive from it — the agent's starting point before extending them by reading the
+    rest of the prose.
+
+    Args:
+        path: a directory inside the target git repo (defaults to the cwd).
+
+    Returns {rules, unmapped_hint}, where each rule is {id, check, paths, severity,
+    intent, why_it_matters, matched} and `matched` is the phrase that triggered it.
+    If there is no CLAUDE.md, returns {rules: [], note: ...}.
+    """
+    root = git.repo_root(Path(path) if path else None)
+    text = _read_claude_md(root)
+    if text is None:
+        return {"rules": [], "note": "No CLAUDE.md at the repo root."}
+    rules = [
+        {
+            "id": rule["id"],
+            "check": rule["check"],
+            "paths": rule["paths"],
+            "severity": rule["severity"],
+            "intent": rule.get("intent", ""),
+            "why_it_matters": rule.get("why", ""),
+            "matched": trigger,
+        }
+        for rule, trigger in _rules_from_claude_md(text, _detect_languages(root))
+    ]
+    return {"rules": rules, "unmapped_hint": _UNMAPPED_HINT}
 
 
 def serve() -> None:

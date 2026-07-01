@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the repo without writing it, returning matched-file count, pass/fail, and what
   it flags — so an agent can validate a rule it translated from a `CLAUDE.md`
   before committing to it.
+- MCP tool `propose_rules_from_claude_md`: returns the rules becwright can derive
+  deterministically from the repo's `CLAUDE.md` (each with the phrase that
+  triggered it) plus a hint to extend them — the agent's starting point.
 
 ### Changed
 - The pre-commit path now checks the **staged content** of files, not the

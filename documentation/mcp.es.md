@@ -56,14 +56,20 @@ pipx install "becwright[mcp]"     # o: pip install "becwright[mcp]"
 | `check` | `all_files` (bool), `path` (dir del repo, opcional) | el mismo resumen que `check --json` |
 | `list_checks` | — | los checks built-in como `{name, description}` |
 | `preview_rule` | `check`, `paths`, `exclude` (opcional), `all_files`, `path` | `{matched_files, passed, output, note}` — un dry-run sin escribir la regla |
+| `propose_rules_from_claude_md` | `path` (dir del repo, opcional) | `{rules, unmapped_hint}` — las reglas que becwright deriva del CLAUDE.md del repo |
 
-**`preview_rule`** deja que un agente *valide una regla antes de escribirla*. Dado
-un `check` candidato y sus `paths`, corre el check contra el repo e informa cuántos
-archivos seleccionan los globs, si la regla pasaría y qué marca — detectando una
-regla que no matchea nada o que nombra un check inexistente. Es el piso
-determinista sobre el que un agente construye al traducir un `CLAUDE.md` a BECs:
-becwright garantiza la *ejecución*; el agente hace la *traducción*, usando
-`list_checks` como vocabulario y `preview_rule` para chequear su trabajo.
+**`propose_rules_from_claude_md`** devuelve las reglas que becwright puede derivar
+determinísticamente de la prosa (cada una con la frase que la disparó) — el *punto
+de partida* del agente. **`preview_rule`** deja que el agente *valide* una regla
+antes de escribirla: dado un `check` candidato y sus `paths`, corre el check contra
+el repo e informa cuántos archivos seleccionan los globs, si la regla pasaría y qué
+marca — detectando una regla que no matchea nada o que nombra un check inexistente.
+
+Juntas definen el reparto: becwright garantiza la *ejecución*; el agente hace la
+*traducción*, arrancando de `propose_rules_from_claude_md`, usando `list_checks`
+como vocabulario, extendiendo con reglas para lo que el extractor no captó, y
+usando `preview_rule` para chequear cada una. Lo de criterio se queda en
+`CLAUDE.md`.
 
 ### Configuración del cliente
 

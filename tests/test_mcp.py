@@ -36,7 +36,9 @@ def _repo(path):
 
 def test_tools_registered():
     tools = asyncio.run(mcp_server.mcp.list_tools())
-    assert {t.name for t in tools} == {"check", "list_checks", "preview_rule"}
+    assert {t.name for t in tools} == {
+        "check", "list_checks", "preview_rule", "propose_rules_from_claude_md",
+    }
 
 
 def test_list_checks_tool_returns_all_builtins():
@@ -99,3 +101,22 @@ def test_preview_rule_flags_unknown_check(tmp_path):
     out = mcp_server.preview_rule(check="becwright run ghost_check",
                                   paths=["**/*.py"], path=str(tmp_path))
     assert out["passed"] is False and "not a built-in check" in out["note"]
+
+
+def test_propose_rules_from_claude_md(tmp_path):
+    _repo(tmp_path)
+    (tmp_path / "svc.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "CLAUDE.md").write_text(
+        "Never hardcode secrets. Keep files under 800 lines.\n", encoding="utf-8")
+    out = mcp_server.propose_rules_from_claude_md(path=str(tmp_path))
+    ids = {r["id"] for r in out["rules"]}
+    assert "no-hardcoded-secrets" in ids and "max-file-lines" in ids
+    assert all(r["matched"] for r in out["rules"])   # each rule keeps its trigger phrase
+    assert "unmapped_hint" in out
+
+
+def test_propose_rules_without_claude_md(tmp_path):
+    _repo(tmp_path)
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    out = mcp_server.propose_rules_from_claude_md(path=str(tmp_path))
+    assert out["rules"] == [] and "No CLAUDE.md" in out["note"]
