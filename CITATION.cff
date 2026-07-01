@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+title: becwright
+message: "If you use becwright in your work, please cite it using these metadata."
+type: software
+authors:
+  - family-names: "De Leon Rodarte"
+    given-names: "Alonso David"
+    alias: DataDave-Dev
+repository-code: "https://github.com/DataDave-Dev/becwright"
+url: "https://becwright.dev"
+abstract: >-
+  becwright enforces Bound Executable Constraints (BECs) on code: rules that
+  carry their own check, deterministically block violating commits, and travel
+  between repositories. A safety net for AI-written and human-written code alike.
+keywords:
+  - git-hooks
+  - pre-commit
+  - static-analysis
+  - developer-tools
+  - ai-agents
+license: MIT

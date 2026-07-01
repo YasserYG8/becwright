@@ -1,0 +1,4 @@
+# Enables the "Sponsor" button on the repo. Uncomment / fill the platforms you use.
+github: [DataDave-Dev]
+# ko_fi: your_handle
+# custom: ["https://becwright.dev"]
