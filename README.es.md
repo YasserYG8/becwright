@@ -93,8 +93,18 @@ tiene juntas:
   `git commit`; las warning informan sin frenar.
 - **Cualquier lenguaje** — el motor matchea globs y corre un comando; usá el
   `forbid` sin código (regex) para Python, JS/TS, Go, Rust o lo que sea.
+- **Deriva reglas de tu `CLAUDE.md`** — `becwright init --from-claude-md` convierte
+  las prohibiciones que reconoce (secretos, `eval`, `debugger`, `console.log`,
+  breakpoints, un límite de líneas por archivo, …) en reglas enforzables; un agente
+  de IA puede extenderlo por MCP. Lo de criterio se queda en `CLAUDE.md`.
+- **Se adopta en cualquier código** — `--baseline` arranca en `warning` las reglas
+  que *ya* tienen violaciones, así un repo legacy no se frena el día uno; graduás
+  cada una a blocking a medida que la limpiás.
 - **Atada al _por qué_** — cada regla lleva su intención y su razón, que se
   muestran cuando se dispara.
+- **Checks incluidos** — `forbid` / `require` (un patrón que *debe* estar) /
+  `max_lines` / `filename`, más checks de secretos, `eval`, debug e imports — con
+  `exclude:` por regla para silenciar falsos positivos.
 - **BECs portables** — `export` de una regla a un `.bec.yaml` e `import` en otro
   repo; los checks custom viajan con su código.
 - **Catálogo offline** — `becwright search` / `add` instalan reglas listas sin
@@ -102,19 +112,25 @@ tiene juntas:
 - **Sin Python** — instalá por npm/pnpm como binario autónomo, o por pip/pipx.
 - **Se adapta a tu setup** — hook de git nativo, o enchufado al framework
   pre-commit o a Husky.
-- **Listo para agentes de IA** — plugin de Claude Code, servidor MCP y
-  `check --json`.
-- **Chico y confiable** — ~750 LOC, una dependencia (`pyyaml`), sin
-  `eval`/`exec`, con dogfooding en CI.
+- **Listo para agentes de IA** — plugin de Claude Code, `check --json` y un
+  servidor MCP con tools para que un agente proponga, previsualice y agregue reglas
+  desde tu `CLAUDE.md`.
+- **Chico y confiable** — dependencias mínimas (`pyyaml`), sin `eval`/`exec`, con
+  dogfooding en CI.
 
 ## Casos de uso
 
+- **Convertí tu `CLAUDE.md` en guardarraíles** — lo determinista pasa a BECs que no
+  se pueden ignorar; lo de criterio se queda como prosa.
+- **Adoptá gradualmente en un repo legacy** — `--baseline` avisa sobre la deuda
+  existente sin frenar commits, y después apretás a blocking regla por regla.
 - **Frenar secretos antes de que entren** — API keys, tokens, claves privadas,
   contraseñas hardcodeadas.
 - **Que no queden restos de debug** — `breakpoint()`, `pdb`, `debugger;`,
   `console.log`, `dbg!`, `panic()` olvidados.
-- **Prohibir APIs riesgosas** — `eval` / `exec`, o cualquier patrón que vetes con
-  una regla regex de una línea.
+- **Prohibir APIs riesgosas / hacer cumplir convenciones** — `eval` / `exec`, un
+  límite de líneas por archivo, reglas de nombre de archivo, o cualquier patrón que
+  vetes con una regla regex de una línea.
 - **Proteger código escrito por IA** — la red determinista para lo que un agente
   regenera y olvida.
 - **Hacer cumplir convenciones del equipo** — codificá una decisión una vez como

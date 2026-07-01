@@ -91,8 +91,18 @@ together:
   warnings inform without blocking.
 - **Any language** — the engine matches file globs and runs a command; use the
   no-code `forbid` regex for Python, JS/TS, Go, Rust, or anything else.
+- **Derive rules from your `CLAUDE.md`** — `becwright init --from-claude-md` turns
+  the prohibitions it recognizes (secrets, `eval`, `debugger`, `console.log`,
+  breakpoints, a file line cap, …) into enforceable rules; an AI agent can extend
+  that over MCP. Judgment-based guidance stays in `CLAUDE.md`.
+- **Adopt on any codebase** — `--baseline` starts rules that *already* have
+  violations as warnings, so a legacy repo isn't blocked on day one; graduate each
+  to blocking as you clean it.
 - **Bound to the _why_** — every rule carries its intent and reason, shown when
   it fires.
+- **Batteries-included checks** — `forbid` / `require` (a pattern that must be
+  present) / `max_lines` / `filename`, plus secret, `eval`, debug and import
+  checks — with per-rule `exclude:` to silence false positives.
 - **Portable BECs** — `export` a rule to a single `.bec.yaml` and `import` it
   into another repo; custom checks travel with their code.
 - **Offline catalog** — `becwright search` / `add` install ready-made rules with
@@ -101,18 +111,23 @@ together:
   via pip/pipx.
 - **Fits your setup** — native git hook, or plug into the pre-commit framework or
   Husky.
-- **AI-agent ready** — Claude Code plugin, MCP server, and `check --json`.
-- **Tiny & trustworthy** — ~750 LOC, one dependency (`pyyaml`), no `eval`/`exec`,
+- **AI-agent ready** — Claude Code plugin, `check --json`, and an MCP server whose
+  tools let an agent propose, preview and add rules from your `CLAUDE.md`.
+- **Tiny & trustworthy** — small, dependency-light (`pyyaml`), no `eval`/`exec`,
   dogfooded in CI.
 
 ## Use cases
 
+- **Turn your `CLAUDE.md` into guardrails** — the deterministic parts become BECs
+  that can't be ignored; the judgment calls stay as prose.
+- **Adopt gradually on a legacy repo** — `--baseline` warns on existing debt
+  without blocking commits, then tighten to blocking rule by rule.
 - **Stop secrets before they land** — API keys, tokens, private keys, hardcoded
   passwords.
 - **Keep debug leftovers out** — `breakpoint()`, `pdb`, `debugger;`,
   `console.log`, `dbg!`, stray `panic()`.
-- **Ban risky APIs** — `eval` / `exec`, or any pattern you forbid with a one-line
-  regex rule.
+- **Ban risky APIs / enforce conventions** — `eval` / `exec`, a file-length cap,
+  file-name rules, or any pattern you forbid with a one-line regex rule.
 - **Guard AI-written code** — the deterministic net for what an agent regenerates
   and forgets.
 - **Enforce team conventions** — encode a decision once as a BEC and share it
