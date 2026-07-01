@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `becwright init --baseline`: start already-violated rules as `warning` and
   clean ones as `blocking`, so becwright can be adopted on a dirty codebase
   without blocking commits on pre-existing debt.
+- `becwright init --from-claude-md`: derive rules from the repo's `CLAUDE.md`,
+  mapping recognized prohibitions (secrets, `eval`, `debugger`, `console.log`,
+  breakpoints, wildcard imports, tokens in logs) to enforceable checks and
+  reporting which phrase matched each. Judgment-based guidance is left for
+  `CLAUDE.md`. Composes with `--baseline`.
 
 ### Changed
 - The pre-commit path now checks the **staged content** of files, not the

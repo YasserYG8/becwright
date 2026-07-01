@@ -159,6 +159,12 @@ reglas que *ya* tienen violaciones arrancan en `warning` (no se frena nada
 legítimo) y las limpias arrancan en `blocking`. Limpiá la deuda con el tiempo y
 después graduá cada regla a `blocking`.
 
+**¿Ya tenés un `CLAUDE.md`?** `becwright init --from-claude-md` lo lee y convierte
+las prohibiciones que reconoce (secretos, `eval`, `debugger`, `console.log`,
+breakpoints, …) en reglas enforzables — la red determinista debajo de la prosa.
+Lo de criterio se queda en `CLAUDE.md`. Revisá el resultado; combinalo con
+`--baseline` para adoptar en un repo sucio de una.
+
 Instalado como devDependency, el hook de pre-commit resuelve el binario local
 desde `node_modules/.bin`, así funciona sin instalación global. Los paquetes npm
 cubren `linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64` y `win32-x64`; en
@@ -171,6 +177,7 @@ Comandos disponibles:
 | `becwright demo` | Muestra a becwright frenando un commit malo de ejemplo (sin configurar nada, sin git) |
 | `becwright init` | Genera un `.bec/rules.yaml` de arranque e instala el hook |
 | `becwright init --baseline` | Igual, pero arranca en `warning` las reglas que ya tienen violaciones (adoptar sin frenar commits) |
+| `becwright init --from-claude-md` | Deriva reglas del `CLAUDE.md` del repo (best-effort) |
 | `becwright list` | Lista los checks incluidos |
 | `becwright check` | Corre las reglas sobre los archivos en staging |
 | `becwright search [texto]` | Lista BECs listas del catálogo incluido |

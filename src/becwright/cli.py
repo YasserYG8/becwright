@@ -192,18 +192,21 @@ def _detect_languages(root: Path) -> list[str]:
     return [lang for lang in ("python", "js", "ts", "go", "rust") if lang in found]
 
 
+_LANG_SOURCE_GLOB = (
+    ("python", "**/*.py"),
+    ("js", "**/*.js"),
+    ("ts", "**/*.ts"),
+    ("go", "**/*.go"),
+    ("rust", "**/*.rs"),
+)
+
+
+def _source_globs(langs: list[str]) -> list[str]:
+    return [glob for lang, glob in _LANG_SOURCE_GLOB if lang in langs]
+
+
 def _starter_rules(langs: list[str]) -> list[dict]:
-    source_globs = [
-        g
-        for lang, g in (
-            ("python", "**/*.py"),
-            ("js", "**/*.js"),
-            ("ts", "**/*.ts"),
-            ("go", "**/*.go"),
-            ("rust", "**/*.rs"),
-        )
-        if lang in langs
-    ]
+    source_globs = _source_globs(langs)
 
     rules: list[dict] = []
 
@@ -254,6 +257,87 @@ def _starter_rules(langs: list[str]) -> list[dict]:
             why="Debug macros and leftover println! calls should not reach production."))
 
     return rules
+
+
+# Prohibitions in a CLAUDE.md that map to a check we already ship. Each `triggers`
+# entry is a lowercase substring; if any appears in the CLAUDE.md, the rule is
+# proposed. `lang`: "any" uses every detected source glob, "python"/"jsts" gate on
+# that language being present. This is deliberately a small, transparent table —
+# judgment-based guidance (architecture, naming, immutability) has no deterministic
+# check and is left for CLAUDE.md to keep asking for.
+_CLAUDE_SIGNALS = (
+    dict(id="no-hardcoded-secrets", lang="any", severity="blocking",
+         triggers=("hardcod", "no secrets", "sin secretos", "api key", "api-key",
+                   "credential", "credencial", "no hardcodear"),
+         check="becwright run hardcoded_secrets",
+         intent="No secret (key, token, password) should be hardcoded in the code.",
+         why="A secret in the repo stays in git history forever and is visible to anyone with access to the code."),
+    dict(id="no-dangerous-eval", lang="any", severity="blocking",
+         triggers=("eval(", "exec(", "no eval", "avoid eval", "evita eval", "sin eval"),  # becwright: ignore  (literal triggers, not real calls)
+         check="becwright run dangerous_eval",
+         intent="Avoid eval and exec, which run arbitrary code.",
+         why="Dynamic eval/exec on untrusted input is remote code execution."),
+    dict(id="no-debug-remnants", lang="python", severity="blocking",
+         triggers=("breakpoint", "pdb", "import pdb"),  # becwright: ignore  (literal triggers, not real calls)
+         check="becwright run debug_remnants",
+         intent="Debug code (breakpoints, pdb) must not be committed.",
+         why="A forgotten breakpoint hangs the process in production or CI."),
+    dict(id="no-wildcard-imports", lang="python", severity="warning",
+         triggers=("wildcard import", "import *", "star import"),
+         check="becwright run wildcard_imports",
+         intent="Avoid wildcard star imports.",
+         why="Wildcard imports hide which names are used and cause shadowing bugs."),
+    dict(id="no-token-in-logs", lang="python", severity="blocking",
+         triggers=("token in log", "tokens in logs", "log tokens", "token en log",
+                   "no token in logs"),
+         check="becwright run no_token_in_logs",
+         intent="Session tokens and credentials must never reach any log.",
+         why="A token in the logs lets anyone with access to them steal a session."),
+    dict(id="no-debugger-js", lang="jsts", severity="blocking",
+         triggers=("debugger",),
+         check="becwright run forbid --pattern '\\bdebugger\\b'",
+         intent="Do not leave 'debugger;' in JavaScript/TypeScript code.",
+         why="A forgotten 'debugger' halts execution and should not reach production."),
+    dict(id="no-console-log-js", lang="jsts", severity="warning",
+         triggers=("console.log",),
+         check="becwright run forbid --pattern 'console\\.log\\s*\\('",
+         intent="Avoid 'console.log(...)' in JavaScript/TypeScript code.",
+         why="Debug console.log statements clutter production output."),
+)
+
+
+def _read_claude_md(root: Path) -> str | None:
+    for name in ("CLAUDE.md", "CLAUDE.MD", "claude.md"):
+        path = root / name
+        if path.is_file():
+            return path.read_text(encoding="utf-8", errors="replace")
+    return None
+
+
+def _rules_from_claude_md(text: str, langs: list[str]) -> list[tuple[dict, str]]:
+    """Best-effort mapping from prohibitions written in CLAUDE.md to executable
+    rules becwright can actually enforce. Returns (rule_dict, matched_trigger)
+    pairs so the caller can show the user exactly what each rule came from."""
+    lowered = text.lower()
+    source = _source_globs(langs)
+    paths_for = {
+        "any": source,
+        "python": ["**/*.py"] if "python" in langs else [],
+        "jsts": [g for g in source if g.endswith((".js", ".ts"))],
+    }
+    derived: list[tuple[dict, str]] = []
+    for signal in _CLAUDE_SIGNALS:
+        paths = paths_for[signal["lang"]]
+        if not paths:
+            continue
+        trigger = next((t for t in signal["triggers"] if t in lowered), None)
+        if trigger is None:
+            continue
+        derived.append((dict(
+            id=signal["id"], paths=paths, check=signal["check"],
+            intent=signal["intent"], why=signal["why"], severity=signal["severity"],
+        ), trigger))
+    return derived
 
 
 def _render_rules_yaml(rules: list[dict]) -> str:
@@ -327,6 +411,15 @@ def _print_baseline(rules: list[dict], downgraded: list[tuple[str, int]]) -> Non
     print(_style("  Clean each up, then flip it to 'blocking' in .bec/rules.yaml.", DIM))
 
 
+def _print_claude_summary(derived: list[tuple[dict, str]]) -> None:
+    print(_style("From CLAUDE.md:", BOLD),
+          f"{len(derived)} enforceable rule(s) derived —")
+    for rule, trigger in derived:
+        print(f"  {_style(rule['id'], GREEN)}  {_style(f'(matched: \"{trigger}\")', DIM)}")
+    print(_style("  Judgment-based guidance (architecture, naming, style) has no", DIM))
+    print(_style("  deterministic check — becwright leaves that to CLAUDE.md.", DIM))
+
+
 def _cmd_init(args: argparse.Namespace) -> int:
     root = git.repo_root()
     rules_path = root / ".bec" / "rules.yaml"
@@ -334,14 +427,34 @@ def _cmd_init(args: argparse.Namespace) -> int:
         print(_style(f"{rules_path} already exists. Use --force to overwrite.", YELLOW))
         return 1
     langs = _detect_languages(root)
-    rules = _starter_rules(langs)
+
+    derived: list[tuple[dict, str]] | None = None
+    if args.from_claude_md:
+        text = _read_claude_md(root)
+        if text is None:
+            print(_style("No CLAUDE.md at the repo root. Run `becwright init` for "
+                         "language-aware starters instead.", YELLOW))
+            return 1
+        derived = _rules_from_claude_md(text, langs)
+        if not derived:
+            print(_style("Found CLAUDE.md but nothing I can enforce deterministically. "
+                         "Try `becwright init` (language starters) or "
+                         "`becwright search` (catalog).", YELLOW))
+            return 1
+        rules = [rule for rule, _ in derived]
+    else:
+        rules = _starter_rules(langs)
+
     downgraded = _apply_baseline(root, rules) if args.baseline else []
     rules_path.parent.mkdir(parents=True, exist_ok=True)
     rules_path.write_text(_render_rules_yaml(rules), encoding="utf-8")
 
     detected = ", ".join(langs) if langs else "none"
+    source = "from CLAUDE.md" if derived is not None else "starter"
     print(f"{_style(f'Created {rules_path}', GREEN)} "
-          f"{_style(f'({len(rules)} starter rule(s); languages: {detected})', DIM)}")
+          f"{_style(f'({len(rules)} {source} rule(s); languages: {detected})', DIM)}")
+    if derived is not None:
+        _print_claude_summary(derived)
     if args.baseline:
         _print_baseline(rules, downgraded)
     ok, msg = git.install_hook(root)
@@ -551,6 +664,8 @@ def _build_parser() -> argparse.ArgumentParser:
     p_init.add_argument("--force", action="store_true", help="overwrite an existing .bec/rules.yaml")
     p_init.add_argument("--baseline", action="store_true",
                         help="start rules that already have violations as warning (adopt on dirty code without blocking)")
+    p_init.add_argument("--from-claude-md", action="store_true",
+                        help="derive rules from the repo's CLAUDE.md (best-effort: maps prohibitions to enforceable checks)")
     p_init.set_defaults(func=_cmd_init)
 
     p_run = sub.add_parser("run", help="run a built-in check against files on stdin (used inside rules)")

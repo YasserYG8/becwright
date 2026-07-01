@@ -238,3 +238,76 @@ def test_init_without_baseline_keeps_default_severity(tmp_path, monkeypatch):
     assert cli.main(["init"]) == 0
     rules = {r.id: r for r in load_rules(tmp_path / ".bec" / "rules.yaml")}
     assert rules["no-debug-remnants"].severity == "blocking"
+
+
+# --- deriving rules from CLAUDE.md ---
+
+def test_read_claude_md_finds_and_misses(tmp_path):
+    assert cli._read_claude_md(tmp_path) is None
+    (tmp_path / "CLAUDE.md").write_text("no secrets\n", encoding="utf-8")
+    assert cli._read_claude_md(tmp_path) == "no secrets\n"
+
+
+def test_rules_from_claude_md_maps_signals_by_language():
+    text = "Never hardcode secrets. No console.log in the code. Avoid debugger."
+    ids = {r["id"] for r, _ in cli._rules_from_claude_md(text, ["ts"])}
+    assert ids == {"no-hardcoded-secrets", "no-console-log-js", "no-debugger-js"}
+
+
+def test_rules_from_claude_md_gates_python_only_signals():
+    text = "Do not leave breakpoint() or pdb; avoid import * as well."
+    assert cli._rules_from_claude_md(text, ["ts"]) == []   # no Python detected
+    py = {r["id"] for r, _ in cli._rules_from_claude_md(text, ["python"])}
+    assert py == {"no-debug-remnants", "no-wildcard-imports"}
+
+
+def test_rules_from_claude_md_no_enforceable_signals():
+    assert cli._rules_from_claude_md("Keep functions small and cohesive.", ["python"]) == []
+
+
+def test_init_from_claude_md_creates_derived_rules(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / "app.ts").write_text("const x = 1\n", encoding="utf-8")
+    (tmp_path / "CLAUDE.md").write_text(
+        "# Rules\n- Never hardcode secrets or API keys.\n- No console.log in shipped code.\n",
+        encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["init", "--from-claude-md"]) == 0
+    ids = {r.id for r in load_rules(tmp_path / ".bec" / "rules.yaml")}
+    assert ids == {"no-hardcoded-secrets", "no-console-log-js"}
+    out = capsys.readouterr().out
+    assert "From CLAUDE.md" in out and "matched:" in out
+
+
+def test_init_from_claude_md_without_file(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["init", "--from-claude-md"]) == 1
+    assert "No CLAUDE.md" in capsys.readouterr().out
+    assert not (tmp_path / ".bec" / "rules.yaml").exists()
+
+
+def test_init_from_claude_md_no_signals_writes_nothing(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "CLAUDE.md").write_text("Keep it simple. Prefer small functions.\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["init", "--from-claude-md"]) == 1
+    assert "nothing I can enforce" in capsys.readouterr().out
+    assert not (tmp_path / ".bec" / "rules.yaml").exists()
+
+
+def test_init_from_claude_md_composes_with_baseline(tmp_path, monkeypatch):
+    monkeypatch.setenv("PYTHONPATH", str(_SRC))
+    _init_repo(tmp_path)
+    (tmp_path / "app.py").write_text("breakpoint()\n", encoding="utf-8")
+    (tmp_path / "CLAUDE.md").write_text(
+        "No breakpoint or pdb left in code. Never hardcode secrets.\n", encoding="utf-8")
+    _git(tmp_path, "add", "app.py")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["init", "--from-claude-md", "--baseline"]) == 0
+    rules = {r.id: r for r in load_rules(tmp_path / ".bec" / "rules.yaml")}
+    assert "no-debug-remnants" in rules and "no-hardcoded-secrets" in rules
+    assert rules["no-debug-remnants"].severity == "warning"    # dirty -> warning
+    assert rules["no-hardcoded-secrets"].severity == "blocking"  # clean -> blocking

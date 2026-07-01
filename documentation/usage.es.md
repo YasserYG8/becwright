@@ -36,6 +36,14 @@ a mano: `becwright install` más un `.bec/rules.yaml` que escribas vos.)
 > con su conteo de violaciones; limpiá la deuda con el tiempo y volvela a
 > `blocking`.
 
+> **¿Ya tenés un `CLAUDE.md` (o similar)?** Corré `becwright init --from-claude-md`.
+> Escanea el archivo buscando prohibiciones que reconoce — secretos, `eval`,
+> `debugger`, `console.log`, breakpoints, imports con `*`, tokens en logs — y
+> convierte cada una en una regla enforzable, informando qué frase la disparó. Es
+> best-effort y según el lenguaje, así que **revisá el resultado**; lo de criterio
+> (arquitectura, naming, inmutabilidad) no tiene check determinista y se queda en
+> `CLAUDE.md`. Combinalo con `--baseline` para adoptar en un repo sucio de una.
+
 ## Comandos
 
 | Comando | Descripción |
@@ -43,6 +51,7 @@ a mano: `becwright install` más un `.bec/rules.yaml` que escribas vos.)
 | `becwright demo` | Muestra a becwright frenando un commit malo de ejemplo (sin configurar nada, sin git) |
 | `becwright init` | Genera un `.bec/rules.yaml` de arranque e instala el hook |
 | `becwright init --baseline` | Igual, pero arranca en `warning` las reglas que ya tienen violaciones (adoptar en un código sucio sin frenar commits) |
+| `becwright init --from-claude-md` | Deriva reglas del `CLAUDE.md` del repo (best-effort; mapea prohibiciones conocidas a checks) |
 | `becwright list` | Lista los checks incluidos |
 | `becwright check` | Corre las reglas sobre los archivos en staging |
 | `becwright check --all` | Corre las reglas sobre todo el repo (`git ls-files`) |

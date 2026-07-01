@@ -157,6 +157,12 @@ commit that breaks a blocking rule. You never call becwright by hand again.
 while clean rules start as `blocking`. Fix the debt over time, then graduate each
 rule to `blocking`.
 
+**Already have a `CLAUDE.md`?** `becwright init --from-claude-md` reads it and
+turns the prohibitions it recognizes (secrets, `eval`, `debugger`, `console.log`,
+breakpoints, …) into enforceable rules — the deterministic safety net under the
+prose. Judgment-based guidance stays in `CLAUDE.md`. Review the result; combine
+with `--baseline` to adopt on a dirty repo in one step.
+
 Available commands:
 
 | Command | What it does |
@@ -164,6 +170,7 @@ Available commands:
 | `becwright demo` | Show becwright block a sample bad commit (no setup, no git needed) |
 | `becwright init` | Scaffold a starter `.bec/rules.yaml` and install the hook |
 | `becwright init --baseline` | Same, but start already-violated rules as `warning` (adopt without blocking) |
+| `becwright init --from-claude-md` | Derive rules from the repo's `CLAUDE.md` (best-effort) |
 | `becwright list` | List the built-in checks |
 | `becwright check` | Runs the rules over the staged files |
 | `becwright search [query]` | Lists ready-made BECs from the built-in catalog |

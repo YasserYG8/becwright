@@ -34,6 +34,14 @@ From then on, every `git commit` runs the checks. (You can also set up by hand:
 > one. Each downgraded rule is annotated with its violation count; clean the debt
 > over time, then flip it back to `blocking`.
 
+> **Already have a `CLAUDE.md` (or similar)?** Run `becwright init --from-claude-md`.
+> It scans the file for prohibitions it recognizes — secrets, `eval`, `debugger`,
+> `console.log`, breakpoints, wildcard imports, tokens in logs — and turns each
+> into an enforceable rule, reporting which phrase matched. This is best-effort
+> and language-aware, so **review the result**; judgment-based guidance
+> (architecture, naming, immutability) has no deterministic check and stays in
+> `CLAUDE.md`. Combine with `--baseline` to adopt on a dirty repo in one step.
+
 ## Commands
 
 | Command | Description |
@@ -41,6 +49,7 @@ From then on, every `git commit` runs the checks. (You can also set up by hand:
 | `becwright demo` | Show becwright block a sample bad commit (no setup, no git needed) |
 | `becwright init` | Scaffold a starter `.bec/rules.yaml` and install the hook |
 | `becwright init --baseline` | Same, but start already-violated rules as `warning` (adopt on a dirty codebase without blocking) |
+| `becwright init --from-claude-md` | Derive rules from the repo's `CLAUDE.md` (best-effort; maps known prohibitions to checks) |
 | `becwright list` | List the built-in checks |
 | `becwright check` | Run rules over the staged files |
 | `becwright check --all` | Run rules over the whole repo (`git ls-files`) |
