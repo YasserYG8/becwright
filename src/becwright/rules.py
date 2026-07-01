@@ -5,6 +5,13 @@ from pathlib import Path
 
 import yaml
 
+_VALID_SEVERITIES = ("blocking", "warning")
+
+
+class RulesError(RuntimeError):
+    """A `.bec/rules.yaml` that cannot be trusted (bad YAML or an invalid rule).
+    Raised instead of letting a typo silently weaken enforcement."""
+
 
 @dataclass(frozen=True)
 class Rule:
@@ -22,6 +29,17 @@ class Rule:
 
 
 def _to_rule(raw: dict) -> Rule:
+    if not isinstance(raw, dict):
+        raise RulesError(f"each rule must be a mapping, got {type(raw).__name__}.")
+    for field in ("id", "check"):
+        if not raw.get(field):
+            raise RulesError(f"a rule is missing the required field '{field}'.")
+    severity = raw.get("severity", "blocking")
+    if severity not in _VALID_SEVERITIES:
+        raise RulesError(
+            f"rule '{raw['id']}': invalid severity {severity!r} "
+            f"(use one of: {', '.join(_VALID_SEVERITIES)})."
+        )
     return Rule(
         id=raw["id"],
         paths=tuple(raw.get("paths", [])),
@@ -29,12 +47,17 @@ def _to_rule(raw: dict) -> Rule:
         intent=(raw.get("intent") or "").strip(),
         why_it_matters=(raw.get("why_it_matters") or "").strip(),
         rejected_alternatives=tuple(raw.get("rejected_alternatives", [])),
-        severity=raw.get("severity", "blocking"),
+        severity=severity,
     )
 
 
 def load_rules(rules_path: Path) -> list[Rule]:
     if not rules_path.exists():
         return []
-    data = yaml.safe_load(rules_path.read_text(encoding="utf-8")) or {}
-    return [_to_rule(r) for r in data.get("rules", [])]
+    try:
+        data = yaml.safe_load(rules_path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as e:
+        raise RulesError(f"{rules_path}: invalid YAML ({e}).")
+    if not isinstance(data, dict) or not isinstance(data.get("rules", []), list):
+        raise RulesError(f"{rules_path}: expected a top-level 'rules:' list.")
+    return [_to_rule(r) for r in data["rules"]] if data.get("rules") else []

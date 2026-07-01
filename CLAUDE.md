@@ -33,13 +33,14 @@ becwright/
 ├── README.md                 # public conceptual document (English; README.es.md = Spanish)
 ├── pyproject.toml            # packaging + `becwright` command (setuptools)
 ├── src/becwright/            # packaged ENGINE (installable, not copied into each repo)
-│   ├── cli.py                # argparse: init / list / check / install / uninstall / export / import
-│   ├── engine.py             # path matching + runs checks + decides pass/fail
-│   ├── rules.py              # Rule model + loading of .bec/rules.yaml
+│   ├── cli.py                # argparse: init/list/check/install/uninstall/export/import/add/search
+│   ├── engine.py             # path matching + runs checks (staged content) + decides pass/fail
+│   ├── rules.py              # Rule model + validated loading of .bec/rules.yaml
 │   ├── bundle.py             # export/import of BECs (the portable bundle)
-│   ├── git.py                # repo root, staged files, native hook
+│   ├── catalog.py            # reads the packaged BEC catalog (for `add` / `search`)
+│   ├── git.py                # repo root, staged files, staged worktree, native hook
+│   ├── becs/                 # packaged catalog of importable BECs (.bec.yaml bundles)
 │   └── checks/               # included checks (no_token_in_logs, forbid, ...)
-├── becs/                     # catalog of importable BECs (.bec.yaml bundles)
 ├── tests/                    # pytest
 ├── docs/                     # concept, decisions, status-and-roadmap (Spanish, gitignored)
 └── prototype/                # ARCHIVED PROTOTYPE (reference, not built upon without notice)
@@ -53,8 +54,10 @@ engine comes from the installed package.
 **MVP (A + B)** and **Phase 1** ("usable by others") done. **Phase 2
 (Portability, C)** done: `becwright export` / `import` move a BEC between repos
 as a single self-contained `.bec.yaml` (a custom check's code travels embedded),
-with a trust gate that shows the code before installing. Commands:
-`init / list / check / install / uninstall / export / import`. **Multi-language:** the engine
+with a trust gate that shows the code before installing. The catalog ships
+**inside the package** so `becwright search` / `add <name>` install a ready-made
+BEC with one command, offline. Commands:
+`init / list / check / install / uninstall / export / import / add / search`. **Multi-language:** the engine
 is agnostic (runs any check on any file); the generic `forbid` check (regex via
 `--pattern`) lets you write rules for any language without code, and the catalog
 includes Python and JS/TS BECs. Included checks: `forbid` (any language),

@@ -108,11 +108,11 @@ def test_legacy_check_materializes_to_new_form(tmp_path):
 
 
 def test_catalog_bundles_are_valid(tmp_path):
-    becs = Path(__file__).resolve().parents[1] / "becs"
-    files = list(becs.glob("*.bec.yaml"))
-    assert files, "no hay bundles en becs/"
-    for f in files:
-        data = bundle.parse_bundle(f.read_text(encoding="utf-8"))
+    from becwright import catalog
+    names = catalog.catalog_names()
+    assert names, "the shipped catalog is empty"
+    for name in names:
+        data = bundle.parse_bundle(catalog.read_bec(name))
         rd = bundle.materialize(data, tmp_path)
         assert rd["check"].startswith("becwright run ")
 

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import contextlib
+import shutil
 import subprocess
+import tempfile
+from collections.abc import Iterator
 from pathlib import Path
 
 # Marker used to recognize (and safely remove) a hook written by becwright.
@@ -44,6 +48,39 @@ def files_to_check(root: Path, *, all_files: bool) -> list[str]:
         cmd = ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"]
     res = subprocess.run(cmd, cwd=root, capture_output=True, text=True)
     return [line for line in res.stdout.splitlines() if line.strip()]
+
+
+def _staged_blob(root: Path, path: str) -> bytes | None:
+    # `:0:<path>` is the staged (index) version of the file, which is exactly
+    # what the commit will record — not the working-tree copy that may differ.
+    res = subprocess.run(
+        ["git", "show", f":0:{path}"],
+        cwd=root, capture_output=True,
+    )
+    return res.stdout if res.returncode == 0 else None
+
+
+@contextlib.contextmanager
+def staged_worktree(root: Path, files: list[str]) -> Iterator[Path]:
+    """Materialize the staged content of `files` into a temp dir, so checks see
+    exactly what is being committed instead of the working tree (which may hold
+    unstaged edits). The working-tree `.bec/` tooling is copied alongside so that
+    custom checks referenced by relative paths still resolve."""
+    tmp = Path(tempfile.mkdtemp(prefix="becwright-"))
+    try:
+        for path in files:
+            blob = _staged_blob(root, path)
+            if blob is None:
+                continue
+            dest = tmp / path
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(blob)
+        bec = root / ".bec"
+        if bec.is_dir():
+            shutil.copytree(bec, tmp / ".bec", dirs_exist_ok=True)
+        yield tmp
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def _hook_path(root: Path) -> Path:

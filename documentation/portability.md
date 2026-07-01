@@ -69,5 +69,5 @@ because that code ships with the becwright package.
 
 ## Catalog
 
-The [`becs/`](../becs/) directory is a catalog of ready-to-use BECs, importable
+The [`becs/`](../src/becwright/becs/) directory is a catalog of ready-to-use BECs, importable
 directly from their raw URL. It includes Python and JavaScript/TypeScript BECs.

@@ -1,0 +1,10 @@
+# Lets other repos use becwright through the pre-commit framework
+# (https://pre-commit.com). becwright decides which staged files are relevant
+# from its own .bec/rules.yaml, so pre-commit does not pass filenames to it.
+- id: becwright
+  name: becwright
+  description: Deterministic, commit-blocking constraints (BECs) on your code.
+  entry: becwright check
+  language: python
+  pass_filenames: false
+  always_run: true

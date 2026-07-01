@@ -40,3 +40,13 @@ def test_evaluate_skips_rule_with_no_matching_files(tmp_path):
     (tmp_path / "note.txt").write_text("breakpoint()\n", encoding="utf-8")
     result = evaluate([_rule()], ["note.txt"], tmp_path)
     assert result.per_rule == []
+
+
+def test_evaluate_times_out_a_hung_check(tmp_path, monkeypatch):
+    monkeypatch.setenv("BECWRIGHT_CHECK_TIMEOUT", "0.3")
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    hung = Rule(id="hangs", paths=("**/*.py",), check="sleep 5", severity="blocking")
+    result = evaluate([hung], ["a.py"], tmp_path)
+    assert result.per_rule[0].passed is False
+    assert "timed out" in result.per_rule[0].output
+    assert result.had_blocking is True

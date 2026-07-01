@@ -132,10 +132,37 @@ Comandos disponibles:
 | `becwright init` | Genera un `.bec/rules.yaml` de arranque e instala el hook |
 | `becwright list` | Lista los checks incluidos |
 | `becwright check` | Corre las reglas sobre los archivos en staging |
+| `becwright search [texto]` | Lista BECs listas del catálogo incluido |
+| `becwright add <nombre>` | Instala una BEC del catálogo en `.bec/rules.yaml` (sin conexión) |
 | `becwright install` | Instala el hook `pre-commit` nativo |
 | `becwright uninstall` | Quita el hook |
 | `becwright export <id>` | Exporta una BEC a un archivo `.bec.yaml` |
 | `becwright import <archivo\|URL>` | Importa una BEC de otro repo |
+
+### ¿Ya usás pre-commit o Husky?
+
+Si tu repo ya administra los git hooks, becwright se enchufa sin `becwright
+install`.
+
+**[pre-commit](https://pre-commit.com)** — agregá esto a `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: https://github.com/DataDave-Dev/becwright
+    rev: v0.3.0
+    hooks:
+      - id: becwright
+```
+
+**Husky** (repos JS/TS) — en `.husky/pre-commit`:
+
+```sh
+npx becwright check
+```
+
+En ambos casos becwright igual lee `.bec/rules.yaml` y frena el commit ante una
+regla bloqueante rota. Solo necesitás `becwright init` una vez para generar las
+reglas (salteá su instalación del hook si otra herramienta lo administra).
 
 ### Uso con agentes de IA (Claude Code)
 
@@ -191,24 +218,22 @@ atar cada regla a su *por qué*.
 
 ## Reglas listas para usar (sin escribir nada)
 
-¿No querés escribir reglas vos mismo? Importá una del [catálogo](becs/) con un
-solo comando — becwright te muestra la regla y después la deja en tu
-`.bec/rules.yaml`, lista para usar:
+¿No querés escribir reglas vos mismo? El catálogo viaja **dentro** de becwright,
+así que instalás una regla con un solo comando — sin URL y sin conexión.
+becwright te muestra la regla y después la deja en tu `.bec/rules.yaml`, lista
+para usar:
 
 ```bash
-# Python
-becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/no-token-in-logs.bec.yaml
-becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/no-debug-remnants.bec.yaml
+becwright search                 # lista todas las BECs del catálogo
+becwright search secret          # filtrá por una palabra
 
-# JavaScript / TypeScript
-becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/no-debugger-js.bec.yaml
-becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/no-console-log-js.bec.yaml
-
-# Cualquier lenguaje
-becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/no-hardcoded-secrets.bec.yaml
+becwright add no-token-in-logs   # instalá una (Python)
+becwright add no-debugger-js     # JavaScript / TypeScript
+becwright add no-hardcoded-secrets   # cualquier lenguaje
 ```
 
-La lista completa (Python, JS/TS, Go, Rust) vive en [`becs/`](becs/).
+La lista completa (Python, JS/TS, Go, Rust) vive en
+[`src/becwright/becs/`](src/becwright/becs/).
 
 ## Cualquier lenguaje
 
@@ -257,8 +282,9 @@ Al importar, becwright **muestra el código del check y pide confirmación** ant
 de instalarlo: importar una BEC es importar código que se ejecutará en cada
 commit. Usá `--yes` para saltar la confirmación en entornos automatizados.
 
-Hay un **catálogo de BECs listas para usar** en [`becs/`](becs/) que podés
-importar directo desde su URL cruda.
+Hay un **catálogo de BECs listas para usar** dentro de becwright: corré
+`becwright search` para listarlas y `becwright add <nombre>` para instalar una
+(también viven en [`src/becwright/becs/`](src/becwright/becs/) para navegarlas).
 
 Los checks built-in (`becwright run *`) viajan con el paquete, así
 que el bundle solo guarda su nombre. Un check **custom** (`.bec/checks/foo.py`)

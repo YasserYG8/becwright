@@ -87,8 +87,10 @@ rules:
 
 ## Pre-made rules
 
-becwright ships a [catalog](../becs/) of ready-to-use BECs you can import:
+becwright ships a [catalog](../src/becwright/becs/) of ready-to-use BECs inside
+the package — install from it with one command, no URL, works offline:
 
 ```bash
-becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/no-debugger-js.bec.yaml
+becwright search              # list the catalog
+becwright add no-debugger-js  # install one
 ```

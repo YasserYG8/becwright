@@ -1,6 +1,6 @@
 {
   "name": "becwright",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Deterministic, portable constraints (BECs) that block commits violating your rules — a safety net for AI-written and human-written code. No Python required.",
   "bin": {
     "becwright": "bin/becwright.js"
@@ -32,10 +32,10 @@
     "node": ">=16"
   },
   "optionalDependencies": {
-    "@becwright/linux-x64": "0.2.2",
-    "@becwright/linux-arm64": "0.2.2",
-    "@becwright/darwin-x64": "0.2.2",
-    "@becwright/darwin-arm64": "0.2.2",
-    "@becwright/win32-x64": "0.2.2"
+    "@becwright/linux-x64": "0.3.0",
+    "@becwright/linux-arm64": "0.3.0",
+    "@becwright/darwin-x64": "0.3.0",
+    "@becwright/darwin-arm64": "0.3.0",
+    "@becwright/win32-x64": "0.3.0"
   }
 }

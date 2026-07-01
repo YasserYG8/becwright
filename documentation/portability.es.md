@@ -69,5 +69,5 @@ necesita el nombre, porque ese código viene con el paquete becwright.
 
 ## Catálogo
 
-El directorio [`becs/`](../becs/) es un catálogo de BECs listas para usar,
+El directorio [`becs/`](../src/becwright/becs/) es un catálogo de BECs listas para usar,
 importables directo desde su URL cruda. Incluye BECs de Python y JavaScript/TypeScript.

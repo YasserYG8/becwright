@@ -14,7 +14,7 @@ def test_cmd_list_prints_checks_and_catalog(capsys):
     out = capsys.readouterr().out
     assert "forbid" in out
     assert "hardcoded_secrets" in out
-    assert "Catalog" in out
+    assert "becwright add" in out
 
 
 def test_every_listed_check_has_a_description():

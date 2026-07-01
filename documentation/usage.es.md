@@ -89,8 +89,10 @@ rules:
 
 ## Reglas listas para usar
 
-becwright trae un [catálogo](../becs/) de BECs listas que podés importar:
+becwright trae un [catálogo](../src/becwright/becs/) de BECs listas dentro del
+paquete — instalás desde él con un comando, sin URL y sin conexión:
 
 ```bash
-becwright import https://raw.githubusercontent.com/DataDave-Dev/becwright/main/becs/no-debugger-js.bec.yaml
+becwright search              # lista el catálogo
+becwright add no-debugger-js  # instalá una
 ```

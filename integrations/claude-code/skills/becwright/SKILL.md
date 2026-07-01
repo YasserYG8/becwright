@@ -54,7 +54,7 @@ is also available (`becwright mcp`, needs the `mcp` extra) exposing `check` and
 `list_checks` as tools.
 
 Catalog of ready-to-use BECs:
-https://github.com/DataDave-Dev/becwright/tree/main/becs
+https://github.com/DataDave-Dev/becwright/tree/main/src/becwright/becs
 
 ## Writing a rule
 

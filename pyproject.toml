@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "becwright"
-version = "0.2.2"
+version = "0.3.0"
 description = "Deterministic, portable constraints (BECs) that block commits violating your rules — a safety net for AI-written and human-written code."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -50,6 +50,10 @@ mcp = ["mcp>=1.2"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+# Ship the BEC catalog inside the wheel so `becwright add` works offline.
+[tool.setuptools.package-data]
+becwright = ["becs/*.bec.yaml"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

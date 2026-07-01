@@ -14,7 +14,12 @@ def gather(root: Path, *, all_files: bool) -> tuple[list[Rule], list[str], Resul
     files = git.files_to_check(root, all_files=all_files)
     if not rules or not files:
         return rules, files, None
-    return rules, files, evaluate(rules, files, root)
+    # `--all` inspects the working tree on purpose; the pre-commit path checks the
+    # staged content, which is what the commit will actually record.
+    if all_files:
+        return rules, files, evaluate(rules, files, root)
+    with git.staged_worktree(root, files) as staged_root:
+        return rules, files, evaluate(rules, files, staged_root)
 
 
 def payload(rules: list[Rule], files: list[str], result: Result | None) -> dict:

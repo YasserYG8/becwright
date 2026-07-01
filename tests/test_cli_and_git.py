@@ -158,6 +158,18 @@ def test_check_passes_clean(tmp_path, monkeypatch, capsys):
     assert "All good" in capsys.readouterr().out
 
 
+def test_check_reports_invalid_rules_file_cleanly(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir()
+    (tmp_path / ".bec" / "rules.yaml").write_text(
+        'rules:\n  - id: r1\n    check: "true"\n    severity: bloqueante\n', encoding="utf-8")
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "a.py")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check"]) == 2
+    assert "invalid severity" in capsys.readouterr().err
+
+
 def test_main_install_uninstall(tmp_path, monkeypatch):
     _init_repo(tmp_path)
     monkeypatch.chdir(tmp_path)
