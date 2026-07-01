@@ -38,16 +38,19 @@ pytest
 
 A check is an executable that:
 
-- reads a newline-separated file list from **stdin**,
+- reads a newline-separated list of paths from **stdin**,
 - prints violations to stdout,
 - exits **0** (pass) or **non-zero** (fail).
 
 Built-in checks live in `src/becwright/checks/` and follow the shared skeleton
 (see `dangerous_eval.py`). For language-agnostic rules, prefer the generic
-`forbid` check (just a regex) over writing a new module.
+`forbid` check (just a regex) over writing a new module. The same contract works
+for a `commit-msg` rule — the commit message file path is fed on stdin instead of
+the changed files, so `forbid` / `require` work on the message with no changes.
 
 ## Adding a catalog BEC
 
-Catalog bundles live in `becs/` as `<id>.bec.yaml`. Always include `intent` and
-`why_it_matters` — the *why* is the whole point of a BEC. See the existing
+Catalog bundles live in `src/becwright/becs/` as `<id>.bec.yaml` (they ship inside
+the package, so `becwright add`/`search` work offline). Always include `intent`
+and `why_it_matters` — the *why* is the whole point of a BEC. See the existing
 bundles for the format.

@@ -12,7 +12,7 @@
       "name": "becwright",
       "source": "./integrations/claude-code",
       "description": "Deterministic commit-blocking constraints (BECs). Install and use becwright from any Claude Code session.",
-      "version": "0.1.0"
+      "version": "0.2.0"
     }
   ]
 }

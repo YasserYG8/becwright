@@ -16,13 +16,13 @@ Interpret the argument and act:
   clean (starts already-violated rules as `warning`). Then show and briefly explain
   the generated `.bec/rules.yaml`. If `becwright mcp` is connected, offer to extend
   the rules via the skill's propose → preview_rule → add_rule loop.
-- **`check`** — Run `becwright check --all` and summarize PASS / WARN / BLOCK. For
-  any BLOCK, point to the offending `file:line` and propose a fix.
+- **`check`** — Run `becwright check --all` and summarize PASS / WARN / ADVISORY /
+  BLOCK. For any BLOCK, point to the offending `file:line` and propose a fix.
 - **`add <thing>`** — If `<thing>` is an http(s) URL or a `.bec.yaml` path, run
   `becwright import <thing>`. Otherwise treat it as a regex and add a `forbid`
   rule to `.bec/rules.yaml` (ask for the target `paths` and `severity` first).
-- **`status`** — Report whether becwright is installed, whether the pre-commit
-  hook exists, and how many rules are in `.bec/rules.yaml`.
+- **`status`** — Report whether becwright is installed, whether the `pre-commit`
+  and `commit-msg` hooks exist, and how many rules are in `.bec/rules.yaml`.
 
 If becwright is not yet installed, install it first. If the current directory is
 not a git repository, say so before running `becwright init`.
