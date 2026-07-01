@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 import pkgutil
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -317,6 +318,24 @@ def _read_claude_md(root: Path) -> str | None:
     return None
 
 
+# A line cap tied to *files* (not functions — that needs an AST): "files < 800
+# lines" or "800 lines per file", EN/ES. The file/module anchor avoids mapping a
+# "functions < 50 lines" rule, which becwright cannot enforce.
+_FILE_LINE_CAP = re.compile(
+    r"(?:files?|archivos?|modules?|m[óo]dulos?)\b[^.\n]{0,40}?(\d{2,4})\s*(?:lines?|l[ií]neas?)"
+    r"|(\d{2,4})\s*(?:lines?|l[ií]neas?)\b[^.\n]{0,25}?(?:per\s+|por\s+)?(?:files?|archivos?|modules?|m[óo]dulos?)",
+    re.IGNORECASE,
+)
+
+
+def _max_lines_cap(text: str) -> int | None:
+    match = _FILE_LINE_CAP.search(text)
+    if match is None:
+        return None
+    cap = int(match.group(1) or match.group(2))
+    return cap if 50 <= cap <= 5000 else None
+
+
 def _rules_from_claude_md(text: str, langs: list[str]) -> list[tuple[dict, str]]:
     """Best-effort mapping from prohibitions written in CLAUDE.md to executable
     rules becwright can actually enforce. Returns (rule_dict, matched_trigger)
@@ -340,6 +359,15 @@ def _rules_from_claude_md(text: str, langs: list[str]) -> list[tuple[dict, str]]
             id=signal["id"], paths=paths, check=signal["check"],
             intent=signal["intent"], why=signal["why"], severity=signal["severity"],
         ), trigger))
+
+    cap = _max_lines_cap(text)
+    if cap is not None and source:
+        derived.append((dict(
+            id="max-file-lines", paths=source, severity="warning",
+            check=f"becwright run max_lines --max {cap}",
+            intent=f"Files should stay under {cap} lines.",
+            why="Large files are hard to read, review and keep cohesive."),
+            f"{cap} lines"))
     return derived
 
 

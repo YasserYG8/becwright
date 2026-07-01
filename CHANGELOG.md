@@ -21,8 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `becwright init --from-claude-md`: derive rules from the repo's `CLAUDE.md`,
   mapping recognized prohibitions (secrets, `eval`, `debugger`, `console.log`,
   breakpoints, wildcard imports, tokens in logs) to enforceable checks and
-  reporting which phrase matched each. Judgment-based guidance is left for
-  `CLAUDE.md`. Composes with `--baseline`.
+  reporting which phrase matched each. Also picks up a per-file line cap
+  ("files under 800 lines" → `max_lines`), ignoring function-length rules it
+  can't enforce. Judgment-based guidance is left for `CLAUDE.md`. Composes with
+  `--baseline`.
 - Three language-agnostic checks that cover common `CLAUDE.md` rules without an
   AST: `max_lines` (file length cap via `--max`), `require` (a regex that must be
   present — the inverse of `forbid`), and `filename` (file-name conventions via

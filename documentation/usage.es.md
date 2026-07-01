@@ -39,7 +39,9 @@ a mano: `becwright install` más un `.bec/rules.yaml` que escribas vos.)
 > **¿Ya tenés un `CLAUDE.md` (o similar)?** Corré `becwright init --from-claude-md`.
 > Escanea el archivo buscando prohibiciones que reconoce — secretos, `eval`,
 > `debugger`, `console.log`, breakpoints, imports con `*`, tokens en logs — y
-> convierte cada una en una regla enforzable, informando qué frase la disparó. Es
+> convierte cada una en una regla enforzable, informando qué frase la disparó.
+> También detecta un límite de líneas por archivo ("archivos < 800 líneas" →
+> `max_lines`), ignorando reglas de largo de función que no puede enforzar. Es
 > best-effort y según el lenguaje, así que **revisá el resultado**; lo de criterio
 > (arquitectura, naming, inmutabilidad) no tiene check determinista y se queda en
 > `CLAUDE.md`. Combinalo con `--baseline` para adoptar en un repo sucio de una.

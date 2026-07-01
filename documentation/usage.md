@@ -37,10 +37,12 @@ From then on, every `git commit` runs the checks. (You can also set up by hand:
 > **Already have a `CLAUDE.md` (or similar)?** Run `becwright init --from-claude-md`.
 > It scans the file for prohibitions it recognizes — secrets, `eval`, `debugger`,
 > `console.log`, breakpoints, wildcard imports, tokens in logs — and turns each
-> into an enforceable rule, reporting which phrase matched. This is best-effort
-> and language-aware, so **review the result**; judgment-based guidance
-> (architecture, naming, immutability) has no deterministic check and stays in
-> `CLAUDE.md`. Combine with `--baseline` to adopt on a dirty repo in one step.
+> into an enforceable rule, reporting which phrase matched. It also picks up a
+> per-file line cap ("files under 800 lines" → `max_lines`), ignoring
+> function-length rules it can't enforce. This is best-effort and language-aware,
+> so **review the result**; judgment-based guidance (architecture, naming,
+> immutability) has no deterministic check and stays in `CLAUDE.md`. Combine with
+> `--baseline` to adopt on a dirty repo in one step.
 
 ## Commands
 

@@ -298,6 +298,30 @@ def test_init_from_claude_md_no_signals_writes_nothing(tmp_path, monkeypatch, ca
     assert not (tmp_path / ".bec" / "rules.yaml").exists()
 
 
+def test_max_lines_cap_extracts_file_cap():
+    assert cli._max_lines_cap("Files are focused (< 800 lines).") == 800
+    assert cli._max_lines_cap("Máximo 300 líneas por archivo.") == 300
+    assert cli._max_lines_cap("800 lines per file max") == 800
+
+
+def test_max_lines_cap_ignores_function_length():
+    # No file/module anchor -> not a file cap (function length needs an AST anyway).
+    assert cli._max_lines_cap("Functions must be under 50 lines.") is None
+
+
+def test_max_lines_cap_out_of_range():
+    assert cli._max_lines_cap("keep files under 40 lines") is None      # below 50
+    assert cli._max_lines_cap("files must not exceed 9000 lines") is None  # above 5000
+
+
+def test_rules_from_claude_md_maps_file_line_cap():
+    text = "Keep files under 800 lines. Never hardcode secrets."
+    by_id = {r["id"]: r for r, _ in cli._rules_from_claude_md(text, ["python"])}
+    assert "max-file-lines" in by_id
+    assert by_id["max-file-lines"]["check"] == "becwright run max_lines --max 800"
+    assert by_id["max-file-lines"]["severity"] == "warning"
+
+
 def test_init_from_claude_md_composes_with_baseline(tmp_path, monkeypatch):
     monkeypatch.setenv("PYTHONPATH", str(_SRC))
     _init_repo(tmp_path)
