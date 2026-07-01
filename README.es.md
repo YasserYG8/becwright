@@ -11,57 +11,43 @@
 [![PyPI](https://img.shields.io/pypi/v/becwright?logo=pypi&logoColor=white)](https://pypi.org/project/becwright/)
 
 **Reglas que se ejecutan, no notas que se ignoran.**
+Tu `CLAUDE.md` es un *cartel*. becwright es el *guardia*.
+
+<sub>Determinista, no probabilístico · cualquier lenguaje · sin Python · frena el commit **y** lleva el *por qué*.</sub>
+
+<sub>Dogfooding — cada commit de este repo lo controlan las propias reglas de becwright ([`.bec/rules.yaml`](.bec/rules.yaml)) en CI.</sub>
+
+## Antes / después
+
+Un agente escribe `checkout.py` — una API key hardcodeada, un `eval()` sobre un
+string de promo — y deja una nota para *"limpiar esto después."* Nadie lo hace.
+Se publica.
+
+Con becwright, el commit no llega a existir:
 
 <p align="center">
   <img src="assets/becwright-demo.svg" alt="becwright frenando un commit que hardcodea un secreto y usa eval" width="640">
 </p>
 
-> **Velo en 5 segundos** — sin configurar nada, sin git, sin tocar tu máquina:
+> **Velo vos mismo en 5 segundos** — sin configurar nada, sin git, sin tocar tu
+> máquina:
 > ```bash
-> becwright demo                  # después de instalar (ver abajo)
-> # sin instalar: npx becwright demo   ·   o: pipx run becwright demo
+> npx becwright demo        # sin instalar   ·   o: pipx run becwright demo
 > ```
 
-`becwright` hace cumplir restricciones (constraints) sobre tu código de forma
-determinista: en lugar de *pedirle* a un agente de IA que respete una regla
-(como hace `CLAUDE.md`, `.cursorrules`, etc. — que el agente puede leer e
-ignorar), becwright **verifica el resultado** y frena el commit si la regla
-se rompe.
+## Por qué un guardia, no un cartel
 
-## En cristiano
+Un agente de IA escribe un módulo y deja una nota: *"esto nunca debe loguear
+tokens de sesión."* Meses después otro agente lo regenera, nunca lee la nota, y
+el token termina en los logs. Nadie se entera hasta que explota en producción.
 
-¿Primera vez con una herramienta así? La idea entera en tres líneas:
-
-Un **commit** es el momento en que *guardás* tu trabajo en git. becwright es un
-guardia parado en esa puerta. Justo antes de guardar, corre tus reglas sobre el
-código:
-
-- ✅ si todo pasa → el commit entra;
-- ❌ si una regla se rompe → te frena, te dice qué regla es y *por qué* existe,
-  y espera hasta que lo arregles.
-
-Una nota en `CLAUDE.md` es un *letrero* que pide a las personas (y a los agentes
-de IA) que se porten bien. becwright es el *guardia que revisa*. Un letrero se
-puede ignorar; el guardia no.
-
-> **Dos palabras que vas a ver mucho:** un **commit** es una foto guardada de tu
-> código en git. Un **hook** es un pequeño script que git ejecuta solo en un
-> momento determinado — becwright usa el hook *pre-commit*, que se dispara justo
-> antes de guardar un commit. Nunca lo corrés a mano; lo hace git.
-
-El resto de este README va de "solo quiero empezar" hasta el detalle técnico
-completo — leé hasta donde necesites.
-
-## El problema
-
-Un agente de IA escribe código y deja una nota: *"esto nunca debe loguear
-tokens de sesión"*. Esa nota es texto. Tres meses después, otro agente
-regenera el módulo, no la lee, y mete el token en los logs. Nadie se entera
-hasta que explota en producción.
-
-Las notas son **probabilísticas** (dependen de que el agente lea, entienda y
-obedezca). becwright es **determinista**: la regla se ejecuta sobre el código
-real y da pasa/no-pasa, sin importar qué agente o modelo hizo el cambio.
+Un cartel *pide*; un guardia *revisa*. Justo antes de guardar tu trabajo,
+becwright corre tus reglas sobre el código: ✅ si todo pasa → el commit entra;
+❌ si una regla se rompe → te frena, te dice qué regla es y su *por qué*, y
+espera hasta que lo arregles. Una nota en `CLAUDE.md` es **probabilística** —
+depende de que el agente lea y obedezca. Una regla becwright es **determinista**
+— se ejecuta sobre el código real y da pasa/no-pasa, sin importar qué modelo
+hizo el cambio:
 
 | | Nota en CLAUDE.md | Regla becwright |
 |---|---|---|
@@ -70,8 +56,18 @@ real y da pasa/no-pasa, sin importar qué agente o modelo hizo el cambio.
 | Resultado | Probable | Garantizado |
 | Analogía | Letrero de "velocidad máxima" | Tope físico en la calle |
 
-Las dos capas son complementarias: CLAUDE.md previene (que el 95% salga bien
-a la primera), becwright es la red de seguridad para el 5% que se cuela.
+Las dos capas son complementarias: `CLAUDE.md` previene (que el 95% salga bien a
+la primera), becwright es la red de seguridad para el 5% que se cuela.
+
+<details>
+<summary><strong>¿Primera vez con commits y hooks?</strong> — el vocabulario en una caja</summary>
+
+Un **commit** es una foto guardada de tu código en git. Un **hook** es un
+pequeño script que git ejecuta solo en un momento determinado — becwright usa el
+hook *pre-commit*, que se dispara justo antes de guardar un commit. Nunca lo
+corrés a mano; lo hace git. El resto de este README va de "solo quiero empezar"
+hasta el detalle técnico completo — leé hasta donde necesites.
+</details>
 
 ## Concepto central: BEC (Bound Executable Constraint)
 
@@ -116,6 +112,9 @@ tiene juntas:
 - **Sin Python** — instalá por npm/pnpm como binario autónomo, o por pip/pipx.
 - **Se adapta a tu setup** — hook de git nativo, o enchufado al framework
   pre-commit o a Husky.
+- **No se puede saltar** — una GitHub Action corre becwright en cada PR (solo los
+  archivos que cambió), así un check obligatorio hace cumplir las reglas aunque el
+  hook local se saltee con `--no-verify`.
 - **Listo para agentes de IA** — plugin de Claude Code, `check --json` y un
   servidor MCP con tools para que un agente proponga, previsualice y agregue reglas
   desde tu `CLAUDE.md`.
@@ -202,6 +201,7 @@ Comandos disponibles:
 | `becwright init --from-claude-md` | Deriva reglas del `CLAUDE.md` del repo (best-effort) |
 | `becwright list` | Lista los checks incluidos |
 | `becwright check` | Corre las reglas sobre los archivos en staging |
+| `becwright check --diff <base>` | Corre las reglas solo sobre los archivos cambiados vs `<base>` (para CI/PR) |
 | `becwright search [texto]` | Lista BECs listas del catálogo incluido |
 | `becwright add <nombre>` | Instala una BEC del catálogo en `.bec/rules.yaml` (sin conexión) |
 | `becwright install` | Instala el hook `pre-commit` nativo |
@@ -233,6 +233,51 @@ npx becwright check
 En ambos casos becwright igual lee `.bec/rules.yaml` y frena el commit ante una
 regla bloqueante rota. Solo necesitás `becwright init` una vez para generar las
 reglas (salteá su instalación del hook si otra herramienta lo administra).
+
+### Como check obligatorio de CI (GitHub Action)
+
+El hook de commit es la primera línea de defensa, pero vive en la máquina de cada
+persona — y `git commit --no-verify` lo saltea. Un **check obligatorio de CI no
+se puede saltar**. Correr becwright en cada pull request convierte las reglas en
+infraestructura del pipeline, no en una comodidad local que un agente (o un
+humano) pueda esquivar.
+
+Agregá `.github/workflows/becwright.yml`:
+
+```yaml
+name: becwright
+on: pull_request
+
+jobs:
+  becwright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # historia completa para que exista el merge-base con la base del PR
+      - uses: DataDave-Dev/becwright@main   # fijá a un tag publicado cuando esté disponible
+```
+
+Por defecto chequea **solo los archivos que cambió el PR** contra la rama base —
+la deuda preexistente en el resto del repo nunca rompe el build, así lo podés
+adoptar en un código grande sin un muro rojo. Marcá el check como *required* en
+las reglas de protección de rama y las reglas dejan de ser negociables.
+
+Inputs (todos opcionales):
+
+| Input | Default | Qué hace |
+|---|---|---|
+| `base` | rama base del PR | Ref de git contra la que diffear; solo se chequean los archivos cambiados vs ella |
+| `version` | `becwright` | Especificador pip a instalar (ej. `becwright==0.4.0`) |
+| `python-version` | `3.x` | Python con el que corre becwright |
+| `args` | *vacío* | Args extra que se agregan a `becwright check` |
+
+> Poné `fetch-depth: 0` en el checkout para que exista el merge-base con la base
+> del PR; un clon shallow deja la ref base inalcanzable y el check falla de forma
+> ruidosa en vez de pasar sobre una lista vacía de archivos.
+
+¿Preferís correrlo vos? `becwright check --diff origin/main` hace lo mismo desde
+cualquier step del workflow, sin necesidad de la action.
 
 ### Uso con agentes de IA (Claude Code)
 
@@ -435,9 +480,26 @@ BECs.
 
 ## FAQ
 
-**¿No hace esto ya `pre-commit`?** `pre-commit` corre herramientas; no te da una
-regla que lleve su *por qué* y viaje entre repos. Incluso podés correr becwright
-*dentro* de pre-commit — ver más arriba.
+**¿Por qué no simplemente Ruff / Black / pre-commit?** Usalos — becwright no
+compite con ellos. Black formatea, Ruff lintea, pre-commit *corre* herramientas.
+Ninguno te da una *regla atada a su razón* que frene el commit y viaje a otro
+repo. becwright es esa capa, y con gusto corre Ruff o gitleaks *como* uno de sus
+checks. Otro laburo, el mismo pipeline.
+
+**Es un proyecto joven — ¿por qué confiarle mis commits?** Porque hay muy poco
+que confiar: una sola dependencia (`pyyaml`), sin `eval`/`exec`, checks que son
+regex simple que leés en menos de un minuto, y licencia MIT. Y se aplica a sí
+mismo — los commits del propio becwright pasan por becwright. Si se rompiera,
+este repo no buildearía.
+
+**¿Un agente no puede borrar la regla y listo?** Puede — pero borrar una regla es
+una línea visible en el diff que el review marca, mientras que ignorar una nota
+en `CLAUDE.md` no deja rastro. Un guardia que tenés que sacar a la vista de todos
+gana contra un cartel que podés pasar de largo.
+
+**¿No hace esto ya `pre-commit`?** Corre herramientas; no te da una regla que
+lleve su *por qué* y viaje entre repos. Incluso podés correr becwright *dentro*
+de pre-commit — ver más arriba.
 
 **¿Necesito Python?** No. `npm i -g becwright` instala un binario autónomo;
 `pipx install becwright` también funciona.
