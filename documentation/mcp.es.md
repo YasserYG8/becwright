@@ -57,6 +57,7 @@ pipx install "becwright[mcp]"     # o: pip install "becwright[mcp]"
 | `list_checks` | — | los checks built-in como `{name, description}` |
 | `preview_rule` | `check`, `paths`, `exclude` (opcional), `all_files`, `path` | `{matched_files, passed, output, note}` — un dry-run sin escribir la regla |
 | `propose_rules_from_claude_md` | `path` (dir del repo, opcional) | `{rules, unmapped_hint}` — las reglas que becwright deriva del CLAUDE.md del repo |
+| `add_rule` | `id`, `check`, `paths`, `intent`, `why_it_matters`, `severity`, `exclude`, `confirm`, `path` | escribe una regla en `.bec/rules.yaml` — preview salvo `confirm=true` |
 
 **`propose_rules_from_claude_md`** devuelve las reglas que becwright puede derivar
 determinísticamente de la prosa (cada una con la frase que la disparó) — el *punto
@@ -65,11 +66,18 @@ antes de escribirla: dado un `check` candidato y sus `paths`, corre el check con
 el repo e informa cuántos archivos seleccionan los globs, si la regla pasaría y qué
 marca — detectando una regla que no matchea nada o que nombra un check inexistente.
 
+**`add_rule`** persiste una regla validada. **Nunca escribe a ciegas**: con
+`confirm=false` (el default) devuelve un preview de lo que escribiría; solo
+`confirm=true` la escribe. Por seguridad acepta **solo checks built-in**
+(`becwright run <name>`) — una regla con un comando shell arbitrario corre en cada
+commit, así que esas van por el `becwright import` del CLI, que le muestra el
+código a un humano.
+
 Juntas definen el reparto: becwright garantiza la *ejecución*; el agente hace la
 *traducción*, arrancando de `propose_rules_from_claude_md`, usando `list_checks`
-como vocabulario, extendiendo con reglas para lo que el extractor no captó, y
-usando `preview_rule` para chequear cada una. Lo de criterio se queda en
-`CLAUDE.md`.
+como vocabulario, extendiendo con reglas para lo que el extractor no captó, usando
+`preview_rule` para chequear cada una, y `add_rule` (confirmado) para persistir.
+Lo de criterio se queda en `CLAUDE.md`.
 
 ### Configuración del cliente
 

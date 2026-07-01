@@ -55,6 +55,7 @@ pipx install "becwright[mcp]"     # or: pip install "becwright[mcp]"
 | `list_checks` | — | the built-in checks as `{name, description}` |
 | `preview_rule` | `check`, `paths`, `exclude` (optional), `all_files`, `path` | `{matched_files, passed, output, note}` — a dry-run without writing the rule |
 | `propose_rules_from_claude_md` | `path` (optional repo dir) | `{rules, unmapped_hint}` — the rules becwright can derive from the repo's CLAUDE.md |
+| `add_rule` | `id`, `check`, `paths`, `intent`, `why_it_matters`, `severity`, `exclude`, `confirm`, `path` | writes a rule to `.bec/rules.yaml` — preview unless `confirm=true` |
 
 **`propose_rules_from_claude_md`** returns the rules becwright can derive
 deterministically from the prose (each with the phrase that triggered it) — the
@@ -64,11 +65,18 @@ against the repo and reports how many files the globs select, whether the rule
 would pass, and what it flags — catching a rule that matches nothing or names an
 unknown check.
 
+**`add_rule`** persists a validated rule. It **never writes blindly**: with
+`confirm=false` (the default) it returns a preview of exactly what would be
+written; only `confirm=true` commits it. For safety it accepts **built-in checks
+only** (`becwright run <name>`) — a rule with an arbitrary shell command runs on
+every commit, so route those through the CLI `becwright import`, which shows the
+code to a human first.
+
 Together they define the division of labor: becwright guarantees the *execution*;
 the agent does the *translation*, starting from `propose_rules_from_claude_md`,
 using `list_checks` as its vocabulary, extending with rules for prohibitions the
-extractor missed, and using `preview_rule` to check each one. Judgment-based
-guidance stays in `CLAUDE.md`.
+extractor missed, using `preview_rule` to check each one, and `add_rule`
+(confirmed) to persist. Judgment-based guidance stays in `CLAUDE.md`.
 
 ### Client configuration
 

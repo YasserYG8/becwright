@@ -132,5 +132,76 @@ def propose_rules_from_claude_md(path: str | None = None) -> dict:
     return {"rules": rules, "unmapped_hint": _UNMAPPED_HINT}
 
 
+@mcp.tool()
+def add_rule(id: str, check: str, paths: list[str], intent: str = "",
+             why_it_matters: str = "", severity: str = "blocking",
+             exclude: list[str] | None = None, confirm: bool = False,
+             path: str | None = None) -> dict:
+    """Add a rule to `.bec/rules.yaml`. Never writes blindly: with `confirm=false`
+    (the default) it returns a preview of exactly what would be written; only
+    `confirm=true` persists it. For safety, `check` must be a built-in check
+    (`becwright run <name>`) — a rule with an arbitrary shell command runs on every
+    commit, so route those through the CLI `becwright import`, which shows the code
+    to a human first.
+
+    Args:
+        id: unique rule id.
+        check: a built-in check command, e.g. "becwright run max_lines --max 800".
+        paths: glob patterns the rule applies to (must be non-empty).
+        intent / why_it_matters: the "bound" context, carried from the CLAUDE.md line.
+        severity: "blocking" (default) or "warning".
+        exclude: globs carved out of `paths` (optional).
+        confirm: write the rule (true) or just preview it (false).
+        path: a directory inside the target git repo (defaults to the cwd).
+
+    Returns {ok, rule_id} on write, or {ok: false, ...} with a preview or an error.
+    """
+    from . import bundle
+    from .rules import RulesError, load_rules
+
+    if severity not in ("blocking", "warning"):
+        return {"ok": False, "error": "severity must be 'blocking' or 'warning'."}
+    if not paths:
+        return {"ok": False, "error": "paths must be a non-empty list of globs."}
+
+    root = git.repo_root(Path(path) if path else None)
+    info = bundle.classify_check(check, root)
+    if info.get("kind") != "builtin":
+        return {"ok": False, "error": "add_rule only accepts built-in checks "
+                "(becwright run <name>). For a custom script or command, use the CLI "
+                "`becwright import`, which shows the code before installing it."}
+    if info["module"] not in set(_builtin_check_names()):
+        return {"ok": False, "error": f"'{info['module']}' is not a built-in check — "
+                "call list_checks."}
+
+    rules_path = root / ".bec" / "rules.yaml"
+    try:
+        existing = {r.id for r in load_rules(rules_path)}
+    except RulesError as e:
+        return {"ok": False, "error": f".bec/rules.yaml is invalid: {e}"}
+    if id in existing:
+        return {"ok": False, "error": f"a rule with id '{id}' already exists."}
+
+    rule: dict = {"id": id}
+    if intent:
+        rule["intent"] = intent
+    if why_it_matters:
+        rule["why_it_matters"] = why_it_matters
+    rule["paths"] = paths
+    if exclude:
+        rule["exclude"] = exclude
+    rule["check"] = check
+    rule["severity"] = severity
+
+    if not confirm:
+        return {"ok": False, "pending_confirmation": True, "rule": rule,
+                "note": "Preview only — call add_rule again with confirm=true to "
+                "write this rule to .bec/rules.yaml."}
+
+    bundle.append_rule(rules_path, rule)
+    return {"ok": True, "rule_id": id,
+            "note": f"Added rule '{id}' to .bec/rules.yaml."}
+
+
 def serve() -> None:
     mcp.run()

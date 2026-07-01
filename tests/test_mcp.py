@@ -38,6 +38,7 @@ def test_tools_registered():
     tools = asyncio.run(mcp_server.mcp.list_tools())
     assert {t.name for t in tools} == {
         "check", "list_checks", "preview_rule", "propose_rules_from_claude_md",
+        "add_rule",
     }
 
 
@@ -120,3 +121,56 @@ def test_propose_rules_without_claude_md(tmp_path):
     (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
     out = mcp_server.propose_rules_from_claude_md(path=str(tmp_path))
     assert out["rules"] == [] and "No CLAUDE.md" in out["note"]
+
+
+def test_add_rule_preview_does_not_write(tmp_path):
+    _repo(tmp_path)
+    out = mcp_server.add_rule(id="no-dbg", check="becwright run debug_remnants",
+                              paths=["**/*.py"], path=str(tmp_path))
+    assert out["ok"] is False and out["pending_confirmation"] is True
+    assert out["rule"]["id"] == "no-dbg"
+    assert not (tmp_path / ".bec" / "rules.yaml").exists()
+
+
+def test_add_rule_confirm_writes(tmp_path):
+    from becwright.rules import load_rules
+    _repo(tmp_path)
+    out = mcp_server.add_rule(id="no-dbg", check="becwright run debug_remnants",
+                              paths=["**/*.py"], intent="No breakpoints",
+                              confirm=True, path=str(tmp_path))
+    assert out["ok"] is True and out["rule_id"] == "no-dbg"
+    rules = load_rules(tmp_path / ".bec" / "rules.yaml")
+    assert [r.id for r in rules] == ["no-dbg"] and rules[0].intent == "No breakpoints"
+
+
+def test_add_rule_rejects_duplicate_id(tmp_path):
+    _repo(tmp_path)
+    mcp_server.add_rule(id="no-dbg", check="becwright run debug_remnants",
+                        paths=["**/*.py"], confirm=True, path=str(tmp_path))
+    out = mcp_server.add_rule(id="no-dbg", check="becwright run dangerous_eval",
+                              paths=["**/*.py"], confirm=True, path=str(tmp_path))
+    assert out["ok"] is False and "already exists" in out["error"]
+
+
+def test_add_rule_rejects_non_builtin_check(tmp_path):
+    _repo(tmp_path)
+    out = mcp_server.add_rule(id="grep-todo", check="grep -r TODO .",
+                              paths=["**/*.py"], confirm=True, path=str(tmp_path))
+    assert out["ok"] is False and "built-in" in out["error"]
+    assert not (tmp_path / ".bec" / "rules.yaml").exists()
+
+
+def test_add_rule_rejects_unknown_builtin(tmp_path):
+    _repo(tmp_path)
+    out = mcp_server.add_rule(id="ghost", check="becwright run ghost_check",
+                              paths=["**/*.py"], confirm=True, path=str(tmp_path))
+    assert out["ok"] is False and "not a built-in check" in out["error"]
+
+
+def test_add_rule_rejects_empty_paths_and_bad_severity(tmp_path):
+    _repo(tmp_path)
+    assert mcp_server.add_rule(id="r", check="becwright run debug_remnants",
+                               paths=[], path=str(tmp_path))["ok"] is False
+    assert mcp_server.add_rule(id="r", check="becwright run debug_remnants",
+                               paths=["**/*.py"], severity="bloqueante",
+                               path=str(tmp_path))["ok"] is False

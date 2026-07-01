@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MCP tool `propose_rules_from_claude_md`: returns the rules becwright can derive
   deterministically from the repo's `CLAUDE.md` (each with the phrase that
   triggered it) plus a hint to extend them — the agent's starting point.
+- MCP tool `add_rule`: persists a rule to `.bec/rules.yaml`, but never blindly —
+  it previews unless `confirm=true`, and accepts built-in checks only (arbitrary
+  shell commands must go through the CLI `import`, which shows the code first).
 
 ### Changed
 - The pre-commit path now checks the **staged content** of files, not the
