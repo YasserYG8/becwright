@@ -43,10 +43,14 @@ generic check:
 | Check | Detects | Language |
 |---|---|---|
 | `forbid` | any regex you pass (`--pattern`) | any |
-| `no_token_in_logs` | tokens/credentials in log calls | Python |
+| `require` | a regex (`--pattern`) that *must* be present (inverse of `forbid`) | any |
+| `max_lines` | files longer than `--max` lines | any |
+| `filename` | file names matching `--forbid` or not matching `--require` | any |
 | `hardcoded_secrets` | AWS keys, private keys, `password = "..."` | any |
-| `debug_remnants` | `breakpoint()`, `pdb.set_trace()`, `import pdb` | Python |
 | `dangerous_eval` | `eval()` / `exec()` | any |
+| `conflict_markers` | leftover git merge conflict markers (`<<<<<<<`) | any |
+| `no_token_in_logs` | tokens/credentials in log calls | Python |
+| `debug_remnants` | `breakpoint()`, `pdb.set_trace()`, `import pdb` | Python |
 | `wildcard_imports` | `from x import *` | Python |
 | `redundant_comments` | comments that restate the obvious code (heuristic) | Python |
 

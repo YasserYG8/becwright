@@ -17,10 +17,10 @@ propios checks.
 
 | Módulo | Responsabilidad |
 |---|---|
-| `cli.py` | CLI con argparse: `init / list / check / install / uninstall / export / import` |
-| `rules.py` | El modelo `Rule` y la carga de `.bec/rules.yaml` |
-| `engine.py` | Matching de rutas por glob, corre los checks, decide pasa/no-pasa |
-| `git.py` | Raíz del repo, archivos en staging, el hook pre-commit nativo |
+| `cli.py` | CLI con argparse: `init / list / check / check-msg / install / uninstall / export / import / add / search` |
+| `rules.py` | El modelo `Rule` (incl. `severity`, `target`) y la carga de `.bec/rules.yaml` |
+| `engine.py` | Matching de rutas por glob, corre los checks (archivos o mensaje del commit), decide pasa/no-pasa |
+| `git.py` | Raíz del repo, archivos en staging, los hooks `pre-commit` y `commit-msg` nativos |
 | `checks/` | Checks incluidos (un módulo cada uno) |
 | `bundle.py` | Export/import de BECs (el `.bec.yaml` portable) |
 
@@ -43,16 +43,23 @@ flowchart TD
     H -->|no-cero| J{severidad}
     J -->|blocking| K[BLOCK: commit rechazado, exit 1]
     J -->|warning| L[WARN: commit permitido]
+    J -->|advisory| M[ADVISORY: best-effort, commit permitido]
 ```
 
-1. Un commit dispara el hook pre-commit, que corre `becwright check`.
+1. Un commit dispara el hook `pre-commit`, que corre `becwright check`.
 2. becwright carga las reglas de `.bec/rules.yaml`.
 3. Le pide a git los archivos en staging.
-4. Por cada regla, filtra los archivos por los globs de `paths` y corre el
-   comando `check` de la regla, pasándole los archivos que matchean por stdin.
+4. Por cada regla con `target: files`, filtra los archivos por los globs de
+   `paths` y corre el comando `check` de la regla, pasándole los archivos que
+   matchean por stdin.
 5. El código de salida del check decide el resultado: `0` pasa; no-cero falla.
-6. Si alguna regla **blocking** falló, el commit se rechaza (exit 1). Los avisos
-   se imprimen pero nunca frenan.
+6. Si alguna regla **blocking** falló, el commit se rechaza (exit 1). Los hallazgos
+   `warning` y `advisory` se imprimen pero nunca frenan (`advisory` va etiquetado
+   como best-effort, para checks no-deterministas como un revisor LLM).
+
+Un hook `commit-msg` aparte corre `becwright check-msg`, que aplica las reglas con
+`target: commit-msg` al mensaje del commit del mismo modo (el mensaje se le pasa al
+check por stdin en vez de las rutas de archivos).
 
 ## El contrato del check
 

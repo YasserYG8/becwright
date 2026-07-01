@@ -16,10 +16,10 @@ The rest of this page is for the curious and for people writing their own checks
 
 | Module | Responsibility |
 |---|---|
-| `cli.py` | Argparse CLI: `init / list / check / install / uninstall / export / import` |
-| `rules.py` | The `Rule` model and loading of `.bec/rules.yaml` |
-| `engine.py` | Glob path matching, running checks, deciding pass/fail |
-| `git.py` | Repo root, staged files, the native pre-commit hook |
+| `cli.py` | Argparse CLI: `init / list / check / check-msg / install / uninstall / export / import / add / search` |
+| `rules.py` | The `Rule` model (incl. `severity`, `target`) and loading of `.bec/rules.yaml` |
+| `engine.py` | Glob path matching, running checks (files or commit message), deciding pass/fail |
+| `git.py` | Repo root, staged files, the native `pre-commit` and `commit-msg` hooks |
 | `checks/` | Built-in checks (one module each) |
 | `bundle.py` | Export/import of BECs (the portable `.bec.yaml`) |
 
@@ -42,16 +42,22 @@ flowchart TD
     H -->|non-zero| J{severity}
     J -->|blocking| K[BLOCK: commit rejected, exit 1]
     J -->|warning| L[WARN: commit allowed]
+    J -->|advisory| M[ADVISORY: best-effort, commit allowed]
 ```
 
-1. A commit triggers the pre-commit hook, which runs `becwright check`.
+1. A commit triggers the `pre-commit` hook, which runs `becwright check`.
 2. becwright loads the rules from `.bec/rules.yaml`.
 3. It asks git for the staged files.
-4. For each rule, it filters the files by the rule's `paths` globs and runs the
-   rule's `check` command, passing the matching files on stdin.
+4. For each rule with `target: files`, it filters the files by the rule's `paths`
+   globs and runs the rule's `check` command, passing the matching files on stdin.
 5. The check's exit code decides the result: `0` passes; non-zero fails.
-6. If any **blocking** rule failed, the commit is rejected (exit 1). Warnings are
-   printed but never block.
+6. If any **blocking** rule failed, the commit is rejected (exit 1). `warning` and
+   `advisory` findings are printed but never block (`advisory` is labelled
+   best-effort, for non-deterministic checks like an LLM reviewer).
+
+A separate `commit-msg` hook runs `becwright check-msg`, which applies the
+`target: commit-msg` rules to the commit message the same way (the message is fed
+to the check on stdin instead of file paths).
 
 ## The check contract
 
