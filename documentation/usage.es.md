@@ -105,8 +105,18 @@ rules:
 | `intent` | no | Qué hace cumplir la regla |
 | `why_it_matters` | no | Por qué importa; se imprime cuando la regla falla |
 | `rejected_alternatives` | no | Contexto: enfoques descartados |
-| `severity` | no | `blocking` (por defecto) o `warning` |
+| `severity` | no | `blocking` (por defecto), `warning` o `advisory` (ver abajo) |
 | `target` | no | `files` (por defecto) o `commit-msg` (ver abajo) |
+
+**Severidad — garantizado vs asistido.** `blocking` y `warning` son para checks
+*deterministas*: el mismo código siempre da el mismo veredicto, así que una regla
+`blocking` es una **garantía al 100%**. `advisory` es el hogar honesto de las
+reglas de *criterio* cuyo check no es determinista — p. ej. una que llama a un LLM
+para revisar legibilidad o diseño. Una regla `advisory` **informa pero nunca
+bloquea**, y aparece etiquetada `ADVISORY (best-effort, not a guarantee)`, así
+siempre sabés qué hallazgos están garantizados y cuáles son asistidos. becwright
+aporta el tier; el revisor es un check tuyo (apuntalo a la herramienta que quieras),
+así que no hay dependencia de LLM dentro de becwright.
 
 ### Globs
 

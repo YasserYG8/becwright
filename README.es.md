@@ -100,6 +100,10 @@ tiene juntas:
 - **Se adopta en cualquier código** — `--baseline` arranca en `warning` las reglas
   que *ya* tienen violaciones, así un repo legacy no se frena el día uno; graduás
   cada una a blocking a medida que la limpiás.
+- **Reglas garantizadas *y* asistidas** — las deterministas `block` con garantía
+  al 100%; las de criterio (legibilidad, diseño) viven como `advisory` — informan
+  con un revisor tuyo (p. ej. un LLM) pero nunca bloquean, y quedan etiquetadas
+  para que siempre sepas qué está garantizado y qué es best-effort.
 - **Atada al _por qué_** — cada regla lleva su intención y su razón, que se
   muestran cuando se dispara.
 - **Checks incluidos** — `forbid` / `require` (un patrón que *debe* estar) /

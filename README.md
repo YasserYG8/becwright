@@ -98,6 +98,10 @@ together:
 - **Adopt on any codebase** — `--baseline` starts rules that *already* have
   violations as warnings, so a legacy repo isn't blocked on day one; graduate each
   to blocking as you clean it.
+- **Guaranteed *and* assisted rules** — deterministic rules `block` with a 100%
+  guarantee; judgment rules (readability, design) live as `advisory` — they report
+  via your own reviewer check (e.g. an LLM) but never block, and are labelled so
+  you always know which findings are guaranteed vs best-effort.
 - **Bound to the _why_** — every rule carries its intent and reason, shown when
   it fires.
 - **Batteries-included checks** — `forbid` / `require` (a pattern that must be

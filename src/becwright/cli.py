@@ -13,7 +13,7 @@ from . import __version__, bundle, catalog, git, report
 from .engine import Result
 from .rules import RulesError, load_rules
 
-RED = "\033[91m"; GREEN = "\033[92m"; YELLOW = "\033[93m"
+RED = "\033[91m"; GREEN = "\033[92m"; YELLOW = "\033[93m"; CYAN = "\033[96m"
 BOLD = "\033[1m"; DIM = "\033[2m"; RESET = "\033[0m"
 
 
@@ -34,6 +34,9 @@ def _print_result(result: Result) -> None:
             continue
         if r.rule.is_blocking:
             print(f"  {_style('BLOCK', RED, BOLD)}  {r.rule.id}  {_style('(blocking)', RED)}")
+        elif r.rule.is_advisory:
+            print(f"  {_style('ADVISORY', CYAN)}  {r.rule.id}  "
+                  f"{_style('(best-effort, not a guarantee)', CYAN)}")
         else:
             print(f"  {_style('WARN', YELLOW)}  {r.rule.id}  {_style('(warning only)', YELLOW)}")
         if r.rule.intent:

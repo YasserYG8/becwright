@@ -71,3 +71,9 @@ def test_invalid_target_raises(tmp_path):
     path = _write(tmp_path, 'rules:\n  - id: r1\n    check: "true"\n    target: mensaje\n')
     with pytest.raises(RulesError, match="invalid target"):
         load_rules(path)
+
+
+def test_loads_advisory_severity(tmp_path):
+    path = _write(tmp_path, 'rules:\n  - id: r1\n    check: "true"\n    severity: advisory\n')
+    rule = load_rules(path)[0]
+    assert rule.is_advisory is True and rule.is_blocking is False

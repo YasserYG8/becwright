@@ -157,6 +157,30 @@ def test_check_blocks_on_violation(tmp_path, monkeypatch, capsys):
     assert "Commit BLOCKED" in capsys.readouterr().out
 
 
+def test_print_result_advisory_label(capsys):
+    adv = Rule(id="design", paths=("*.py",), check="x", severity="advisory",
+               intent="Readable code")
+    res = Result(per_rule=[RuleResult(rule=adv, passed=False, output="  looks off")])
+    cli._print_result(res)
+    out = capsys.readouterr().out
+    assert "ADVISORY" in out and "BLOCK" not in out and "looks off" in out
+
+
+def test_check_advisory_never_blocks(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir()
+    # `false` always "fails"; an advisory rule must report but not block the commit.
+    (tmp_path / ".bec" / "rules.yaml").write_text(
+        "rules:\n  - id: adv\n    paths: ['**/*.py']\n    check: 'false'\n    severity: advisory\n",
+        encoding="utf-8")
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "a.py")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check"]) == 0
+    out = capsys.readouterr().out
+    assert "ADVISORY" in out and "All good" in out
+
+
 def test_check_passes_clean(tmp_path, monkeypatch, capsys):
     _init_repo(tmp_path)
     (tmp_path / ".bec").mkdir()

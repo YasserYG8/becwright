@@ -5,7 +5,9 @@ from pathlib import Path
 
 import yaml
 
-_VALID_SEVERITIES = ("blocking", "warning")
+# blocking = stops the commit | warning = deterministic finding, does not block |
+# advisory = best-effort / non-deterministic (e.g. an LLM reviewer); reports, never blocks
+_VALID_SEVERITIES = ("blocking", "warning", "advisory")
 _VALID_TARGETS = ("files", "commit-msg")
 
 
@@ -29,6 +31,10 @@ class Rule:
     @property
     def is_blocking(self) -> bool:
         return self.severity == "blocking"
+
+    @property
+    def is_advisory(self) -> bool:
+        return self.severity == "advisory"
 
 
 def _to_rule(raw: dict) -> Rule:

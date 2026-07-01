@@ -152,6 +152,16 @@ def test_add_rule_rejects_duplicate_id(tmp_path):
     assert out["ok"] is False and "already exists" in out["error"]
 
 
+def test_add_rule_accepts_advisory_severity(tmp_path):
+    from becwright.rules import load_rules
+    _repo(tmp_path)
+    out = mcp_server.add_rule(id="adv", check="becwright run debug_remnants",
+                              paths=["**/*.py"], severity="advisory",
+                              confirm=True, path=str(tmp_path))
+    assert out["ok"] is True
+    assert load_rules(tmp_path / ".bec" / "rules.yaml")[0].is_advisory is True
+
+
 def test_add_rule_rejects_non_builtin_check(tmp_path):
     _repo(tmp_path)
     out = mcp_server.add_rule(id="grep-todo", check="grep -r TODO .",

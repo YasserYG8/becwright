@@ -159,8 +159,8 @@ def add_rule(id: str, check: str, paths: list[str], intent: str = "",
     from . import bundle
     from .rules import RulesError, load_rules
 
-    if severity not in ("blocking", "warning"):
-        return {"ok": False, "error": "severity must be 'blocking' or 'warning'."}
+    if severity not in ("blocking", "warning", "advisory"):
+        return {"ok": False, "error": "severity must be 'blocking', 'warning' or 'advisory'."}
     if not paths:
         return {"ok": False, "error": "paths must be a non-empty list of globs."}
 

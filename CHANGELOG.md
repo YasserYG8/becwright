@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`advisory` severity.** The honest home for judgment rules whose check isn't
+  deterministic (e.g. an LLM reviewer): it reports, labelled `ADVISORY (best-effort,
+  not a guarantee)`, but never blocks — so `blocking`/`warning` stay 100% guarantees
+  and you always know which findings are guaranteed vs assisted. becwright supplies
+  the tier; the reviewer is your own check command (no LLM dependency in becwright).
 - **Commit-message rules.** A rule with `target: commit-msg` checks the commit
   message instead of the files; `becwright init` now installs a `commit-msg` hook
   alongside `pre-commit`, and `becwright check-msg <file>` runs those rules.

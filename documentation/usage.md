@@ -102,8 +102,18 @@ rules:
 | `intent` | no | What the rule enforces |
 | `why_it_matters` | no | Why it matters; printed when the rule fails |
 | `rejected_alternatives` | no | Context: approaches that were dismissed |
-| `severity` | no | `blocking` (default) or `warning` |
+| `severity` | no | `blocking` (default), `warning`, or `advisory` (see below) |
 | `target` | no | `files` (default) or `commit-msg` (see below) |
+
+**Severity — guaranteed vs assisted.** `blocking` and `warning` are for
+*deterministic* checks: the same code always gives the same verdict, so a
+`blocking` rule is a **100% guarantee**. `advisory` is the honest home for
+*judgment* rules whose check isn't deterministic — e.g. one that calls an LLM to
+review readability or design. An `advisory` rule **reports but never blocks**, and
+shows up labelled `ADVISORY (best-effort, not a guarantee)`, so you always know
+which findings are guaranteed and which are assisted. becwright supplies the tier;
+the reviewer is your own check command (point it at whatever tool you like), so
+there is no LLM dependency in becwright itself.
 
 ### Globs
 

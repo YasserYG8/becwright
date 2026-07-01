@@ -90,7 +90,9 @@ rules:
 - `check`: `becwright run <built-in> [args]` (see `becwright list`), a custom
   `.bec/checks/<name>.py` script, or any shell command that exits non-zero on
   failure.
-- `severity`: `blocking` stops the commit; `warning` only reports.
+- `severity`: `blocking` stops the commit; `warning` reports (deterministic, no
+  block); `advisory` reports a best-effort/non-deterministic finding (e.g. an LLM
+  reviewer) and never blocks.
 
 Built-in checks (run `becwright list` for the current set):
 
@@ -115,9 +117,12 @@ into BECs — but only the parts a check can actually verify. Split the file:
   contents without understanding meaning: banned patterns (`console.log`, `eval`,
   `debugger`, a secret, a forbidden API), a file-length cap, a required snippet
   (license header), file-name conventions.
-- **Judgment-based → leave in CLAUDE.md.** Anything needing meaning: architecture,
-  "readable names", KISS/YAGNI, immutability, "functions should be small". These
-  have no deterministic check — do **not** invent a weak BEC for them.
+- **Judgment-based → leave in CLAUDE.md, or make it an `advisory` rule.** Anything
+  needing meaning (architecture, "readable names", KISS/YAGNI, immutability) has no
+  deterministic check — never fake it as a `blocking`/`warning` guarantee. If the
+  user wants it enforced, add it with `severity: advisory` pointing at *their* own
+  reviewer check (e.g. an LLM script): it reports, labelled best-effort, and never
+  blocks. Otherwise leave it as prose in CLAUDE.md.
 
 **Fast path (CLI):** `becwright init --from-claude-md` maps the prohibitions it
 recognizes automatically and reports which phrase matched each. Start here.
