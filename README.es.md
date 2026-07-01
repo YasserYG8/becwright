@@ -85,6 +85,41 @@ tiene juntas:
 - **Portable** — puede exportarse de un repo e importarse en otro, como un
   paquete (esto es lo que genera el efecto de red a futuro).
 
+## Características
+
+- **Cumplimiento determinista** — una regla es un chequeo real que corre sobre tu
+  código y da pasa/no-pasa, no una nota que un agente puede ignorar.
+- **Frena el commit, no solo avisa** — las reglas blocking detienen
+  `git commit`; las warning informan sin frenar.
+- **Cualquier lenguaje** — el motor matchea globs y corre un comando; usá el
+  `forbid` sin código (regex) para Python, JS/TS, Go, Rust o lo que sea.
+- **Atada al _por qué_** — cada regla lleva su intención y su razón, que se
+  muestran cuando se dispara.
+- **BECs portables** — `export` de una regla a un `.bec.yaml` e `import` en otro
+  repo; los checks custom viajan con su código.
+- **Catálogo offline** — `becwright search` / `add` instalan reglas listas sin
+  URL, empaquetadas dentro del paquete.
+- **Sin Python** — instalá por npm/pnpm como binario autónomo, o por pip/pipx.
+- **Se adapta a tu setup** — hook de git nativo, o enchufado al framework
+  pre-commit o a Husky.
+- **Listo para agentes de IA** — plugin de Claude Code, servidor MCP y
+  `check --json`.
+- **Chico y confiable** — ~750 LOC, una dependencia (`pyyaml`), sin
+  `eval`/`exec`, con dogfooding en CI.
+
+## Casos de uso
+
+- **Frenar secretos antes de que entren** — API keys, tokens, claves privadas,
+  contraseñas hardcodeadas.
+- **Que no queden restos de debug** — `breakpoint()`, `pdb`, `debugger;`,
+  `console.log`, `dbg!`, `panic()` olvidados.
+- **Prohibir APIs riesgosas** — `eval` / `exec`, o cualquier patrón que vetes con
+  una regla regex de una línea.
+- **Proteger código escrito por IA** — la red determinista para lo que un agente
+  regenera y olvida.
+- **Hacer cumplir convenciones del equipo** — codificá una decisión una vez como
+  BEC y compartila entre todos los repos.
+
 ## Cómo se usa
 
 becwright se instala una vez; cada proyecto solo agrega un `.bec/rules.yaml`
@@ -197,6 +232,24 @@ rules:
     check: "becwright run no_token_in_logs"
     severity: blocking   # blocking = frena el commit | warning = solo avisa
 ```
+
+## Cómo se compara becwright
+
+becwright no es un linter ni solo un lanzador de hooks — es la capa que hace que
+una *regla* sea portable y esté atada a su razón, y que frena el commit por ella.
+
+| | becwright | pre-commit / Husky | gitleaks / linters | CLAUDE.md / .cursorrules |
+|---|:---:|:---:|:---:|:---:|
+| Corre un chequeo real | ✅ | ✅ (corre otras herramientas) | ✅ | ❌ prosa |
+| Frena el commit | ✅ | ✅ | ✅ | ❌ |
+| Lleva el *por qué* (intención) | ✅ | ❌ | ❌ | ⚠️ no se exige |
+| Regla portable entre repos | ✅ `export`/`import` | ⚠️ copiar config | ⚠️ | ⚠️ |
+| Cualquier lenguaje, sin plugin por herramienta | ✅ `forbid` regex | ⚠️ | ❌ atado a la herramienta | n/a |
+
+becwright los **complementa** en lugar de reemplazarlos: corré gitleaks o un
+linter *como* un check de becwright, o agregá becwright *dentro* de pre-commit /
+Husky. La diferencia es que una BEC ata la regla a su intención y viaja entre
+repos.
 
 ## Checks incluidos
 
@@ -321,3 +374,48 @@ en verde.
 
 El trabajo futuro (análisis AST, tooling profundo por lenguaje, firma de
 verificaciones) está documentado en el plan del proyecto.
+
+## Roadmap
+
+becwright es chico a propósito. En el horizonte:
+
+- Ampliar el catálogo de `becwright add` con más lenguajes y reglas comunes.
+- Una landing page y un set `examples/` más rico.
+- Más checks incluidos, guiados por el uso real.
+
+Deliberadamente **fuera de alcance** para mantenerlo simple y determinista:
+análisis basado en AST, suites profundas por lenguaje, y firma criptográfica de
+BECs.
+
+## FAQ
+
+**¿No hace esto ya `pre-commit`?** `pre-commit` corre herramientas; no te da una
+regla que lleve su *por qué* y viaje entre repos. Incluso podés correr becwright
+*dentro* de pre-commit — ver más arriba.
+
+**¿Necesito Python?** No. `npm i -g becwright` instala un binario autónomo;
+`pipx install becwright` también funciona.
+
+**¿Funciona en Windows?** Sí, vía Git Bash (el hook es un script `sh`, que Git
+para Windows provee). La CLI `becwright` en sí es multiplataforma.
+
+**¿Cómo ignoro una línea?** Poné un comentario `becwright: ignore` en ella.
+
+**¿Cómo se pronuncia "becwright" / qué significa?** *bec-wright* — un "wright" es
+un artesano/hacedor (como en *playwright*), así que becwright es "el que hace
+BECs".
+
+**¿Es seguro importar una BEC?** becwright muestra el código del check y pide
+confirmación antes de instalar. Tratá un bundle no confiable como cualquier
+script no confiable.
+
+## Contribuir
+
+Las contribuciones son bienvenidas — mirá [CONTRIBUTING.md](CONTRIBUTING.md) y el
+[Código de Conducta](CODE_OF_CONDUCT.md). ¿Encontraste un problema de seguridad?
+Seguí la [política de seguridad](SECURITY.md). El [changelog](CHANGELOG.md)
+registra cada release.
+
+## Licencia
+
+[MIT](LICENSE) © Alonso David De Leon Rodarte
