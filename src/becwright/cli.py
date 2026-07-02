@@ -417,10 +417,13 @@ def _read_claude_md(root: Path) -> str | None:
 
 # A line cap tied to *files* (not functions — that needs an AST): "files < 800
 # lines" or "800 lines per file", EN/ES. The file/module anchor avoids mapping a
-# "functions < 50 lines" rule, which becwright cannot enforce.
+# "functions < 50 lines" rule, which becwright cannot enforce. The gap between the
+# number and the file word excludes commas and digits so a match cannot bridge
+# across a clause boundary — e.g. "~50 lines per function, ~800 per file" must not
+# read the function's 50 as the file cap just because "file" appears later.
 _FILE_LINE_CAP = re.compile(
-    r"(?:files?|archivos?|modules?|m[óo]dulos?)\b[^.\n]{0,40}?(\d{2,4})\s*(?:lines?|l[ií]neas?)"
-    r"|(\d{2,4})\s*(?:lines?|l[ií]neas?)\b[^.\n]{0,25}?(?:per\s+|por\s+)?(?:files?|archivos?|modules?|m[óo]dulos?)",
+    r"(?:files?|archivos?|modules?|m[óo]dulos?)\b[^.,\n\d]{0,40}?(\d{2,4})\s*(?:lines?|l[ií]neas?)"
+    r"|(\d{2,4})\s*(?:lines?|l[ií]neas?)\b[^.,\n\d]{0,25}?(?:per\s+|por\s+)?(?:files?|archivos?|modules?|m[óo]dulos?)",
     re.IGNORECASE,
 )
 

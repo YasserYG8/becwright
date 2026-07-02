@@ -320,6 +320,16 @@ def test_max_lines_cap_ignores_function_length():
     assert cli._max_lines_cap("Functions must be under 50 lines.") is None
 
 
+def test_max_lines_cap_does_not_bridge_function_cap_to_file_word():
+    # Real CLAUDE.md phrasing (bot-telegram field test): a per-function number and a
+    # per-file number in one clause, comma-joined. The function number (50) must NOT
+    # be captured just because "archivo"/"file" appears later past the comma. The file
+    # number (800) is elliptical (no "líneas" word of its own), so becwright declines
+    # rather than guessing wrong — an ambiguous soft guideline derives no cap.
+    assert cli._max_lines_cap("~50 líneas por función, ~800 por archivo") is None
+    assert cli._max_lines_cap("~50 lines per function, ~800 per file") is None
+
+
 def test_max_lines_cap_out_of_range():
     assert cli._max_lines_cap("keep files under 40 lines") is None      # below 50
     assert cli._max_lines_cap("files must not exceed 9000 lines") is None  # above 5000

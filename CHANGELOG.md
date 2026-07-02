@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   becwright" error — instead of risking a silent misparse. (The `.bec.yaml`
   export bundle was already versioned via `becwright_bec`.)
 
+### Fixed
+- `becwright init --from-claude-md` no longer misreads a per-*function* line count
+  as a per-*file* cap. A phrase like "~50 lines per function, ~800 per file" used
+  to derive `max_lines --max 50` (flagging nearly every file); the file-cap
+  matcher now refuses to bridge across a comma or another number, so an ambiguous
+  soft guideline derives no cap instead of a wrong one. (Surfaced field-testing a
+  real Python repo.)
+
 ### Documentation
 - Documented becwright's **stable contract** in `documentation/usage.md`: the CLI
   exit codes (`0` pass · `1` a blocking rule failed · `2` config/usage problem)
