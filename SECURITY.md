@@ -2,13 +2,13 @@
 
 ## Supported versions
 
-becwright is pre-1.0 and ships fixes on the latest release only. Please make
-sure you are on the most recent version before reporting.
+becwright ships fixes on the latest release only. Please make sure you are on
+the most recent version before reporting.
 
 | Version | Supported |
 | ------- | --------- |
-| latest `0.x` | ✅ |
-| older `0.x` | ❌ |
+| latest `1.x` | ✅ |
+| older releases | ❌ |
 
 ## Reporting a vulnerability
 

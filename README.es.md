@@ -8,9 +8,12 @@
 
 [![CI](https://github.com/DataDave-Dev/becwright/actions/workflows/ci.yml/badge.svg)](https://github.com/DataDave-Dev/becwright/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/becwright?logo=npm)](https://www.npmjs.com/package/becwright)
+[![npm downloads](https://img.shields.io/npm/dm/becwright?logo=npm&label=descargas)](https://www.npmjs.com/package/becwright)
 [![PyPI](https://img.shields.io/pypi/v/becwright?logo=pypi&logoColor=white)](https://pypi.org/project/becwright/)
+[![Versiones de Python](https://img.shields.io/pypi/pyversions/becwright?logo=python&logoColor=white)](https://pypi.org/project/becwright/)
+[![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-green)](LICENSE)
 
-**La capa de enforcement para agentes de IA.**
+**La capa de enforcement para agentes de IA.** <sub>(se pronuncia *bec-ráit* — un "wright" es un artesano, como en *playwright*)</sub>
 
 Reglas que se ejecutan, no notas que se ignoran. Tu `CLAUDE.md` es un *cartel*;
 becwright es el *guardia* — corre tus reglas sobre el código y frena el commit
@@ -29,7 +32,7 @@ Se publica.
 Con becwright, el commit no llega a existir:
 
 <p align="center">
-  <img src="assets/becwright-demo.svg" alt="becwright frenando un commit que hardcodea un secreto y usa eval" width="640">
+  <img src="assets/becwright-demo-animated.svg" alt="becwright frenando un commit en vivo: corre git commit, dos reglas blocking se disparan con su porqué, el commit se detiene" width="640">
 </p>
 
 > **Velo vos mismo en 5 segundos** — sin configurar nada, sin git, sin tocar tu
