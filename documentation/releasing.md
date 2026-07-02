@@ -47,7 +47,7 @@ deprecation policy**:
 - A change that would break a `1.x` rule file, bundle, or check script belongs in
   a major bump, not a minor.
 
-See the [README's Stability & versioning section](../README.md#stability--versioning)
+See the [stability & versioning doc](stability.md)
 for the user-facing statement.
 
 ## Notes

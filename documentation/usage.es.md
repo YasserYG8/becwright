@@ -151,7 +151,7 @@ a mano.
 
 > **Conjunto de campos estable.** Los nueve campos de arriba están congelados
 > desde `schema_version 1`. Desde `1.0.0`, un campo solo se añade o quita bajo la
-> [política de deprecación](../README.es.md#estabilidad-y-versionado) (deprecado
+> [política de deprecación](stability.es.md) (deprecado
 > con un warning durante al menos un minor, quitado solo en el siguiente major),
 > así que un archivo de reglas válido hoy sigue válido en toda la línea `1.x`.
 

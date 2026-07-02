@@ -48,7 +48,7 @@ aviso**:
 - Un cambio que rompería un archivo de reglas, bundle o script de check de `1.x`
   va en un bump mayor, no en un minor.
 
-Ver la [sección Estabilidad y versionado del README](../README.es.md#estabilidad-y-versionado)
+Ver la [doc de estabilidad y versionado](stability.es.md)
 para la declaración de cara al usuario.
 
 ## Notas
