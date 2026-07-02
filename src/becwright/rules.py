@@ -10,6 +10,11 @@ import yaml
 _VALID_SEVERITIES = ("blocking", "warning", "advisory")
 _VALID_TARGETS = ("files", "commit-msg")
 
+# The `.bec/rules.yaml` format version. Absent means 1 (files predating the
+# field). The engine refuses a file stamped newer than it understands instead of
+# risking a silent misparse; migration between versions is added when a v2 exists.
+RULES_SCHEMA_VERSION = 1
+
 
 class RulesError(RuntimeError):
     """A `.bec/rules.yaml` that cannot be trusted (bad YAML or an invalid rule).
@@ -77,4 +82,20 @@ def load_rules(rules_path: Path) -> list[Rule]:
         raise RulesError(f"{rules_path}: invalid YAML ({e}).")
     if not isinstance(data, dict) or not isinstance(data.get("rules", []), list):
         raise RulesError(f"{rules_path}: expected a top-level 'rules:' list.")
+    _check_schema_version(data.get("schema_version"), rules_path)
     return [_to_rule(r) for r in data["rules"]] if data.get("rules") else []
+
+
+def _check_schema_version(value, rules_path: Path) -> None:
+    if value is None:
+        return
+    # bool is an int subclass; a YAML `true` is not a valid version.
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise RulesError(
+            f"{rules_path}: schema_version must be a positive integer, got {value!r}."
+        )
+    if value > RULES_SCHEMA_VERSION:
+        raise RulesError(
+            f"{rules_path}: schema_version {value} is newer than this becwright "
+            f"understands (max {RULES_SCHEMA_VERSION}); upgrade becwright."
+        )

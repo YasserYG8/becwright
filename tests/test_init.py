@@ -129,6 +129,17 @@ def test_render_empty_is_valid(tmp_path):
     assert load_rules(p) == []
 
 
+def test_render_yaml_stamps_schema_version(tmp_path):
+    from becwright.rules import RULES_SCHEMA_VERSION
+
+    for rules in ([], cli._starter_rules(["python"])):
+        text = cli._render_rules_yaml(rules)
+        assert f"schema_version: {RULES_SCHEMA_VERSION}" in text
+        p = tmp_path / "rules.yaml"
+        p.write_text(text, encoding="utf-8")
+        load_rules(p)  # round-trips without raising
+
+
 def test_render_yaml_emits_exclude(tmp_path):
     rules = [{"id": "no-log", "intent": "x", "why": "y", "paths": ["**/*.ts"],
               "exclude": ["lib/logger.ts"], "check": "true", "severity": "warning"}]

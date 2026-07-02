@@ -84,3 +84,45 @@ def test_check_json_clean_repo(tmp_path, monkeypatch, capsys):
     rc = cli.main(["check", "--all", "--json"])
     data = json.loads(capsys.readouterr().out)
     assert rc == 0 and data["blocked"] is False and data["results"] == []
+
+
+# --- stable contract: exit codes and JSON key sets ---
+
+def test_exit_code_2_on_unknown_builtin_check(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir(parents=True, exist_ok=True)
+    (tmp_path / ".bec" / "rules.yaml").write_text(
+        "rules:\n  - id: r1\n    paths: ['**/*.py']\n"
+        "    check: 'becwright run does_not_exist'\n    severity: blocking\n",
+        encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check", "--all"]) == 2
+
+
+def test_exit_code_2_on_malformed_rules(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir(parents=True, exist_ok=True)
+    (tmp_path / ".bec" / "rules.yaml").write_text(
+        "rules:\n  - id: r1\n    severity: not-a-severity\n    check: 'true'\n",
+        encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check", "--all"]) == 2
+
+
+def test_payload_key_contract():
+    """The `check --json` shape is part of the 1.0 contract; lock its keys so a
+    change is a deliberate, reviewed break rather than a silent drift."""
+    rule = Rule(id="r", paths=("**/*.js",), check="false", severity="blocking")
+    from becwright.engine import Result, RuleResult
+    out = report.payload([rule], ["a.js"],
+                         Result(per_rule=[RuleResult(rule=rule, passed=False, output="x")]))
+    assert set(out) == {"rule_count", "checked_files", "blocked", "results"}
+    assert set(out["results"][0]) == {"id", "severity", "passed", "intent",
+                                      "why_it_matters", "output"}
+
+
+def test_rule_record_key_contract():
+    """`why --json` / `list --json` expose a rule's bound half; lock its keys."""
+    out = report.rule_record(Rule(id="r", paths=("**/*.py",), check="true"))
+    assert set(out) == {"id", "severity", "target", "intent", "why_it_matters",
+                        "rejected_alternatives", "paths", "exclude", "check"}

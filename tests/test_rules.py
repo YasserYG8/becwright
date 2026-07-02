@@ -1,6 +1,6 @@
 import pytest
 
-from becwright.rules import RulesError, load_rules
+from becwright.rules import RULES_SCHEMA_VERSION, RulesError, load_rules
 
 
 def _write(tmp_path, text):
@@ -77,3 +77,37 @@ def test_loads_advisory_severity(tmp_path):
     path = _write(tmp_path, 'rules:\n  - id: r1\n    check: "true"\n    severity: advisory\n')
     rule = load_rules(path)[0]
     assert rule.is_advisory is True and rule.is_blocking is False
+
+
+def test_absent_schema_version_loads(tmp_path):
+    path = _write(tmp_path, 'rules:\n  - id: r1\n    check: "true"\n')
+    assert len(load_rules(path)) == 1
+
+
+def test_current_schema_version_loads(tmp_path):
+    path = _write(
+        tmp_path,
+        f'schema_version: {RULES_SCHEMA_VERSION}\nrules:\n  - id: r1\n    check: "true"\n',
+    )
+    assert len(load_rules(path)) == 1
+
+
+def test_newer_schema_version_raises(tmp_path):
+    path = _write(
+        tmp_path,
+        f'schema_version: {RULES_SCHEMA_VERSION + 1}\nrules:\n  - id: r1\n    check: "true"\n',
+    )
+    with pytest.raises(RulesError, match="newer"):
+        load_rules(path)
+
+
+def test_non_integer_schema_version_raises(tmp_path):
+    path = _write(tmp_path, 'schema_version: one\nrules:\n  - id: r1\n    check: "true"\n')
+    with pytest.raises(RulesError, match="schema_version"):
+        load_rules(path)
+
+
+def test_non_positive_schema_version_raises(tmp_path):
+    path = _write(tmp_path, 'schema_version: 0\nrules:\n  - id: r1\n    check: "true"\n')
+    with pytest.raises(RulesError, match="schema_version"):
+        load_rules(path)

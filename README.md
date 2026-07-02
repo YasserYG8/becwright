@@ -513,6 +513,38 @@ is green.
 Future work (AST analysis, deep per-language tooling, cryptographic signing of
 verifications) is documented in the project plan.
 
+## Stability & versioning
+
+becwright is **Beta**. It's dogfooded (its own commits are gated by becwright),
+the test suite is green, and it's published on npm and PyPI — but it is still
+`0.x`, so under [SemVer](https://semver.org) a minor release *may* change the
+public contract. If you depend on it in CI, pin a version
+(`becwright==0.4.0`, or `npm i -g becwright@0.4.0`).
+
+**The public contract** — the surface that becomes stable at `1.0.0` and only
+changes on a major bump after that:
+
+- The `.bec/rules.yaml` schema (rule fields and their meaning).
+- The `.bec.yaml` bundle format that `export` / `import` move between repos.
+- Built-in check names and their flags.
+- CLI commands and their exit codes.
+- The `check --json` output shape.
+- MCP tool names and signatures.
+
+Everything else (message wording, catalog contents, internal modules) can change
+at any time.
+
+**The path to 1.0.0** — we ship it once we're confident the contract above won't
+need a breaking change:
+
+- [x] Version both on-disk formats so a newer file fails loudly instead of
+      misparsing — the `.bec.yaml` bundle (`becwright_bec`) and `.bec/rules.yaml`
+      (`schema_version`).
+- [ ] Freeze the `rules.yaml` field set — no pending schema changes.
+- [x] Document and stabilize CLI exit codes and the `check --json` shape.
+- [ ] State a deprecation policy: one minor release of notice before any removal.
+- [ ] Validate on real repositories beyond this one.
+
 ## Roadmap
 
 becwright is intentionally small. On the horizon:

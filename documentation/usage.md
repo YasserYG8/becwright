@@ -69,12 +69,47 @@ From then on, every `git commit` runs the checks. (You can also set up by hand:
 > (the exact set the commit will create), which is why it's fast. Use
 > `--all` to scan the whole project instead.
 
-Exit codes (the number a command returns when it ends; `0` means success):
-`0` pass · `1` a blocking rule failed · `2` not a git repo / usage error.
+### Exit codes
+
+The number a command returns when it ends. These are part of becwright's stable
+contract — scripts and CI can rely on them:
+
+| Code | Meaning |
+|---|---|
+| `0` | Passed — no blocking rule failed (or there was nothing to check). |
+| `1` | A **blocking** rule failed. This is the signal that stops a commit. A `warning`/`advisory` finding alone does **not** set this. |
+| `2` | A problem to fix before becwright can judge: not a git repository, a malformed/untrusted `.bec/rules.yaml`, a rule pointing at a non-existent built-in check, or a usage error. |
+
+### `check --json`
+
+`becwright check --json` prints one JSON object and still uses the exit codes
+above (`1` when blocked). The shape is stable:
+
+```json
+{
+  "rule_count": 2,
+  "checked_files": 5,
+  "blocked": true,
+  "results": [
+    {
+      "id": "no-token-in-logs",
+      "severity": "blocking",
+      "passed": false,
+      "intent": "Session tokens must never reach any log.",
+      "why_it_matters": "A token in the logs lets anyone steal a session.",
+      "output": "src/app.py:12: token=..."
+    }
+  ]
+}
+```
+
+`intent`, `why_it_matters` and `output` are `null` when absent. `results` is
+empty when there was nothing to evaluate.
 
 ## The rules file: `.bec/rules.yaml`
 
 ```yaml
+schema_version: 1               # optional format version; absent means 1
 rules:
   - id: no-token-in-logs        # unique identifier
     intent: >                   # what the rule asks for (the "bound" part)
@@ -104,6 +139,12 @@ rules:
 | `rejected_alternatives` | no | Context: approaches that were dismissed |
 | `severity` | no | `blocking` (default), `warning`, or `advisory` (see below) |
 | `target` | no | `files` (default) or `commit-msg` (see below) |
+
+**`schema_version`** is an optional top-level key (not a rule field). It stamps
+the format version of the file; when absent it is treated as `1`, so existing
+files keep working. `becwright init` writes it, and becwright refuses a file
+stamped a *newer* version than it understands — telling you to upgrade — rather
+than misreading it. You rarely touch it by hand.
 
 **Severity — guaranteed vs assisted.** `blocking` and `warning` are for
 *deterministic* checks: the same code always gives the same verdict, so a

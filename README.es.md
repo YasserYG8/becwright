@@ -484,6 +484,41 @@ en verde.
 El trabajo futuro (análisis AST, tooling profundo por lenguaje, firma de
 verificaciones) está documentado en el plan del proyecto.
 
+## Estabilidad y versionado
+
+becwright está en **Beta**. Se usa a sí mismo (sus propios commits pasan por
+becwright), la suite de tests está en verde y está publicado en npm y PyPI —
+pero sigue en `0.x`, así que bajo [SemVer](https://semver.org) una release menor
+*puede* cambiar el contrato público. Si dependés de él en CI, fijá una versión
+(`becwright==0.4.0`, o `npm i -g becwright@0.4.0`).
+
+**El contrato público** — la superficie que se vuelve estable en `1.0.0` y a
+partir de ahí solo cambia con un bump mayor:
+
+- El esquema de `.bec/rules.yaml` (los campos de una regla y su significado).
+- El formato de bundle `.bec.yaml` que `export` / `import` mueven entre repos.
+- Los nombres de los checks incluidos y sus flags.
+- Los comandos de la CLI y sus códigos de salida.
+- La forma de la salida `check --json`.
+- Los nombres y firmas de las herramientas MCP.
+
+Todo lo demás (el texto de los mensajes, el contenido del catálogo, los módulos
+internos) puede cambiar en cualquier momento.
+
+**El camino a 1.0.0** — la publicamos cuando estemos seguros de que el contrato
+de arriba no va a necesitar un cambio que rompa compatibilidad:
+
+- [x] Versionar los dos formatos en disco para que un archivo más nuevo falle
+      fuerte en vez de mal-interpretarse — el bundle `.bec.yaml` (`becwright_bec`)
+      y `.bec/rules.yaml` (`schema_version`).
+- [ ] Congelar el conjunto de campos de `rules.yaml` — sin cambios de esquema
+      pendientes.
+- [x] Documentar y estabilizar los códigos de salida de la CLI y la forma de
+      `check --json`.
+- [ ] Definir una política de deprecación: una release menor de aviso antes de
+      quitar cualquier cosa.
+- [ ] Validar en repos reales más allá de este.
+
 ## Roadmap
 
 becwright es chico a propósito. En el horizonte:

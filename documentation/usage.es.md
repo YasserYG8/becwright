@@ -71,13 +71,47 @@ a mano: `becwright install` más un `.bec/rules.yaml` que escribas vos.)
 > solo esos por defecto (justo lo que el commit va a crear), por eso es rápido.
 > Usá `--all` para escanear todo el proyecto.
 
-Códigos de salida (el número que devuelve un comando al terminar; `0` significa
-éxito): `0` pasa · `1` falló una regla blocking · `2` no es un repo git / error
-de uso.
+### Códigos de salida
+
+El número que devuelve un comando al terminar. Forman parte del contrato estable
+de becwright — scripts y CI pueden depender de ellos:
+
+| Código | Significado |
+|---|---|
+| `0` | Pasó — ninguna regla blocking falló (o no había nada que revisar). |
+| `1` | Falló una regla **blocking**. Es la señal que frena un commit. Un hallazgo `warning`/`advisory` por sí solo **no** activa esto. |
+| `2` | Un problema a corregir antes de que becwright pueda juzgar: no es un repo git, un `.bec/rules.yaml` malformado/no confiable, una regla que apunta a un check integrado inexistente, o un error de uso. |
+
+### `check --json`
+
+`becwright check --json` imprime un objeto JSON y sigue usando los códigos de
+salida de arriba (`1` cuando bloquea). La forma es estable:
+
+```json
+{
+  "rule_count": 2,
+  "checked_files": 5,
+  "blocked": true,
+  "results": [
+    {
+      "id": "no-token-in-logs",
+      "severity": "blocking",
+      "passed": false,
+      "intent": "Los tokens de sesión nunca deben llegar a ningún log.",
+      "why_it_matters": "Un token en los logs deja robar una sesión.",
+      "output": "src/app.py:12: token=..."
+    }
+  ]
+}
+```
+
+`intent`, `why_it_matters` y `output` son `null` cuando faltan. `results` está
+vacío cuando no había nada que evaluar.
 
 ## El archivo de reglas: `.bec/rules.yaml`
 
 ```yaml
+schema_version: 1               # versión de formato opcional; ausente = 1
 rules:
   - id: no-token-in-logs        # identificador único
     intent: >                   # qué pide la regla (la parte "bound")
@@ -107,6 +141,13 @@ rules:
 | `rejected_alternatives` | no | Contexto: enfoques descartados |
 | `severity` | no | `blocking` (por defecto), `warning` o `advisory` (ver abajo) |
 | `target` | no | `files` (por defecto) o `commit-msg` (ver abajo) |
+
+**`schema_version`** es una clave opcional de nivel superior (no un campo de
+regla). Sella la versión de formato del archivo; cuando falta se trata como `1`,
+así que los archivos existentes siguen funcionando. `becwright init` la escribe,
+y becwright rechaza un archivo sellado con una versión *más nueva* de la que
+entiende — pidiéndote actualizar — en vez de mal-interpretarlo. Rara vez la tocas
+a mano.
 
 **Severidad — garantizado vs asistido.** `blocking` y `warning` son para checks
 *deterministas*: el mismo código siempre da el mismo veredicto, así que una regla
