@@ -1,0 +1,19 @@
+becwright_bec: 1
+exported_from: https://github.com/DataDave-Dev/becwright
+rule:
+  id: no-set-x-left-in
+  intent: >
+    Do not leave `set -x` (shell command tracing) enabled in shipped scripts.
+  why_it_matters: >
+    `set -x` echoes every executed command, including expanded variables, to
+    stdout/stderr before it runs. In CI logs or captured output, that means
+    secrets, tokens, and other sensitive values passed as arguments get
+    printed in plaintext — a common accidental leak vector in shell scripts
+    that were debugged locally and never cleaned up before commit.
+  paths:
+    - "**/*.sh"
+  severity: blocking
+check:
+  kind: builtin
+  module: forbid
+  args: "--pattern 'set\\s+-x'"

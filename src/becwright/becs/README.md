@@ -20,5 +20,6 @@ becwright add <name>        # install one, e.g. `becwright add no-token-in-logs`
 | `no-console-log-js` | Warns about `console.log(...)` in JS/TS | `warning` |
 | `no-debug-go` | Blocks `fmt.Println()` and `panic()` in Go | `blocking` |
 | `no-debug-rust` | Blocks `dbg!()` and `println!()` in Rust | `blocking` |
+| `no-set-x-left-in` | Blocks `set -x` tracing left enabled in shell scripts | `blocking` |
 
 The Python BECs use `paths: ["src/**/*.py"]`, the JS/TS ones `["**/*.js", "**/*.ts"]`, the Go bundles use `["**/*.go"]`, and the Rust bundles use `["**/*.rs"]`. After installing, adjust `paths` in your `.bec/rules.yaml` if your code lives elsewhere.
