@@ -506,17 +506,18 @@ Todo lo demás (el texto de los mensajes, el contenido del catálogo, los módul
 internos) puede cambiar en cualquier momento.
 
 **El camino a 1.0.0** — la publicamos cuando estemos seguros de que el contrato
-de arriba no va a necesitar un cambio que rompa compatibilidad:
+de arriba no va a necesitar un cambio que rompa compatibilidad. Toda la base ya
+está lista:
 
 - [x] Versionar los dos formatos en disco para que un archivo más nuevo falle
       fuerte en vez de mal-interpretarse — el bundle `.bec.yaml` (`becwright_bec`)
       y `.bec/rules.yaml` (`schema_version`).
-- [ ] Congelar el conjunto de campos de `rules.yaml` — sin cambios de esquema
-      pendientes.
+- [x] Congelar el conjunto de campos de `rules.yaml` — los nueve campos son
+      estables y están fijados por tests.
 - [x] Documentar y estabilizar los códigos de salida de la CLI y la forma de
       `check --json`.
 - [x] Definir una política de deprecación (abajo).
-- [ ] Validar en repos reales más allá de este.
+- [x] Validar en repos reales más allá de este.
 
 **Política de deprecación** — desde `1.0.0`, nada del contrato público se quita
 sin un major de aviso de por medio. Cuando algo tiene que cambiar:

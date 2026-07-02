@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   refuses a file stamped newer than it understands — with a clear "upgrade
   becwright" error — instead of risking a silent misparse. (The `.bec.yaml`
   export bundle was already versioned via `becwright_bec`.)
+- **Froze the `.bec/rules.yaml` field set** as of `schema_version 1`: the nine
+  rule fields (`id`, `paths`, `check`, `exclude`, `intent`, `why_it_matters`,
+  `rejected_alternatives`, `severity`, `target`) are now test-locked, so from
+  `1.0.0` on a field only changes under the deprecation policy. This completes the
+  groundwork on the path to 1.0.0.
 
 ### Fixed
 - `becwright init --from-claude-md` no longer misreads a per-*function* line count

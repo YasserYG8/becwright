@@ -146,6 +146,12 @@ files keep working. `becwright init` writes it, and becwright refuses a file
 stamped a *newer* version than it understands — telling you to upgrade — rather
 than misreading it. You rarely touch it by hand.
 
+> **Stable field set.** The nine fields above are frozen as of `schema_version 1`.
+> From `1.0.0` on, a field is only added or removed under the
+> [deprecation policy](../README.md#stability--versioning) (deprecated with a
+> warning for at least one minor, removed only in the next major), so a rules file
+> that is valid today stays valid across the whole `1.x` line.
+
 **Severity — guaranteed vs assisted.** `blocking` and `warning` are for
 *deterministic* checks: the same code always gives the same verdict, so a
 `blocking` rule is a **100% guarantee**. `advisory` is the honest home for

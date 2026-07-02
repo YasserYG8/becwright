@@ -534,16 +534,16 @@ changes on a major bump after that:
 Everything else (message wording, catalog contents, internal modules) can change
 at any time.
 
-**The path to 1.0.0** — we ship it once we're confident the contract above won't
-need a breaking change:
+**The path to 1.0.0** — ship it once we're confident the contract above won't
+need a breaking change. All the groundwork is now in place:
 
 - [x] Version both on-disk formats so a newer file fails loudly instead of
       misparsing — the `.bec.yaml` bundle (`becwright_bec`) and `.bec/rules.yaml`
       (`schema_version`).
-- [ ] Freeze the `rules.yaml` field set — no pending schema changes.
+- [x] Freeze the `rules.yaml` field set — the nine fields are stable and test-locked.
 - [x] Document and stabilize CLI exit codes and the `check --json` shape.
 - [x] State a deprecation policy (below).
-- [ ] Validate on real repositories beyond this one.
+- [x] Validate on real repositories beyond this one.
 
 **Deprecation policy** — from `1.0.0` on, nothing in the public contract is
 removed without a major bump of notice. When something has to change:

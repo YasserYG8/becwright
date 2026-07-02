@@ -1,12 +1,27 @@
+import dataclasses
+
 import pytest
 
-from becwright.rules import RULES_SCHEMA_VERSION, RulesError, load_rules
+from becwright.rules import RULES_SCHEMA_VERSION, Rule, RulesError, load_rules
 
 
 def _write(tmp_path, text):
     path = tmp_path / "rules.yaml"
     path.write_text(text, encoding="utf-8")
     return path
+
+
+# The `.bec/rules.yaml` field set is frozen as of schema_version 1: from 1.0.0 on,
+# a field is only added/removed under the deprecation policy (README). This test
+# makes a change to the set a deliberate, reviewed break rather than an accident.
+_FROZEN_RULE_FIELDS = {
+    "id", "paths", "check", "exclude", "intent",
+    "why_it_matters", "rejected_alternatives", "severity", "target",
+}
+
+
+def test_rule_field_set_is_frozen():
+    assert {f.name for f in dataclasses.fields(Rule)} == _FROZEN_RULE_FIELDS
 
 
 def test_missing_file_returns_empty(tmp_path):

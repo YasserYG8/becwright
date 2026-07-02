@@ -149,6 +149,12 @@ y becwright rechaza un archivo sellado con una versión *más nueva* de la que
 entiende — pidiéndote actualizar — en vez de mal-interpretarlo. Rara vez la tocas
 a mano.
 
+> **Conjunto de campos estable.** Los nueve campos de arriba están congelados
+> desde `schema_version 1`. Desde `1.0.0`, un campo solo se añade o quita bajo la
+> [política de deprecación](../README.es.md#estabilidad-y-versionado) (deprecado
+> con un warning durante al menos un minor, quitado solo en el siguiente major),
+> así que un archivo de reglas válido hoy sigue válido en toda la línea `1.x`.
+
 **Severidad — garantizado vs asistido.** `blocking` y `warning` son para checks
 *deterministas*: el mismo código siempre da el mismo veredicto, así que una regla
 `blocking` es una **garantía al 100%**. `advisory` es el hogar honesto de las
