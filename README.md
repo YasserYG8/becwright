@@ -264,7 +264,7 @@ Inputs (all optional):
 | Input | Default | What it does |
 |---|---|---|
 | `base` | PR base branch | Git ref to diff against; only files changed vs it are checked |
-| `version` | `becwright` | pip specifier to install (e.g. `becwright==0.4.0`) |
+| `version` | `becwright` | pip specifier to install (e.g. `becwright==1.0.0`) |
 | `python-version` | `3.x` | Python used to run becwright |
 | `args` | *empty* | Extra args appended to `becwright check` |
 
@@ -515,14 +515,13 @@ verifications) is documented in the project plan.
 
 ## Stability & versioning
 
-becwright is **Beta**. It's dogfooded (its own commits are gated by becwright),
-the test suite is green, and it's published on npm and PyPI — but it is still
-`0.x`, so under [SemVer](https://semver.org) a minor release *may* change the
-public contract. If you depend on it in CI, pin a version
-(`becwright==0.4.0`, or `npm i -g becwright@0.4.0`).
+becwright is **stable** (`1.0`). It's dogfooded (its own commits are gated by
+becwright), the test suite is green, and it's published on npm and PyPI. Under
+[SemVer](https://semver.org) the public contract below only breaks on a major
+bump, so a `1.x` upgrade is always safe. If you depend on it in CI, pin a version
+anyway (`becwright==1.0.0`, or `npm i -g becwright@1.0.0`).
 
-**The public contract** — the surface that becomes stable at `1.0.0` and only
-changes on a major bump after that:
+**The public contract** — stable as of `1.0.0`, changed only on a major bump:
 
 - The `.bec/rules.yaml` schema (rule fields and their meaning).
 - The `.bec.yaml` bundle format that `export` / `import` move between repos.
@@ -534,16 +533,10 @@ changes on a major bump after that:
 Everything else (message wording, catalog contents, internal modules) can change
 at any time.
 
-**The path to 1.0.0** — ship it once we're confident the contract above won't
-need a breaking change. All the groundwork is now in place:
-
-- [x] Version both on-disk formats so a newer file fails loudly instead of
-      misparsing — the `.bec.yaml` bundle (`becwright_bec`) and `.bec/rules.yaml`
-      (`schema_version`).
-- [x] Freeze the `rules.yaml` field set — the nine fields are stable and test-locked.
-- [x] Document and stabilize CLI exit codes and the `check --json` shape.
-- [x] State a deprecation policy (below).
-- [x] Validate on real repositories beyond this one.
+Before `1.0.0` the groundwork was: both on-disk formats versioned so a newer file
+fails loudly (`schema_version` / `becwright_bec`), the `rules.yaml` field set
+frozen and test-locked, exit codes and `check --json` documented and test-locked,
+and validation against real repositories.
 
 **Deprecation policy** — from `1.0.0` on, nothing in the public contract is
 removed without a major bump of notice. When something has to change:

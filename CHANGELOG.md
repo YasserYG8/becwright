@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-07-02
+
+First **stable** release (`Development Status :: 5 - Production/Stable`). From here
+on, becwright's public contract — the `.bec/rules.yaml` schema, the `.bec.yaml`
+bundle format, built-in check names and flags, CLI commands and exit codes, the
+`check --json` shape, and MCP tool signatures — is stable under SemVer and only
+breaks on a major bump, with the one-minor deprecation policy in between. No code
+behavior changed since 0.4.0; this release adds the guarantees, versioning, and
+docs that make the contract dependable.
+
 ### Added
-- Declared **Beta** maturity (`Development Status :: 4 - Beta` classifier) and a
-  public **Stability & versioning** section in the README: what the `1.0.0`
-  contract covers (`rules.yaml` schema, `.bec.yaml` bundle format, check names,
-  CLI commands and exit codes, `check --json` shape, MCP signatures) and the
-  exit criteria to reach it.
+- A public **Stability & versioning** section in the README: what the contract
+  covers, the SemVer promise, and the deprecation policy.
 - `.bec/rules.yaml` now carries an optional `schema_version` (absent means `1`,
   so existing files keep working). `becwright init` stamps it, and the engine
   refuses a file stamped newer than it understands — with a clear "upgrade
@@ -145,7 +152,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `uninstall`, `list`, `run`), the native pre-commit hook, and the first
   built-in checks.
 
-[Unreleased]: https://github.com/DataDave-Dev/becwright/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/DataDave-Dev/becwright/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/DataDave-Dev/becwright/compare/v0.4.0...v1.0.0
 [0.4.0]: https://github.com/DataDave-Dev/becwright/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/DataDave-Dev/becwright/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/DataDave-Dev/becwright/compare/v0.2.1...v0.2.2

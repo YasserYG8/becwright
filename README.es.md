@@ -272,7 +272,7 @@ Inputs (todos opcionales):
 | Input | Default | Qué hace |
 |---|---|---|
 | `base` | rama base del PR | Ref de git contra la que diffear; solo se chequean los archivos cambiados vs ella |
-| `version` | `becwright` | Especificador pip a instalar (ej. `becwright==0.4.0`) |
+| `version` | `becwright` | Especificador pip a instalar (ej. `becwright==1.0.0`) |
 | `python-version` | `3.x` | Python con el que corre becwright |
 | `args` | *vacío* | Args extra que se agregan a `becwright check` |
 
@@ -486,14 +486,14 @@ verificaciones) está documentado en el plan del proyecto.
 
 ## Estabilidad y versionado
 
-becwright está en **Beta**. Se usa a sí mismo (sus propios commits pasan por
-becwright), la suite de tests está en verde y está publicado en npm y PyPI —
-pero sigue en `0.x`, así que bajo [SemVer](https://semver.org) una release menor
-*puede* cambiar el contrato público. Si dependés de él en CI, fijá una versión
-(`becwright==0.4.0`, o `npm i -g becwright@0.4.0`).
+becwright es **estable** (`1.0`). Se usa a sí mismo (sus propios commits pasan
+por becwright), la suite de tests está en verde y está publicado en npm y PyPI.
+Bajo [SemVer](https://semver.org) el contrato público de abajo solo rompe con un
+bump mayor, así que actualizar dentro de `1.x` siempre es seguro. Si dependés de
+él en CI, fijá una versión igualmente (`becwright==1.0.0`, o
+`npm i -g becwright@1.0.0`).
 
-**El contrato público** — la superficie que se vuelve estable en `1.0.0` y a
-partir de ahí solo cambia con un bump mayor:
+**El contrato público** — estable desde `1.0.0`, cambia solo con un bump mayor:
 
 - El esquema de `.bec/rules.yaml` (los campos de una regla y su significado).
 - El formato de bundle `.bec.yaml` que `export` / `import` mueven entre repos.
@@ -505,19 +505,10 @@ partir de ahí solo cambia con un bump mayor:
 Todo lo demás (el texto de los mensajes, el contenido del catálogo, los módulos
 internos) puede cambiar en cualquier momento.
 
-**El camino a 1.0.0** — la publicamos cuando estemos seguros de que el contrato
-de arriba no va a necesitar un cambio que rompa compatibilidad. Toda la base ya
-está lista:
-
-- [x] Versionar los dos formatos en disco para que un archivo más nuevo falle
-      fuerte en vez de mal-interpretarse — el bundle `.bec.yaml` (`becwright_bec`)
-      y `.bec/rules.yaml` (`schema_version`).
-- [x] Congelar el conjunto de campos de `rules.yaml` — los nueve campos son
-      estables y están fijados por tests.
-- [x] Documentar y estabilizar los códigos de salida de la CLI y la forma de
-      `check --json`.
-- [x] Definir una política de deprecación (abajo).
-- [x] Validar en repos reales más allá de este.
+Antes de `1.0.0` la base fue: los dos formatos en disco versionados para que un
+archivo más nuevo falle fuerte (`schema_version` / `becwright_bec`), el conjunto
+de campos de `rules.yaml` congelado y fijado por tests, los códigos de salida y
+`check --json` documentados y fijados por tests, y validación contra repos reales.
 
 **Política de deprecación** — desde `1.0.0`, nada del contrato público se quita
 sin un major de aviso de por medio. Cuando algo tiene que cambiar:
