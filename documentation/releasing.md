@@ -34,6 +34,22 @@ becwright ships through three channels from a single GitHub release:
    - publishes the platform packages first, then the launcher,
    - builds and publishes the Python package to PyPI.
 
+## Compatibility (from 1.0.0 on)
+
+Once `1.0.0` ships, the public contract (the `rules.yaml` schema, the `.bec.yaml`
+bundle format, built-in check names and flags, CLI commands and exit codes, the
+`check --json` shape, and MCP tool signatures) follows a **one-minor-of-notice
+deprecation policy**:
+
+- Never remove or break anything in the contract inside a minor or patch.
+- To retire something, mark it **deprecated** in a minor (it keeps working and
+  warns), then remove it only in the **next major**.
+- A change that would break a `1.x` rule file, bundle, or check script belongs in
+  a major bump, not a minor.
+
+See the [README's Stability & versioning section](../README.md#stability--versioning)
+for the user-facing statement.
+
 ## Notes
 
 - Platform packages are published before the launcher so the launcher's

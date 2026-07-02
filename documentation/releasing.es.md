@@ -34,6 +34,23 @@ becwright se distribuye por tres canales desde un único release de GitHub:
    - publica primero los paquetes de plataforma y luego el lanzador,
    - construye y publica el paquete de Python en PyPI.
 
+## Compatibilidad (desde 1.0.0)
+
+Una vez que salga `1.0.0`, el contrato público (el esquema de `rules.yaml`, el
+formato de bundle `.bec.yaml`, los nombres y flags de los checks integrados, los
+comandos y códigos de salida de la CLI, la forma de `check --json` y las firmas
+de las herramientas MCP) sigue una **política de deprecación con un minor de
+aviso**:
+
+- Nunca quitar ni romper nada del contrato dentro de un minor o un patch.
+- Para retirar algo, marcarlo **deprecado** en un minor (sigue funcionando y
+  avisa), y quitarlo solo en el **siguiente major**.
+- Un cambio que rompería un archivo de reglas, bundle o script de check de `1.x`
+  va en un bump mayor, no en un minor.
+
+Ver la [sección Estabilidad y versionado del README](../README.es.md#estabilidad-y-versionado)
+para la declaración de cara al usuario.
+
 ## Notas
 
 - Los paquetes de plataforma se publican antes que el lanzador para que sus

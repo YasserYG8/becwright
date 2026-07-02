@@ -542,8 +542,21 @@ need a breaking change:
       (`schema_version`).
 - [ ] Freeze the `rules.yaml` field set — no pending schema changes.
 - [x] Document and stabilize CLI exit codes and the `check --json` shape.
-- [ ] State a deprecation policy: one minor release of notice before any removal.
+- [x] State a deprecation policy (below).
 - [ ] Validate on real repositories beyond this one.
+
+**Deprecation policy** — from `1.0.0` on, nothing in the public contract is
+removed without a major bump of notice. When something has to change:
+
+1. It is marked **deprecated** in a minor release — it keeps working and emits a
+   warning.
+2. It keeps working (still warning) through the rest of that major series.
+3. It is removed only in the next **major** release.
+
+So anything valid on `1.0` stays valid across every `1.x`: a breaking change
+always crosses a major version, with at least one minor of warning first. Pin a
+version in CI and a `1.x` upgrade will never break your rules, bundles, or check
+scripts without warning.
 
 ## Roadmap
 

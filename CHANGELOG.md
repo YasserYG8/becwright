@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exit codes (`0` pass · `1` a blocking rule failed · `2` config/usage problem)
   and the `check --json` output shape, both now locked by tests so a change is a
   deliberate break rather than a silent drift.
+- Stated a **deprecation policy** for `1.0.0` on (README + `documentation/releasing.md`):
+  anything in the public contract is deprecated with a warning for at least one
+  minor and removed only in the next major, so no `1.x` upgrade breaks a rule
+  file, bundle, or check script without notice.
 
 ## [0.4.0] — 2026-07-01
 

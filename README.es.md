@@ -515,9 +515,21 @@ de arriba no va a necesitar un cambio que rompa compatibilidad:
       pendientes.
 - [x] Documentar y estabilizar los códigos de salida de la CLI y la forma de
       `check --json`.
-- [ ] Definir una política de deprecación: una release menor de aviso antes de
-      quitar cualquier cosa.
+- [x] Definir una política de deprecación (abajo).
 - [ ] Validar en repos reales más allá de este.
+
+**Política de deprecación** — desde `1.0.0`, nada del contrato público se quita
+sin un major de aviso de por medio. Cuando algo tiene que cambiar:
+
+1. Se marca como **deprecado** en una release menor — sigue funcionando y emite
+   un warning.
+2. Sigue funcionando (con el warning) durante el resto de esa serie mayor.
+3. Se quita solo en la siguiente release **mayor**.
+
+Así, lo que es válido en `1.0` sigue válido en cada `1.x`: un cambio que rompe
+compatibilidad siempre cruza una versión mayor, con al menos un minor de aviso
+antes. Fijá una versión en CI y una actualización dentro de `1.x` nunca romperá
+tus reglas, bundles ni scripts de check sin avisar.
 
 ## Roadmap
 
