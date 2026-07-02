@@ -1,8 +1,10 @@
 name: becwright
+# The Marketplace caps description at 125 chars. The full rationale: a commit
+# hook can be skipped with `git commit --no-verify`; a required CI check cannot —
+# this closes that gap and makes the rules infrastructure, not a suggestion.
 description: >-
-  Enforce BECs (Bound Executable Constraints) on the files a pull request changes.
-  A commit hook can be skipped with `git commit --no-verify`; a required CI check
-  cannot — so this closes that gap and makes the rules infrastructure, not a suggestion.
+  Enforce becwright rules (BECs) on the files a PR changes — a required CI check
+  that can't be skipped like a local hook.
 author: DataDave-Dev
 branding:
   icon: shield
