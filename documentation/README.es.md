@@ -10,6 +10,7 @@ lenguaje simple y después profundiza, así que podés parar donde deje de serte
 **Empezá acá**
 
 - [Uso](usage.es.md) — instalación, comandos y cómo escribir una regla. Leé esto primero.
+- [Recetas](recipes.es.md) — reglas para copiar y pegar: gitleaks/ruff/semgrep como checks, rutas congeladas, límites de arquitectura, CI, Husky.
 - [Escribir checks](writing-checks.es.md) — el atajo sin código `forbid` y luego checks propios en cualquier lenguaje.
 - [Portabilidad](portability.es.md) — compartir una regla entre proyectos con export/import.
 

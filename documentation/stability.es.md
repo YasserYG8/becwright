@@ -21,6 +21,14 @@ Estable desde `1.0.0`, cambia solo con un bump mayor:
 Todo lo demás (el texto de los mensajes, el contenido del catálogo, los módulos
 internos) puede cambiar en cualquier momento.
 
+## Soporte de plataformas
+
+Linux y macOS tienen soporte completo y se ejercitan en CI. **Windows está en
+beta**: la CLI y el hook corren bajo Git Bash (que Git para Windows provee),
+pero Windows todavía no es parte de la matriz de CI y hay huecos conocidos
+([#31](https://github.com/DataDave-Dev/becwright/issues/31)). El soporte de
+primera clase es el milestone v1.3.
+
 Antes de `1.0.0` la base fue: los dos formatos en disco versionados para que un
 archivo más nuevo falle fuerte (`schema_version` / `becwright_bec`), el conjunto
 de campos de `rules.yaml` congelado y fijado por tests, los códigos de salida y

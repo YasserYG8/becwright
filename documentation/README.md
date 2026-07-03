@@ -10,6 +10,7 @@ prior background assumed.
 **Start here**
 
 - [Usage](usage.md) — install, the commands, and how to write a rule. Read this first.
+- [Recipes](recipes.md) — copy-paste rules for common jobs: gitleaks/ruff/semgrep as checks, frozen paths, architecture boundaries, CI, Husky.
 - [Writing checks](writing-checks.md) — the no-code `forbid` shortcut, then custom checks in any language.
 - [Portability](portability.md) — share a rule between projects with export/import.
 

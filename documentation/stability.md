@@ -20,6 +20,14 @@ Stable as of `1.0.0`, changed only on a major bump:
 Everything else (message wording, catalog contents, internal modules) can change
 at any time.
 
+## Platform support
+
+Linux and macOS are fully supported and exercised in CI. **Windows is beta**:
+the CLI and the hook run under Git Bash (which Git for Windows provides), but
+Windows is not yet part of the CI matrix and known gaps exist
+([#31](https://github.com/DataDave-Dev/becwright/issues/31)). First-class
+Windows support is the v1.3 milestone.
+
 Before `1.0.0` the groundwork was: both on-disk formats versioned so a newer file
 fails loudly (`schema_version` / `becwright_bec`), the `rules.yaml` field set
 frozen and test-locked, exit codes and `check --json` documented and test-locked,

@@ -12,6 +12,26 @@ pip install -e ".[dev]"
 pytest
 ```
 
+## Map of the code
+
+Everything lives under `src/becwright/` — [architecture.md](documentation/architecture.md)
+has the full picture and the exact check flow; this is the one-paragraph version:
+
+| Module | Owns |
+|---|---|
+| `cli.py` | argparse commands; each `_cmd_*` is one subcommand |
+| `engine.py` | glob matching + running checks (subprocess per rule) |
+| `rules.py` | the `Rule` model and validated loading of `.bec/rules.yaml` |
+| `git.py` | repo root, staged files, staged snapshot, native hooks |
+| `bundle.py` / `catalog.py` | export/import bundles; the packaged catalog |
+| `report.py` | shared JSON payloads (`check --json`, `why --json`, MCP) |
+| `checks/` | built-in checks (each one file, shared skeleton) |
+| `becs/` | catalog bundles (`<id>.bec.yaml`) |
+
+becwright is dogfooded: this repo's own [.bec/rules.yaml](.bec/rules.yaml)
+gates every commit. After `pip install -e ".[dev]"`, run `becwright check --all`
+here to see it police itself.
+
 ## Workflow
 
 `main` is protected: changes land via pull request with CI green.

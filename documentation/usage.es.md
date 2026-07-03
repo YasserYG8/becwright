@@ -10,8 +10,11 @@ Ese es todo el ciclo — el resto de esta página es el detalle.
 ## Instalación
 
 ```bash
-pipx install becwright      # o: pip install becwright
+pipx install becwright      # o: pip install becwright / uv tool install becwright
 ```
+
+(O sin Python: `npm install -g becwright` trae un binario autónomo por
+plataforma.)
 
 ## Configurar un repo
 
@@ -222,3 +225,26 @@ paquete — instalás desde él con un comando, sin URL y sin conexión:
 becwright search              # lista el catálogo
 becwright add no-debugger-js  # instalá una
 ```
+
+## Rendimiento y límites
+
+Notas honestas sobre cómo corre el motor, para que puedas predecir su
+comportamiento:
+
+- **Un proceso por regla.** El `check` de cada regla corre como su propio
+  subproceso sobre los archivos matcheados. En el camino normal del commit (un
+  puñado de archivos staged) es instantáneo. `becwright check --all` en un repo
+  muy grande con muchas reglas paga un arranque de proceso por regla — rápido
+  en la práctica, pero no está diseñado como escáner de monorepos completos.
+  En CI, preferí `check --diff <base>`, que solo mira lo que cambió el PR.
+- **Un check colgado no puede congelar tu commit.** Cada check tiene un tope de
+  30 segundos; se ajusta con la variable de entorno `BECWRIGHT_CHECK_TIMEOUT`
+  (segundos; `0` desactiva el tope) para corridas lentas sobre todo el repo.
+- **Un solo `.bec/rules.yaml` por repositorio**, en la raíz. Todavía no hay
+  archivo de reglas por paquete para monorepos — delimitá reglas por paquete
+  con globs en `paths`/`exclude` (p. ej. `paths: ["packages/api/**/*.ts"]`).
+- **Los checks juzgan el contenido staged.** Al commitear, los checks corren
+  sobre un snapshot de lo que el commit va a registrar — no sobre tu working
+  tree, que puede tener ediciones sin stagear. Mirá la nota en
+  [recetas](recipes.es.md) si un check envuelve una herramienta externa que
+  espera un repositorio git.

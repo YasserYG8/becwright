@@ -10,8 +10,11 @@ whole loop — the rest of this page is the detail.
 ## Install
 
 ```bash
-pipx install becwright      # or: pip install becwright
+pipx install becwright      # or: pip install becwright / uv tool install becwright
 ```
+
+(Or without Python at all: `npm install -g becwright` ships a self-contained
+binary per platform.)
 
 ## Set up a repo
 
@@ -220,3 +223,24 @@ the package — install from it with one command, no URL, works offline:
 becwright search              # list the catalog
 becwright add no-debugger-js  # install one
 ```
+
+## Performance and limits
+
+Honest notes on how the engine runs, so you can predict its behavior:
+
+- **One process per rule.** Each rule's `check` runs as its own subprocess over
+  the matched files. On the normal commit path (a handful of staged files) this
+  is instantaneous. `becwright check --all` on a very large repo with many
+  rules pays one process start per rule — fast in practice, but not designed as
+  a whole-monorepo scanner. In CI, prefer `check --diff <base>`, which only
+  looks at what the PR changed.
+- **A hung check cannot freeze your commit.** Every check is capped at 30
+  seconds; override with the `BECWRIGHT_CHECK_TIMEOUT` environment variable
+  (seconds; `0` disables the cap) for slow whole-repo runs.
+- **One `.bec/rules.yaml` per repository**, at the root. There is no
+  per-package rules file for monorepos yet — scope rules to packages with
+  `paths`/`exclude` globs instead (e.g. `paths: ["packages/api/**/*.ts"]`).
+- **Checks judge the staged content.** On commit, checks run against a snapshot
+  of what the commit will actually record — not your working tree, which may
+  hold unstaged edits. See the note in [recipes](recipes.md) if a check wraps
+  an external tool that expects a git repository.

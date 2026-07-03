@@ -38,7 +38,7 @@ Con becwright, el commit no llega a existir:
 > **Velo vos mismo en 5 segundos** — sin configurar nada, sin git, sin tocar tu
 > máquina:
 > ```bash
-> npx becwright demo        # sin instalar   ·   o: pipx run becwright demo
+> npx becwright demo        # sin instalar   ·   o: uvx becwright demo · pipx run becwright demo
 > ```
 
 ## Empezar
@@ -54,6 +54,10 @@ becwright init              # detecta tu lenguaje, escribe .bec/rules.yaml, inst
 Listo. A partir de ahora cada `git commit` corre los chequeos solo y frena un
 commit que rompa una regla blocking. No volvés a llamar a becwright a mano.
 
+> **¿Cuál instalación?** `npm install -g` para probarlo o para uso individual;
+> `npm install --save-dev becwright` para un repo de equipo, así la versión
+> queda fijada en `package.json` y el hook lo encuentra en `node_modules/.bin`.
+
 - **¿Código existente con deuda?** `becwright init --baseline` arranca en
   `warning` las reglas que *ya* tienen violaciones (no se frena nada legítimo) y
   en `blocking` las limpias. Limpiá la deuda con el tiempo y graduá cada regla.
@@ -67,7 +71,7 @@ commit que rompa una regla blocking. No volvés a llamar a becwright a mano.
 
 ```bash
 pnpm add -g becwright
-pipx install becwright                # o: pip install becwright
+pipx install becwright                # o: pip install becwright / uv tool install becwright
 npm install --save-dev becwright      # local al proyecto; el hook lo encuentra en node_modules/.bin
 ```
 
@@ -75,6 +79,26 @@ Por npm/pnpm **no hace falta Python** — viene un binario autónomo por platafo
 (`linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`, `win32-x64`). En
 cualquier otra plataforma, usá `pipx install becwright`.
 </details>
+
+### Sentilo frenar, en 90 segundos
+
+La forma más rápida de confiar en un guardia es verlo frenarte una vez:
+
+```bash
+cd tu-proyecto && becwright init           # reglas + hook, un comando
+
+echo 'api_key = "AKIAIOSFODNN7EXAMPLE"' >> demo_leak.py
+git add demo_leak.py && git commit -m "probar el guardia"
+#   BLOCK  no-hardcoded-secrets  (blocking)
+#     Why it matters: un secreto en el repo queda en la historia de git para siempre...
+#   >>> Commit BLOCKED: a blocking rule was broken.
+
+git reset demo_leak.py && rm demo_leak.py  # deshacer el experimento
+git commit -m "..."                        # los commits normales pasan sin más
+```
+
+Ese ciclo — violar, ser frenado *con el porqué*, arreglar, commitear — es todo
+lo que becwright hace, para siempre, automáticamente.
 
 ## Por qué un guardia, no un cartel
 
@@ -264,7 +288,29 @@ Cada check es un módulo que se invoca desde el campo `check`. Funcionan
 buscando texto en tus archivos con un patrón — simples y predecibles a
 propósito; el verdadero valor está en atar cada regla a su *por qué*. Para
 análisis más profundo, apuntá una regla a cualquier herramienta que ya uses
-(gitleaks, ruff, semgrep) como su check.
+como su check — la regla lleva el *por qué*, la herramienta hace la detección:
+
+```yaml
+  - id: no-secrets-gitleaks
+    intent: >
+      Ningún secreto puede commitearse, según el ruleset completo de gitleaks.
+    why_it_matters: >
+      Una credencial filtrada en la historia de git queda expuesta para siempre,
+      incluso después de un revert.
+    paths: ["**/*"]
+    check: "gitleaks detect --no-git --redact --exit-code 1"
+    severity: blocking
+
+  - id: python-passes-ruff
+    intent: "El código Python debe pasar el ruleset de ruff del equipo antes del commit."
+    why_it_matters: "Un lint consistente mantiene el review enfocado en la lógica, no en el estilo."
+    paths: ["**/*.py"]
+    check: "xargs ruff check --force-exclude"
+    severity: warning
+```
+
+Más patrones listos (semgrep, eslint, rutas congeladas, límites de
+arquitectura, CI): **[recetas](documentation/recipes.es.md)**.
 
 | Check | Qué detecta | Lenguaje | Severidad sugerida |
 |---|---|---|---|
@@ -351,6 +397,8 @@ La documentación completa vive en [`documentation/`](documentation/README.es.md
 
 - **Recién empezás:** [uso](documentation/usage.es.md) — instalación, los
   comandos, códigos de salida y cómo escribir una regla.
+- **Reglas para copiar y pegar** (gitleaks/ruff/semgrep como checks, rutas
+  congeladas, límites de arquitectura, CI): [recetas](documentation/recipes.es.md).
 - **Querés agregar tu propia regla:** [escribir checks](documentation/writing-checks.es.md).
 - **Compartir reglas entre proyectos:** [portabilidad](documentation/portability.es.md).
 - **Curiosidad por cómo funciona adentro:** [arquitectura y flujo](documentation/architecture.es.md).
@@ -404,8 +452,12 @@ de pre-commit — ver más arriba.
 **¿Necesito Python?** No. `npm i -g becwright` instala un binario autónomo;
 `pipx install becwright` también funciona.
 
-**¿Funciona en Windows?** Sí, vía Git Bash (el hook es un script `sh`, que Git
-para Windows provee). La CLI `becwright` en sí es multiplataforma.
+**¿Funciona en Windows?** En beta. La CLI y el hook corren bajo Git Bash (que
+Git para Windows provee), pero Windows todavía no se ejercita en CI — los
+huecos conocidos están en
+[#31](https://github.com/DataDave-Dev/becwright/issues/31) y el soporte de
+primera clase es el milestone v1.3. Hasta entonces, tratá Windows como
+best-effort.
 
 **¿Cómo ignoro una línea?** Poné un comentario `becwright: ignore` en ella.
 
