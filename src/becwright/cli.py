@@ -789,7 +789,8 @@ def _print_claude_summary(derived: list[tuple[dict, str]]) -> None:
     print(_style("From CLAUDE.md:", BOLD),
           f"{len(derived)} enforceable rule(s) derived —")
     for rule, trigger in derived:
-        print(f"  {_style(rule['id'], GREEN)}  {_style(f'(matched: \"{trigger}\")', DIM)}")
+        matched = f'(matched: "{trigger}")'
+        print(f"  {_style(rule['id'], GREEN)}  {_style(matched, DIM)}")
     print(_style("  Judgment-based guidance (architecture, naming, style) has no", DIM))
     print(_style("  deterministic check — becwright leaves that to CLAUDE.md.", DIM))
 

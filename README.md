@@ -76,7 +76,7 @@ npm install --save-dev becwright      # project-local; the hook finds it in node
 
 Via npm/pnpm there's **no Python required** — a self-contained binary ships per
 platform (`linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`, `win32-x64`).
-On any other platform, use `pipx install becwright`.
+On any other platform, use `pipx install becwright` with Python 3.10 or newer.
 </details>
 
 ### Feel it block, in 90 seconds

@@ -77,7 +77,8 @@ npm install --save-dev becwright      # local al proyecto; el hook lo encuentra 
 
 Por npm/pnpm **no hace falta Python** — viene un binario autónomo por plataforma
 (`linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`, `win32-x64`). En
-cualquier otra plataforma, usá `pipx install becwright`.
+cualquier otra plataforma, usá `pipx install becwright` con Python 3.10 o más
+nuevo.
 </details>
 
 ### Sentilo frenar, en 90 segundos

@@ -1,4 +1,4 @@
-# Packaging for becwright. Target Python 3.12 (current environment has 3.14).
+# Packaging for becwright. Target Python 3.10+.
 # Minimal dependencies on purpose: only pyyaml (project convention).
 [build-system]
 requires = ["setuptools>=61"]
@@ -9,7 +9,7 @@ name = "becwright"
 version = "1.0.0"
 description = "The enforcement layer for AI coding agents — deterministic, portable constraints (BECs) that block a commit when a rule breaks, for AI-written and human-written code."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 authors = [{ name = "Alonso David De Leon Rodarte" }]
 license = { text = "MIT" }
 keywords = [
@@ -30,6 +30,8 @@ dependencies = ["pyyaml>=6"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: MIT License",
     "Environment :: Console",
