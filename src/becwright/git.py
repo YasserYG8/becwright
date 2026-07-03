@@ -150,6 +150,34 @@ def _uninstall_named(root: Path, name: str) -> tuple[bool, str]:
     return True, f"becwright {name} hook uninstalled."
 
 
+def hook_state(root: Path, name: str = "pre-commit") -> str:
+    """'becwright' (ours), 'foreign' (someone else's), or 'missing'."""
+    hook = _hook_path(root, name)
+    if not hook.exists():
+        return "missing"
+    return "becwright" if _HOOK_MARK in hook.read_text(encoding="utf-8") else "foreign"
+
+
+def hooks_path_override(root: Path) -> str | None:
+    """The value of `core.hooksPath` when set (e.g. `.husky/_` by Husky), else None.
+    When set, git ignores `.git/hooks` entirely — including a becwright hook there."""
+    res = subprocess.run(
+        ["git", "config", "core.hooksPath"],
+        cwd=root, capture_output=True, text=True,
+    )
+    value = res.stdout.strip()
+    return value or None
+
+
+def hook_manager(root: Path) -> str | None:
+    """The hook manager this repo appears to use: 'husky', 'pre-commit', or None."""
+    if (root / ".husky").is_dir():
+        return "husky"
+    if (root / ".pre-commit-config.yaml").is_file():
+        return "pre-commit"
+    return None
+
+
 def install_hook(root: Path) -> tuple[bool, str]:
     return _install_named(root, "pre-commit")
 

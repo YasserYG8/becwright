@@ -192,6 +192,8 @@ Full field reference: [`documentation/usage.md`](documentation/usage.md).
 | `becwright check` | Runs the rules over the staged files |
 | `becwright check --diff <base>` | Runs the rules over only the files changed vs `<base>` (for CI/PR) |
 | `becwright why [id]` | Shows the intent + why behind the rules — the repo's decision memory (`--json` for agents) |
+| `becwright validate` | Validates `.bec/rules.yaml` without running any check (for editors and CI) |
+| `becwright doctor` | Diagnoses the setup: rules file, checks, hooks and hook managers |
 | `becwright search [query]` | Lists ready-made BECs from the built-in catalog |
 | `becwright add <name>` | Installs a catalog BEC into `.bec/rules.yaml` (offline) |
 | `becwright install` / `uninstall` | Installs / removes the native hooks |

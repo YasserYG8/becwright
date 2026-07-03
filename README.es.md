@@ -196,6 +196,8 @@ Referencia completa de campos: [`documentation/usage.es.md`](documentation/usage
 | `becwright check` | Corre las reglas sobre los archivos en staging |
 | `becwright check --diff <base>` | Corre las reglas solo sobre los archivos cambiados vs `<base>` (para CI/PR) |
 | `becwright why [id]` | Muestra la intención + el por qué de las reglas — la memoria de decisiones del repo (`--json` para agentes) |
+| `becwright validate` | Valida `.bec/rules.yaml` sin correr ningún check (para editores y CI) |
+| `becwright doctor` | Diagnostica el setup: archivo de reglas, checks, hooks y hook managers |
 | `becwright search [texto]` | Lista BECs listas del catálogo incluido |
 | `becwright add <nombre>` | Instala una BEC del catálogo en `.bec/rules.yaml` (sin conexión) |
 | `becwright install` / `uninstall` | Instala / quita los hooks nativos |

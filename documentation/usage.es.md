@@ -64,6 +64,8 @@ a mano: `becwright install` más un `.bec/rules.yaml` que escribas vos.)
 | `becwright list` | Lista los checks incluidos |
 | `becwright check` | Corre las reglas sobre los archivos en staging |
 | `becwright check --all` | Corre las reglas sobre todo el repo (`git ls-files`) |
+| `becwright validate` | Valida `.bec/rules.yaml` — YAML, ids duplicados, checks desconocidos — sin ejecutar nada |
+| `becwright doctor` | Diagnostica el setup: archivo de reglas, checks, hooks y hook managers (Husky, pre-commit) |
 | `becwright install` | Instala el hook pre-commit |
 | `becwright uninstall` | Quita el hook |
 | `becwright export <id> [-o archivo]` | Exporta una regla a un bundle `.bec.yaml` |

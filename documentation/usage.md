@@ -62,6 +62,8 @@ From then on, every `git commit` runs the checks. (You can also set up by hand:
 | `becwright list` | List the built-in checks |
 | `becwright check` | Run rules over the staged files |
 | `becwright check --all` | Run rules over the whole repo (`git ls-files`) |
+| `becwright validate` | Validate `.bec/rules.yaml` — YAML, duplicate ids, unknown checks — without running anything |
+| `becwright doctor` | Diagnose the setup: rules file, checks, hooks, and hook managers (Husky, pre-commit) |
 | `becwright install` | Install the pre-commit hook |
 | `becwright uninstall` | Remove the hook |
 | `becwright export <id> [-o file]` | Export a rule to a `.bec.yaml` bundle |

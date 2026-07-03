@@ -176,6 +176,140 @@ def _cmd_check(args: argparse.Namespace) -> int:
     return 0
 
 
+def _duplicate_rule_ids(rules) -> list[str]:
+    seen: set[str] = set()
+    dupes: list[str] = []
+    for rule in rules:
+        if rule.id in seen and rule.id not in dupes:
+            dupes.append(rule.id)
+        seen.add(rule.id)
+    return dupes
+
+
+def _pathless_file_rules(rules) -> list[str]:
+    return [r.id for r in rules if r.target == "files" and not r.paths]
+
+
+def _cmd_validate(_: argparse.Namespace) -> int:
+    root = git.repo_root()
+    rules_path = root / ".bec" / "rules.yaml"
+    if not rules_path.exists():
+        print(_style(f"No {rules_path}. Run `becwright init` to create one.", RED),
+              file=sys.stderr)
+        return 2
+    rules = load_rules(rules_path)  # RulesError propagates -> exit 2 in main()
+
+    problems = False
+    for rule_id in _duplicate_rule_ids(rules):
+        problems = True
+        print(_style(f"duplicate rule id '{rule_id}' — ids must be unique.", RED),
+              file=sys.stderr)
+    unknown = _unknown_builtin_checks(rules, root)
+    if unknown:
+        problems = True
+        _print_unknown_checks(unknown)
+    if problems:
+        return 2
+
+    for rule_id in _pathless_file_rules(rules):
+        print(_style(f"warning: rule '{rule_id}' has no `paths` — it will never "
+                     "match a file.", YELLOW))
+    print(_style(f"OK: {len(rules)} rule(s) valid; every check resolves.", GREEN, BOLD))
+    return 0
+
+
+# Doctor findings: (status, message). `fail` means becwright cannot enforce as
+# configured (exit 2); `warn` is a gap worth fixing; `ok` is informational.
+_DOCTOR_ICONS = {"ok": ("OK", GREEN), "warn": ("WARN", YELLOW), "fail": ("FAIL", RED)}
+
+
+def _doctor_rules(root: Path) -> tuple[list, list[tuple[str, str]]]:
+    rules_path = root / ".bec" / "rules.yaml"
+    if not rules_path.exists():
+        return [], [("warn", "no .bec/rules.yaml — run `becwright init` to create one.")]
+    try:
+        rules = load_rules(rules_path)
+    except RulesError as e:
+        return [], [("fail", f".bec/rules.yaml cannot be loaded: {e}")]
+    findings = [("ok", f".bec/rules.yaml loads: {len(rules)} rule(s).")]
+    for rule_id in _duplicate_rule_ids(rules):
+        findings.append(("fail", f"duplicate rule id '{rule_id}' — ids must be unique."))
+    for rule_id, module in _unknown_builtin_checks(rules, root):
+        findings.append(("fail", f"rule '{rule_id}' uses '{module}', which is not a "
+                                 "built-in check (see `becwright list`)."))
+    for rule_id in _pathless_file_rules(rules):
+        findings.append(("warn", f"rule '{rule_id}' has no `paths` — it will never "
+                                 "match a file."))
+    return rules, findings
+
+
+def _doctor_precommit_hook(root: Path) -> tuple[str, str]:
+    manager = git.hook_manager(root)
+    override = git.hooks_path_override(root)
+    if override:
+        if manager == "husky":
+            husky_hook = root / ".husky" / "pre-commit"
+            if husky_hook.is_file() and "becwright" in husky_hook.read_text(encoding="utf-8"):
+                return "ok", "Husky runs becwright on pre-commit."
+            return "warn", ("Husky owns the hooks (core.hooksPath) but .husky/pre-commit "
+                            "does not run becwright — add `npx becwright check` to it.")
+        return "warn", (f"core.hooksPath = {override}: git ignores .git/hooks, so a "
+                        "becwright hook there never runs — wire `becwright check` into "
+                        "that hook path instead.")
+    state = git.hook_state(root, "pre-commit")
+    if state == "becwright":
+        return "ok", "becwright pre-commit hook installed."
+    if state == "foreign":
+        if manager == "pre-commit":
+            config = (root / ".pre-commit-config.yaml").read_text(encoding="utf-8")
+            if "becwright" in config:
+                return "ok", "the pre-commit framework runs becwright."
+            return "warn", ("the pre-commit framework owns the hook but its config does "
+                            "not include becwright — add the becwright hook to "
+                            ".pre-commit-config.yaml.")
+        return "warn", ("a non-becwright pre-commit hook exists — add `becwright check` "
+                        "to it, or let your hook manager run becwright.")
+    return "warn", "no pre-commit hook — run `becwright install` (or wire becwright into your hook manager)."
+
+
+def _doctor_msg_hook(root: Path, rules) -> tuple[str, str] | None:
+    if not any(r.target == "commit-msg" for r in rules):
+        return None
+    if git.hooks_path_override(root):
+        return None  # already flagged by the pre-commit finding
+    state = git.hook_state(root, "commit-msg")
+    if state == "becwright":
+        return "ok", "becwright commit-msg hook installed."
+    return "warn", ("you have commit-msg rules but no becwright commit-msg hook — "
+                    "run `becwright install`.")
+
+
+def _cmd_doctor(_: argparse.Namespace) -> int:
+    print(f"{_style('becwright doctor', BOLD)} "
+          f"{_style(f'— becwright {__version__}', DIM)}\n")
+    root = git.repo_root()  # NotAGitRepo propagates -> exit 2 in main()
+    rules, findings = _doctor_rules(root)
+    findings.append(_doctor_precommit_hook(root))
+    msg_finding = _doctor_msg_hook(root, rules)
+    if msg_finding:
+        findings.append(msg_finding)
+
+    for status, message in findings:
+        label, color = _DOCTOR_ICONS[status]
+        print(f"  {_style(label.ljust(4), color, BOLD)}  {message}")
+    failed = any(status == "fail" for status, _ in findings)
+    warned = any(status == "warn" for status, _ in findings)
+    print()
+    if failed:
+        print(_style(">>> Problems found: becwright cannot enforce as configured.", RED, BOLD))
+        return 2
+    if warned:
+        print(_style(">>> Working, with gaps worth fixing (see WARN above).", YELLOW, BOLD))
+        return 0
+    print(_style(">>> All good.", GREEN, BOLD))
+    return 0
+
+
 def _cmd_install(_: argparse.Namespace) -> int:
     root = git.repo_root()
     for install in (git.install_hook, git.install_msg_hook):
@@ -887,6 +1021,8 @@ def _build_parser() -> argparse.ArgumentParser:
     p_check_msg.add_argument("msgfile", help="path to the commit message file (git passes this to the hook)")
     p_check_msg.set_defaults(func=_cmd_check_msg)
 
+    sub.add_parser("validate", help="validate .bec/rules.yaml without running any check (for editors and CI)").set_defaults(func=_cmd_validate)
+    sub.add_parser("doctor", help="diagnose the setup: rules file, checks, hooks and hook managers").set_defaults(func=_cmd_doctor)
     sub.add_parser("demo", help="see becwright block a sample bad commit (no setup, no git needed)").set_defaults(func=_cmd_demo)
     sub.add_parser("list", help="list the built-in checks").set_defaults(func=_cmd_list)
     sub.add_parser("mcp", help="run the MCP server for AI agents (needs the 'mcp' extra)").set_defaults(func=_cmd_mcp)
