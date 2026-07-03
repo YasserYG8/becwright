@@ -24,8 +24,11 @@ becwright init              # scaffolds .bec/rules.yaml (language-aware) and ins
 ```
 
 `init` detects whether the repo has Python or JS/TS files and writes a starter
-`.bec/rules.yaml` with matching rules, then installs the pre-commit hook. Review
-the generated rules and run `becwright check --all` to see the current state.
+`.bec/rules.yaml` with matching rules, then installs the pre-commit hook. If a
+hook manager already owns the hooks (Husky, the pre-commit framework, or a
+custom `core.hooksPath`), `init` skips its own hook and prints the exact line
+to add to that manager instead. Review the generated rules and run
+`becwright check --all` to see the current state.
 
 From then on, every `git commit` runs the checks. (You can also set up by hand:
 `becwright install` plus a `.bec/rules.yaml` you write yourself.)

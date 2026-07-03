@@ -225,8 +225,9 @@ npx becwright check
 ```
 
 En ambos casos becwright igual lee `.bec/rules.yaml` y frena el commit ante una
-regla bloqueante rota. Corré `becwright init` una vez para generar las reglas
-(salteá su instalación del hook si otra herramienta lo administra).
+regla bloqueante rota. Corré `becwright init` una vez para generar las reglas —
+detecta Husky, el framework pre-commit o un `core.hooksPath` custom, saltea su
+propio hook e imprime la línea exacta a agregar en su lugar.
 
 ## Como check obligatorio de CI (GitHub Action)
 

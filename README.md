@@ -221,8 +221,9 @@ npx becwright check
 ```
 
 Either way becwright still reads `.bec/rules.yaml` and blocks the commit on a
-broken blocking rule. Run `becwright init` once to scaffold the rules (skip its
-hook install if another tool owns the hook).
+broken blocking rule. Run `becwright init` once to scaffold the rules —
+it detects Husky, the pre-commit framework, or a custom `core.hooksPath`, skips
+its own hook, and prints the exact line to add instead.
 
 ## As a required CI check (GitHub Action)
 

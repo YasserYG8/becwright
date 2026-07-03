@@ -25,8 +25,10 @@ becwright init              # genera .bec/rules.yaml (según el lenguaje) e inst
 
 `init` detecta si el repo tiene archivos Python o JS/TS y escribe un
 `.bec/rules.yaml` de arranque con reglas acordes, y luego instala el hook
-pre-commit. Revisá las reglas generadas y corré `becwright check --all` para ver
-el estado actual.
+pre-commit. Si un hook manager ya administra los hooks (Husky, el framework
+pre-commit o un `core.hooksPath` custom), `init` saltea su propio hook e
+imprime la línea exacta a agregar a ese manager en su lugar. Revisá las reglas
+generadas y corré `becwright check --all` para ver el estado actual.
 
 A partir de ahí, cada `git commit` corre los checks. (También podés configurarlo
 a mano: `becwright install` más un `.bec/rules.yaml` que escribas vos.)

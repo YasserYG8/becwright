@@ -310,11 +310,49 @@ def _cmd_doctor(_: argparse.Namespace) -> int:
     return 0
 
 
-def _cmd_install(_: argparse.Namespace) -> int:
-    root = git.repo_root()
+def _hook_guidance(root: Path) -> str | None:
+    """When a hook manager owns this repo's hooks, a native hook in .git/hooks is
+    dead code (core.hooksPath redirects git away from it) or a second owner of the
+    same moment. Returns the integration to print instead of installing, or None
+    when the native hook is the right move."""
+    manager = git.hook_manager(root)
+    override = git.hooks_path_override(root)
+    if manager == "husky":
+        return ("Husky manages this repo's hooks. Add this line to .husky/pre-commit "
+                "instead:\n      npx becwright check")
+    if override:
+        return (f"core.hooksPath = {override}: git ignores .git/hooks entirely, so "
+                "the native hook would never run. Wire `becwright check` into that "
+                "hook path.")
+    if manager == "pre-commit":
+        return ("The pre-commit framework manages this repo's hooks. Add becwright to "
+                ".pre-commit-config.yaml instead:\n"
+                "      - repo: https://github.com/DataDave-Dev/becwright\n"
+                f"        rev: v{__version__}\n"
+                "        hooks:\n"
+                "          - id: becwright")
+    return None
+
+
+def _install_native_hooks(root: Path) -> None:
     for install in (git.install_hook, git.install_msg_hook):
         ok, msg = install(root)
         print(_style(msg, GREEN if ok else YELLOW))
+
+
+def _cmd_install(_: argparse.Namespace) -> int:
+    root = git.repo_root()
+    if git.hooks_path_override(root):
+        # A native hook would be dead on arrival — refuse rather than half-install.
+        print(_style("Not installing: this hook would never run.", RED, BOLD),
+              file=sys.stderr)
+        print(_style(f"  {_hook_guidance(root)}", DIM), file=sys.stderr)
+        return 2
+    guidance = _hook_guidance(root)
+    if guidance:
+        print(_style(f"Note: {guidance}", YELLOW))
+        print(_style("  Installing the native hook anyway, as asked.", DIM))
+    _install_native_hooks(root)
     return 0
 
 
@@ -792,9 +830,12 @@ def _cmd_init(args: argparse.Namespace) -> int:
         _print_claude_summary(derived)
     if args.baseline:
         _print_baseline(rules, downgraded)
-    for install in (git.install_hook, git.install_msg_hook):
-        ok, msg = install(root)
-        print(_style(msg, GREEN if ok else YELLOW))
+    guidance = _hook_guidance(root)
+    if guidance:
+        print(_style("Hook manager detected — not installing the native git hook.", YELLOW))
+        print(f"    {guidance}")
+    else:
+        _install_native_hooks(root)
     print()
     print(_style("Next steps:", BOLD))
     print(f"  1. {_style('Look at your rules:', DIM)}      .bec/rules.yaml")
