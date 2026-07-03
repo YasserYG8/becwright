@@ -43,7 +43,8 @@ classifiers = [
 becwright = "becwright.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "pytest-cov>=5", "mcp>=1.2"]
+# jsonschema is test-only: it validates schema/rules.schema.json against examples.
+dev = ["pytest>=8", "pytest-cov>=5", "mcp>=1.2", "jsonschema>=4"]
 # Used to freeze the standalone binary distributed via npm (see packaging/).
 build = ["pyinstaller>=6"]
 # MCP server for AI agents: `becwright mcp` (see src/becwright/mcp_server.py).

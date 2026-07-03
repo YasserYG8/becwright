@@ -149,6 +149,14 @@ rules:
 | `severity` | no | `blocking` (por defecto), `warning` o `advisory` (ver abajo) |
 | `target` | no | `files` (por defecto) o `commit-msg` (ver abajo) |
 
+> **Autocompletado y validación en el editor.** `.bec/rules.yaml` tiene un
+> [JSON Schema](../schema/rules.schema.json) publicado. `becwright init` escribe
+> una línea `# yaml-language-server: $schema=…` al inicio del archivo, así los
+> editores con language server de YAML (la extensión YAML de VS Code, los IDEs
+> de JetBrains) autocompletan los campos y marcan un typo (`pathss:`,
+> `severity: blockng`) mientras escribís. Agregá esa línea a mano en un archivo
+> de reglas preexistente para obtener lo mismo.
+
 **`schema_version`** es una clave opcional de nivel superior (no un campo de
 regla). Sella la versión de formato del archivo; cuando falta se trata como `1`,
 así que los archivos existentes siguen funcionando. `becwright init` la escribe,

@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/DataDave-Dev/becwright/main/schema/rules.schema.json",
+  "title": "becwright rules",
+  "description": "Schema for .bec/rules.yaml — the rules becwright enforces on every commit. Field reference: https://github.com/DataDave-Dev/becwright/blob/main/documentation/usage.md",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Format version of this file; absent means 1. becwright refuses a file stamped newer than it understands."
+    },
+    "rules": {
+      "type": "array",
+      "description": "The rules (BECs) enforced on every commit.",
+      "items": { "$ref": "#/definitions/rule" }
+    }
+  },
+  "definitions": {
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "check"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique rule id, e.g. no-token-in-logs."
+        },
+        "intent": {
+          "type": "string",
+          "description": "What the rule asks for — the 'bound' half of the BEC."
+        },
+        "why_it_matters": {
+          "type": "string",
+          "description": "Why the rule exists; shown the moment the rule fails."
+        },
+        "rejected_alternatives": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Context: approaches that were considered and dropped."
+        },
+        "paths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Glob patterns of the files this rule applies to (e.g. src/**/*.py). Not needed for target: commit-msg rules."
+        },
+        "exclude": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Globs carved out of `paths` — vendored code, generated files, the check's own implementation."
+        },
+        "check": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Shell command that runs the check: reads the file list on stdin, exits 0 (pass) or non-zero (fail). E.g. becwright run forbid --pattern '...'"
+        },
+        "severity": {
+          "enum": ["blocking", "warning", "advisory"],
+          "default": "blocking",
+          "description": "blocking = stops the commit | warning = deterministic finding, does not block | advisory = best-effort / non-deterministic, reports but never blocks."
+        },
+        "target": {
+          "enum": ["files", "commit-msg"],
+          "default": "files",
+          "description": "files = the changed files (default) | commit-msg = the commit message."
+        }
+      }
+    }
+  }
+}
