@@ -23,8 +23,9 @@ def _init_repo(tmp_path):
 
 
 def _rules_yaml(module):
-    check = f'PYTHONPATH="{_SRC}" "{sys.executable}" -m becwright.checks.{module}'
-    return f'rules:\n  - id: no-debug\n    paths: ["**/*.py"]\n    check: \'{check}\'\n    severity: blocking\n'
+    src_posix = _SRC.as_posix()
+    check = f'"{sys.executable}" -c "import sys; sys.path.insert(0, \'{src_posix}\'); from becwright.checks.{module} import main; sys.exit(main())"'
+    return f'rules:\n  - id: no-debug\n    paths: ["**/*.py"]\n    check: |-\n      {check}\n    severity: blocking\n'
 
 
 # --- git.py ---
@@ -171,7 +172,7 @@ def test_check_advisory_never_blocks(tmp_path, monkeypatch, capsys):
     (tmp_path / ".bec").mkdir()
     # `false` always "fails"; an advisory rule must report but not block the commit.
     (tmp_path / ".bec" / "rules.yaml").write_text(
-        "rules:\n  - id: adv\n    paths: ['**/*.py']\n    check: 'false'\n    severity: advisory\n",
+        f"rules:\n  - id: adv\n    paths: ['**/*.py']\n    check: '\"{sys.executable}\" -c \"import sys; sys.exit(1)\"'\n    severity: advisory\n",
         encoding="utf-8")
     (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
     _git(tmp_path, "add", "a.py")
@@ -232,7 +233,7 @@ def test_check_does_not_flag_opaque_command(tmp_path, monkeypatch, capsys):
     (tmp_path / ".bec").mkdir()
     (tmp_path / ".bec" / "rules.yaml").write_text(
         'rules:\n  - id: r1\n    paths: ["**/*.py"]\n'
-        "    check: 'true'\n    severity: blocking\n", encoding="utf-8")
+        f"    check: '\"{sys.executable}\" -c \"import sys; sys.exit(0)\"'\n    severity: blocking\n", encoding="utf-8")
     (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
     _git(tmp_path, "add", "a.py")
     monkeypatch.chdir(tmp_path)
@@ -282,7 +283,7 @@ def test_check_msg_no_message_rules_is_noop(tmp_path, monkeypatch):
     _init_repo(tmp_path)
     (tmp_path / ".bec").mkdir()
     (tmp_path / ".bec" / "rules.yaml").write_text(
-        "rules:\n  - id: f\n    paths: ['**/*.py']\n    check: 'true'\n    severity: blocking\n",
+        f"rules:\n  - id: f\n    paths: ['**/*.py']\n    check: '\"{sys.executable}\" -c \"import sys; sys.exit(0)\"'\n    severity: blocking\n",
         encoding="utf-8")
     msg = tmp_path / "MSG"
     msg.write_text("anything\n", encoding="utf-8")

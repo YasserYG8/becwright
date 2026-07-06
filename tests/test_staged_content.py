@@ -19,8 +19,9 @@ def _init_repo(tmp_path):
 
 
 def _rules_yaml(module):
-    check = f'PYTHONPATH="{_SRC}" "{sys.executable}" -m becwright.checks.{module}'
-    return f'rules:\n  - id: no-debug\n    paths: ["**/*.py"]\n    check: \'{check}\'\n    severity: blocking\n'
+    src_posix = _SRC.as_posix()
+    check = f'"{sys.executable}" -c "import sys; sys.path.insert(0, \'{src_posix}\'); from becwright.checks.{module} import main; sys.exit(main())"'
+    return f'rules:\n  - id: no-debug\n    paths: ["**/*.py"]\n    check: |-\n      {check}\n    severity: blocking\n'
 
 
 def _setup(tmp_path):

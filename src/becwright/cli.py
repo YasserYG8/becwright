@@ -506,26 +506,26 @@ def _starter_rules(langs: list[str]) -> list[dict]:
         js_globs = [g for g in source_globs if g.endswith((".js", ".ts"))]
         rules.append(dict(
             id="no-debugger-js", paths=js_globs, severity="blocking",
-            check="becwright run forbid --pattern '\\bdebugger\\b'",
+            check="becwright run forbid --pattern \"\\bdebugger\\b\"",
             intent="Do not leave 'debugger;' in JavaScript/TypeScript code.",
             why="A forgotten 'debugger' halts execution and should not reach production."))
         rules.append(dict(
             id="no-console-log-js", paths=js_globs, severity="warning",
-            check="becwright run forbid --pattern 'console\\.log\\s*\\('",
+            check="becwright run forbid --pattern \"console\\.log\\s*\\(\"",
             intent="Avoid 'console.log(...)' in JavaScript/TypeScript code.",
             why="Debug console.log statements clutter production output."))
 
     if "go" in langs:
         rules.append(dict(
             id="no-debug-go", paths=["**/*.go"], severity="blocking",
-            check=r"becwright run forbid --pattern 'fmt\.Println\s*\(|panic\s*\('",
+            check="becwright run forbid --pattern \"fmt\\.Println\\s*\\(|panic\\s*\\(\"",
             intent="Do not leave debug output or panic calls in Go code.",
             why="Debug statements and unexpected panic calls should not reach production."))
 
     if "rust" in langs:
         rules.append(dict(
             id="no-debug-rust", paths=["**/*.rs"], severity="blocking",
-            check=r"becwright run forbid --pattern 'dbg!\s*\(|println!\s*\('",
+            check="becwright run forbid --pattern \"dbg!\\s*\\(|println!\\s*\\(\"",
             intent="Do not leave debug output in Rust code.",
             why="Debug macros and leftover println! calls should not reach production."))
 
@@ -568,12 +568,12 @@ _CLAUDE_SIGNALS = (
          why="A token in the logs lets anyone with access to them steal a session."),
     dict(id="no-debugger-js", lang="jsts", severity="blocking",
          triggers=("debugger",),
-         check="becwright run forbid --pattern '\\bdebugger\\b'",
+         check="becwright run forbid --pattern \"\\bdebugger\\b\"",
          intent="Do not leave 'debugger;' in JavaScript/TypeScript code.",
          why="A forgotten 'debugger' halts execution and should not reach production."),
     dict(id="no-console-log-js", lang="jsts", severity="warning",
          triggers=("console.log",),
-         check="becwright run forbid --pattern 'console\\.log\\s*\\('",
+         check="becwright run forbid --pattern \"console\\.log\\s*\\(\"",
          intent="Avoid 'console.log(...)' in JavaScript/TypeScript code.",
          why="Debug console.log statements clutter production output."),
 )
@@ -629,17 +629,17 @@ _COMMIT_MSG_SIGNALS = (
     dict(id="conventional-commits", severity="blocking",
          triggers=("conventional commit", "commit convention", "commits convencionales",
                    "convención de commit", "convencion de commit"),
-         check=(r"becwright run require --pattern "
-                r"'^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?!?: '"),
+         check=(r'becwright run require --pattern '
+                r'"^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.+\))?!?: "'),
          intent="Commit messages must follow the Conventional Commits format.",
          why="A consistent commit format keeps history readable and enables automated changelogs."),
     dict(id="no-ai-attribution", severity="blocking",
          triggers=("no ai attribution", "sin atribución de ia", "sin atribucion de ia",
                    "co-authored-by", "generated with", "no menciones a claude",
                    "atribución de ia", "atribucion de ia", "no ai credit"),
-         check=(r"becwright run forbid --ignore-case --pattern "
-                r"'co-authored-by:.*(claude|anthropic|gpt|copilot)"
-                r"|generated with.*(claude|chatgpt|copilot)'"),
+         check=(r'becwright run forbid --ignore-case --pattern '
+                r'"co-authored-by:.*(claude|anthropic|gpt|copilot)'
+                r'|generated with.*(claude|chatgpt|copilot)"'),
          intent="Commit messages must not include AI attribution or co-author trailers.",
          why="Keeps the history free of tool boilerplate; commits stand on their content."),
 )

@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 from becwright import cli, report
@@ -21,11 +22,12 @@ def _init_repo(path):
 
 
 def _rule_yaml(tmp_path):
-    check = f'PYTHONPATH="{_SRC}" python -m becwright.checks.forbid --pattern "\\bdebugger\\b"'
+    src_posix = _SRC.as_posix()
+    check = f'"{sys.executable}" -c "import sys; sys.path.insert(0, \'{src_posix}\'); from becwright.checks.forbid import main; sys.exit(main())" --pattern "\\bdebugger\\b"'
     (tmp_path / ".bec").mkdir(parents=True, exist_ok=True)
     (tmp_path / ".bec" / "rules.yaml").write_text(
         "rules:\n  - id: no-dbg\n    intent: no debugger\n    why_it_matters: it halts\n"
-        f"    paths: ['**/*.js']\n    check: '{check}'\n    severity: blocking\n",
+        f"    paths: ['**/*.js']\n    check: |-\n      {check}\n    severity: blocking\n",
         encoding="utf-8")
 
 
