@@ -69,7 +69,7 @@ def test_starter_rules_go():
     assert debug_rule["paths"] == ["**/*.go"]
     assert debug_rule["severity"] == "blocking"
     assert debug_rule["check"] == (
-        r"becwright run forbid --pattern 'fmt\.Println\s*\(|panic\s*\('"
+        r'becwright run forbid --pattern "fmt\.Println\s*\(|panic\s*\("'
     )
 
 
@@ -88,7 +88,7 @@ def test_starter_rules_rust():
     assert debug_rule["paths"] == ["**/*.rs"]
     assert debug_rule["severity"] == "blocking"
     assert debug_rule["check"] == (
-        r"becwright run forbid --pattern 'dbg!\s*\(|println!\s*\('"
+        r'becwright run forbid --pattern "dbg!\s*\(|println!\s*\("'
     )
 
 def test_starter_rules_empty():
@@ -120,7 +120,7 @@ def test_render_yaml_parses_and_keeps_forbid(tmp_path):
     rules = load_rules(p)
     assert {r.id for r in rules} == {"no-hardcoded-secrets", "no-debugger-js", "no-console-log-js"}
     dbg = next(r for r in rules if r.id == "no-debugger-js")
-    assert r"--pattern '\bdebugger\b'" in dbg.check
+    assert r'--pattern "\bdebugger\b"' in dbg.check
 
 
 def test_render_empty_is_valid(tmp_path):

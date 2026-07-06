@@ -1,5 +1,6 @@
 import asyncio
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -19,11 +20,12 @@ def _repo_with_rule(path):
     _git(path, "init")
     _git(path, "config", "user.email", "t@t.t")
     _git(path, "config", "user.name", "t")
-    check = f'PYTHONPATH="{_SRC}" python -m becwright.checks.forbid --pattern "breakpoint"'
+    src_posix = _SRC.as_posix()
+    check = f'"{sys.executable}" -c "import sys; sys.path.insert(0, \'{src_posix}\'); from becwright.checks.forbid import main; sys.exit(main())" --pattern "breakpoint"'
     (path / ".bec").mkdir(parents=True)
     (path / ".bec" / "rules.yaml").write_text(
         "rules:\n  - id: no-bp\n    paths: ['**/*.py']\n"
-        f"    check: '{check}'\n    severity: blocking\n", encoding="utf-8")
+        f"    check: |-\n      {check}\n    severity: blocking\n", encoding="utf-8")
     return path
 
 
@@ -81,8 +83,10 @@ def test_preview_rule_reports_violations(tmp_path):
     _repo(tmp_path)
     (tmp_path / "a.py").write_text("breakpoint()\n", encoding="utf-8")
     _git(tmp_path, "add", "a.py")
+    src_posix = _SRC.as_posix()
+    check = f'"{sys.executable}" -c "import sys; sys.path.insert(0, \'{src_posix}\'); from becwright.checks.forbid import main; sys.exit(main())" --pattern breakpoint'
     out = mcp_server.preview_rule(
-        check=f'PYTHONPATH="{_SRC}" python -m becwright.checks.forbid --pattern breakpoint',
+        check=check,
         paths=["**/*.py"], all_files=True, path=str(tmp_path))
     assert out["matched_files"] == 1 and out["passed"] is False
     assert "a.py" in out["output"] and out["note"] is None
@@ -92,8 +96,10 @@ def test_preview_rule_passes_clean(tmp_path):
     _repo(tmp_path)
     (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
     _git(tmp_path, "add", "a.py")
+    src_posix = _SRC.as_posix()
+    check = f'"{sys.executable}" -c "import sys; sys.path.insert(0, \'{src_posix}\'); from becwright.checks.forbid import main; sys.exit(main())" --pattern breakpoint'
     out = mcp_server.preview_rule(
-        check=f'PYTHONPATH="{_SRC}" python -m becwright.checks.forbid --pattern breakpoint',
+        check=check,
         paths=["**/*.py"], path=str(tmp_path))
     assert out["passed"] is True and out["matched_files"] == 1
 

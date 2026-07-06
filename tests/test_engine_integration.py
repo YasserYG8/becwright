@@ -8,7 +8,8 @@ _SRC = Path(__file__).resolve().parents[1] / "src"
 
 
 def _check_cmd(module: str) -> str:
-    return f'PYTHONPATH="{_SRC}" "{sys.executable}" -m becwright.checks.{module}'
+    src_posix = _SRC.as_posix()
+    return f'"{sys.executable}" -c "import sys; sys.path.insert(0, \'{src_posix}\'); from becwright.checks.{module} import main; sys.exit(main())"'
 
 
 def _rule() -> Rule:
@@ -102,7 +103,8 @@ def test_evaluate_ignores_commit_msg_rules(tmp_path):
 def test_evaluate_times_out_a_hung_check(tmp_path, monkeypatch):
     monkeypatch.setenv("BECWRIGHT_CHECK_TIMEOUT", "0.3")
     (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
-    hung = Rule(id="hangs", paths=("**/*.py",), check="sleep 5", severity="blocking")
+    check = f'"{sys.executable}" -c "import time; time.sleep(5)"'
+    hung = Rule(id="hangs", paths=("**/*.py",), check=check, severity="blocking")
     result = evaluate([hung], ["a.py"], tmp_path)
     assert result.per_rule[0].passed is False
     assert "timed out" in result.per_rule[0].output
