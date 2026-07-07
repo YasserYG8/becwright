@@ -519,3 +519,19 @@ def test_mcp_subcommand_without_extra(monkeypatch):
     # Simulate the 'mcp' extra not being installed: force the import to fail.
     monkeypatch.setitem(sys.modules, "becwright.mcp_server", None)
     assert cli.main(["mcp"]) == 2
+
+
+def test_cli_custom_help(capsys):
+    assert cli.main([]) == 0
+    out = capsys.readouterr().out
+    assert "Usage:  becwright" in out
+    assert "Core Commands:" in out
+    assert "Hook Management:" in out
+    assert "BEC Catalog:" in out
+    assert "Diagnostics & Utilities:" in out
+    assert "Global Options:" in out
+
+    assert cli.main(["--help"]) == 0
+    out2 = capsys.readouterr().out
+    assert "Usage:  becwright" in out2
+
