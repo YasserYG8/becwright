@@ -1093,7 +1093,44 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _print_custom_help() -> None:
+    usage = (
+        f"Usage:  {_style('becwright', GREEN, BOLD)} [OPTIONS] COMMAND\n\n"
+        "Deterministic pre-commit guardrails for your codebase.\n\n"
+        f"{_style('Core Commands:', BOLD)}\n"
+        "  check       Verify the code against rules\n"
+        "  init        Scaffold starter rules and install hooks\n"
+        "  why         Explain the intent + context behind active rules\n"
+        "  validate    Check rules.yaml structure for correctness\n\n"
+        f"{_style('Hook Management:', BOLD)}\n"
+        "  install     Install the pre-commit and commit-msg hooks\n"
+        "  uninstall   Remove the becwright hooks from git\n"
+        "  check-msg   Verify commit message against rules (used by hook)\n\n"
+        f"{_style('BEC Catalog:', BOLD)}\n"
+        "  search      List ready-made BECs in the catalog\n"
+        "  add         Install a BEC from the built-in catalog\n"
+        "  import      Import a rule from a file or URL\n"
+        "  export      Save a rule into a shareable .bec.yaml file\n\n"
+        f"{_style('Diagnostics & Utilities:', BOLD)}\n"
+        "  doctor      Diagnose rules, hooks, and hook managers\n"
+        "  list        List all available built-in check modules\n"
+        "  mcp         Start the MCP server for AI agents (e.g. Claude Code)\n"
+        "  demo        Show a live simulation of a blocked commit\n"
+        "  run         Run a check command directly against files on stdin\n\n"
+        f"{_style('Global Options:', BOLD)}\n"
+        "  -h, --help  Show this help message and exit\n"
+        "  --version   Show the version information\n\n"
+        f"Run {_style('becwright COMMAND --help', CYAN)} for more information on a command."
+    )
+    print(usage)
+
+
 def main(argv: list[str] | None = None) -> int:
+    args_list = sys.argv[1:] if argv is None else argv
+    if not args_list or args_list == ["-h"] or args_list == ["--help"]:
+        _print_custom_help()
+        return 0
+
     args = _build_parser().parse_args(argv)
     try:
         return args.func(args)
