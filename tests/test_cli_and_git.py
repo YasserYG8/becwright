@@ -519,3 +519,25 @@ def test_mcp_subcommand_without_extra(monkeypatch):
     # Simulate the 'mcp' extra not being installed: force the import to fail.
     monkeypatch.setitem(sys.modules, "becwright.mcp_server", None)
     assert cli.main(["mcp"]) == 2
+
+
+def test_check_respects_global_exclude(tmp_path, monkeypatch, capsys):
+    _init_repo(tmp_path)
+    (tmp_path / ".bec").mkdir()
+
+    src_posix = _SRC.as_posix()
+    check = f'"{sys.executable}" -c "import sys; sys.path.insert(0, \'{src_posix}\'); from becwright.checks.forbid import main; sys.exit(main())" --pattern "breakpoint"'
+
+    (tmp_path / ".bec" / "rules.yaml").write_text(
+        "global_exclude:\n  - 'ignored/**'\n"
+        "rules:\n  - id: no-bp\n    paths: ['**/*.py']\n"
+        f"    check: |-\n      {check}\n    severity: blocking\n", encoding="utf-8")
+
+    (tmp_path / "ignored").mkdir()
+    (tmp_path / "ignored" / "app.py").write_text("breakpoint()\n", encoding="utf-8")
+    _git(tmp_path, "add", "ignored/app.py")
+
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["check"]) == 0
+    assert "All good" in capsys.readouterr().out
+
