@@ -11,6 +11,11 @@
       "minimum": 1,
       "description": "Format version of this file; absent means 1. becwright refuses a file stamped newer than it understands."
     },
+    "global_exclude": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Global glob patterns of files to exclude from all file-based rules."
+    },
     "rules": {
       "type": "array",
       "description": "The rules (BECs) enforced on every commit.",
