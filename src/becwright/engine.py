@@ -88,7 +88,8 @@ def _run_check(rule: Rule, stdin: str, root: Path) -> RuleResult:
             rule=rule, passed=False,
             output=f"check timed out after {_check_timeout():g}s (its command hung)",
         )
-    output = proc.stdout.strip() or proc.stderr.strip()
+    outputs = [proc.stdout.strip(), proc.stderr.strip()]
+    output = "\n".join(o for o in outputs if o).strip()
     return RuleResult(rule=rule, passed=proc.returncode == 0, output=output)
 
 
