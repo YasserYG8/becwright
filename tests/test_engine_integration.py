@@ -109,3 +109,14 @@ def test_evaluate_times_out_a_hung_check(tmp_path, monkeypatch):
     assert result.per_rule[0].passed is False
     assert "timed out" in result.per_rule[0].output
     assert result.had_blocking is True
+
+
+def test_evaluate_captures_both_stdout_and_stderr(tmp_path):
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    check = f'"{sys.executable}" -c "import sys; print(\'out_msg\'); print(\'err_msg\', file=sys.stderr); sys.exit(1)"'
+    rule = Rule(id="both", paths=("**/*.py",), check=check, severity="blocking")
+    result = evaluate([rule], ["a.py"], tmp_path)
+    assert result.per_rule[0].passed is False
+    assert "out_msg" in result.per_rule[0].output
+    assert "err_msg" in result.per_rule[0].output
+
