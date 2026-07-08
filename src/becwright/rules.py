@@ -42,7 +42,7 @@ class Rule:
         return self.severity == "advisory"
 
 
-def _to_rule(raw: dict) -> Rule:
+def _to_rule(raw: dict, global_exclude: list[str] | None = None) -> Rule:
     if not isinstance(raw, dict):
         raise RulesError(f"each rule must be a mapping, got {type(raw).__name__}.")
     for field in ("id", "check"):
@@ -60,11 +60,16 @@ def _to_rule(raw: dict) -> Rule:
             f"rule '{raw['id']}': invalid target {target!r} "
             f"(use one of: {', '.join(_VALID_TARGETS)})."
         )
+
+    exclude_list = list(raw.get("exclude", []))
+    if global_exclude:
+        exclude_list.extend(global_exclude)
+
     return Rule(
         id=raw["id"],
         paths=tuple(raw.get("paths", [])),
         check=raw["check"],
-        exclude=tuple(raw.get("exclude", [])),
+        exclude=tuple(exclude_list),
         intent=(raw.get("intent") or "").strip(),
         why_it_matters=(raw.get("why_it_matters") or "").strip(),
         rejected_alternatives=tuple(raw.get("rejected_alternatives", [])),
@@ -83,7 +88,12 @@ def load_rules(rules_path: Path) -> list[Rule]:
     if not isinstance(data, dict) or not isinstance(data.get("rules", []), list):
         raise RulesError(f"{rules_path}: expected a top-level 'rules:' list.")
     _check_schema_version(data.get("schema_version"), rules_path)
-    return [_to_rule(r) for r in data["rules"]] if data.get("rules") else []
+
+    global_exclude = data.get("global_exclude", [])
+    if not isinstance(global_exclude, list) or not all(isinstance(x, str) for x in global_exclude):
+        raise RulesError(f"{rules_path}: global_exclude must be a list of glob patterns.")
+
+    return [_to_rule(r, global_exclude) for r in data["rules"]] if data.get("rules") else []
 
 
 def _check_schema_version(value, rules_path: Path) -> None:
