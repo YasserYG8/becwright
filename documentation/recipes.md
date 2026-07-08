@@ -163,6 +163,30 @@ jobs:
 Make it a *required* check in branch protection and the rules can no longer be
 skipped with `git commit --no-verify`.
 
+## CI: Docker & GitLab CI (or generic environments)
+
+For CI environments that support Docker containers (such as GitLab CI or Jenkins), or to run checks without installing Python locally, you can use the official Docker image.
+
+Run the container by mounting your repository root as a volume:
+
+```sh
+docker run --rm -v "$PWD:/repo" -w /repo ghcr.io/datadave-dev/becwright check --diff origin/main
+```
+
+### GitLab CI Integration
+
+Add the following job to your `.gitlab-ci.yml`:
+
+```yaml
+becwright:
+  stage: test
+  image:
+    name: ghcr.io/datadave-dev/becwright:latest
+    entrypoint: [""]
+  script:
+    - becwright check --diff origin/main
+```
+
 ## pre-commit framework
 
 `.pre-commit-config.yaml`:

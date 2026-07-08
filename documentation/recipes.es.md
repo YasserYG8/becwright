@@ -170,6 +170,30 @@ jobs:
 Marcalo como check *required* en la protección de rama y las reglas ya no se
 pueden saltar con `git commit --no-verify`.
 
+## CI: Docker y GitLab CI (o entornos genéricos)
+
+Para entornos de CI que soportan contenedores Docker (como GitLab CI o Jenkins), o para ejecutar validaciones sin instalar Python localmente, puedes usar la imagen oficial de Docker.
+
+Ejecuta el contenedor montando la raíz de tu repositorio como volumen:
+
+```sh
+docker run --rm -v "$PWD:/repo" -w /repo ghcr.io/datadave-dev/becwright check --diff origin/main
+```
+
+### Integración con GitLab CI
+
+Agrega el siguiente trabajo a tu `.gitlab-ci.yml`:
+
+```yaml
+becwright:
+  stage: test
+  image:
+    name: ghcr.io/datadave-dev/becwright:latest
+    entrypoint: [""]
+  script:
+    - becwright check --diff origin/main
+```
+
 ## Framework pre-commit
 
 `.pre-commit-config.yaml`:
