@@ -540,4 +540,18 @@ def test_check_respects_global_exclude(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
     assert cli.main(["check"]) == 0
     assert "All good" in capsys.readouterr().out
+def test_cli_custom_help(capsys):
+    assert cli.main([]) == 0
+    out = capsys.readouterr().out
+    assert "Usage:  becwright" in out
+    assert "Core Commands:" in out
+    assert "Hook Management:" in out
+    assert "BEC Catalog:" in out
+    assert "Diagnostics & Utilities:" in out
+    assert "Global Options:" in out
+
+    assert cli.main(["--help"]) == 0
+    out2 = capsys.readouterr().out
+    assert "Usage:  becwright" in out2
+
 
