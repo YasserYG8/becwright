@@ -126,3 +126,35 @@ def test_non_positive_schema_version_raises(tmp_path):
     path = _write(tmp_path, 'schema_version: 0\nrules:\n  - id: r1\n    check: "true"\n')
     with pytest.raises(RulesError, match="schema_version"):
         load_rules(path)
+
+
+def test_global_exclude_merges_with_rule_exclude(tmp_path):
+    path = _write(
+        tmp_path,
+        'global_exclude:\n  - "vendor/**"\n  - "build/**"\n'
+        'rules:\n  - id: r1\n    check: "true"\n    exclude: ["local/exclude.py"]\n'
+    )
+    rules = load_rules(path)
+    assert len(rules) == 1
+    assert rules[0].exclude == ("local/exclude.py", "vendor/**", "build/**")
+
+
+def test_global_exclude_not_list_raises(tmp_path):
+    path = _write(
+        tmp_path,
+        'global_exclude: "not-a-list"\n'
+        'rules:\n  - id: r1\n    check: "true"\n'
+    )
+    with pytest.raises(RulesError, match="global_exclude must be a list"):
+        load_rules(path)
+
+
+def test_global_exclude_non_string_elements_raises(tmp_path):
+    path = _write(
+        tmp_path,
+        'global_exclude:\n  - 123\n'
+        'rules:\n  - id: r1\n    check: "true"\n'
+    )
+    with pytest.raises(RulesError, match="global_exclude must be a list"):
+        load_rules(path)
+

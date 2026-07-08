@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -94,7 +95,7 @@ def _run_check(rule: Rule, stdin: str, root: Path) -> RuleResult:
 
 
 def evaluate(rules: list[Rule], files: list[str], root: Path) -> Result:
-    results: list[RuleResult] = []
+    tasks: list[tuple[Rule, str]] = []
     for rule in rules:
         if rule.target != "files":
             continue
@@ -104,7 +105,14 @@ def evaluate(rules: list[Rule], files: list[str], root: Path) -> Result:
         ]
         if not relevant:
             continue
-        results.append(_run_check(rule, "\n".join(relevant), root))
+        tasks.append((rule, "\n".join(relevant)))
+
+    with ThreadPoolExecutor() as executor:
+        futures = [
+            executor.submit(_run_check, rule, stdin, root)
+            for rule, stdin in tasks
+        ]
+        results = [f.result() for f in futures]
     return Result(per_rule=results)
 
 
@@ -112,9 +120,14 @@ def evaluate_message(rules: list[Rule], message_path: str, root: Path) -> Result
     """Run the `commit-msg` rules against the commit message. The message file
     path is fed to each check on stdin, exactly like a source file, so the generic
     `forbid` / `require` checks work on the message with no special casing."""
-    results = [
-        _run_check(rule, message_path, root)
-        for rule in rules
+    tasks = [
+        rule for rule in rules
         if rule.target == "commit-msg"
     ]
+    with ThreadPoolExecutor() as executor:
+        futures = [
+            executor.submit(_run_check, rule, message_path, root)
+            for rule in tasks
+        ]
+        results = [f.result() for f in futures]
     return Result(per_rule=results)
